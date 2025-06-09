@@ -1,0 +1,24 @@
+name: Docker
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - name: Build Docker image
+        run: |
+          docker build . --file Dockerfile --tag ghcr.io/${{ github.repository_owner }}/core:latest
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository_owner }}/core:latest
