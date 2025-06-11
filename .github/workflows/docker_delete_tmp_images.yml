@@ -1,0 +1,34 @@
+name: Cleanup Docker Images Except Latest
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install gh
+        run: |
+          sudo mkdir -p -m 755 /etc/apt/keyrings
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/etc/apt/keyrings/githubcli-archive-keyring.gpg
+          sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh
+
+      - name: Authenticate gh
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: List and delete images
+        run: |
+          # Récupérer la liste des tags d'images
+          IMAGES=$(gh api -H "Accept: application/vnd.github+json" \
+            /users/${{ github.repository_owner }}/packages/container/database/versions | \
+            jq -r '.[] | select(.metadata.container.tags[0] != "latest") | .id')
+
+          # Supprimer chaque image
+          for IMAGE_ID in $IMAGES; do
+            echo "Suppression de l'image avec l'ID: $IMAGE_ID"
+            gh api -X DELETE -H "Accept: application/vnd.github+json" \
+              /users/${{ github.repository_owner }}/packages/container/database/versions/$IMAGE_ID
+          done
