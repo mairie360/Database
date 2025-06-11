@@ -53,18 +53,3 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  redis:
-    image: redis:7.4.2-bookworm
-    restart: always
-    expose:
-      - "6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - backend
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
