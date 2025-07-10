@@ -8,17 +8,7 @@ permissions:
   packages: write
 
 jobs:
-  build-temporary:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.2.2
-
-      - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
-
-      - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/tmp-database:${{ github.ref_name }}-${{ github.run_id }} .
-
-      - name: Push Docker image
-        run: docker push ghcr.io/${{ github.repository_owner }}/tmp-database:${{ github.ref_name }}-${{ github.run_id }}
+  call-cicd:
+    uses: mairie360/CICD/.github/workflows/docker_manual.yml@3-feat-add-creation-of-package
+    with:
+      package_name: database
