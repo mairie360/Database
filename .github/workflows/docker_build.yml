@@ -1,0 +1,15 @@
+name: Docker
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  call-cicd:
+    uses: mairie360/CICD/.github/workflows/docker_build.yml@3-feat-add-creation-of-package
+    with:
+      package_name: database
