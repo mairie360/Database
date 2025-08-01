@@ -92,3 +92,13 @@ CREATE TABLE role_permissions (
 
 CREATE INDEX idx_role_permissions_role_id ON role_permissions(role_id);
 CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_id);
+
+DO
+$$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM users) THEN
+    INSERT INTO users (first_name, last_name, email, password, status)
+    VALUES ('Admin', 'User', 'template.email@gmail.com', 'password_template', 'active');
+  END IF;
+END;
+$$;
