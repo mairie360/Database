@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Création de la fonction update_updated_at_column -->
+    <changeSet id="1" author="you">
+        <sql splitStatements="false" stripComments="true">
+            CREATE OR REPLACE FUNCTION update_updated_at_column()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                NEW.updated_at := now();
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        </sql>
+    </changeSet>
+
+    <!-- Création des tables modules, users, etc. -->
+    <changeSet id="2" author="you">
+        <sqlFile path="scripts/V1__init_tables.sql"/>
+    </changeSet>
+
+    <!-- Création des triggers -->
+    <changeSet id="3" author="you">
+        <sqlFile path="scripts/V1__triggers.sql"/>
+    </changeSet>
+
+    <!-- Insertion de l'utilisateur admin -->
+    <changeSet id="4" author="you">
+        <sql splitStatements="false" stripComments="true">
+            DO $do$
+            BEGIN
+            IF NOT EXISTS (SELECT 1 FROM users) THEN
+                INSERT INTO users (first_name, last_name, email, password, status)
+                VALUES ('Admin', 'User', 'template.email@gmail.com', 'password_template', 'active');
+            END IF;
+            END;
+            $do$ LANGUAGE plpgsql;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
