@@ -9,6 +9,6 @@ permissions:
 
 jobs:
   call-cicd:
-    uses: mairie360/CICD/.github/workflows/docker_manual_build.yml@3-feat-add-creation-of-package
+    uses: mairie360/CICD/.github/workflows/docker_manual_build.yml@main
     with:
       package_name: database
