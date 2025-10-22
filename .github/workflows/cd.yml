@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   dev-release:
-    uses: mairie360/CICD/.github/workflows/database_cd.yml@main
+    uses: mairie360/CICD/.github/workflows/database_cd.yml@feat/mair-23-add-release-and-tag-creation-for-db
     with:
       job: "release"
       environment: "dev"
