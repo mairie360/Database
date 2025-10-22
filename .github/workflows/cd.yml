@@ -15,4 +15,3 @@ jobs:
     with:
       job: "release"
       environment: "dev"
-      package_name: database
