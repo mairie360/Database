@@ -15,3 +15,11 @@ jobs:
     with:
       job: "release"
       environment: "dev"
+
+  staging-release:
+    if: github.ref == 'refs/heads/main'
+    needs: dev-release
+    uses: mairie360/CICD/.github/workflows/database_cd.yml@feat/mair-23-add-release-and-tag-creation-for-db
+    with:
+      job: "release"
+      environment: "staging"
