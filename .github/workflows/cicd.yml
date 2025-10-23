@@ -14,4 +14,4 @@ jobs:
     uses: mairie360/CICD/.github/workflows/database_cicd.yml@feat/mair-23-add-release-and-tag-creation-for-db
     with:
       package_name: database
-      ref: feat/mair-23-add-release-and-tag-creation-for-db
+      # ref: feat/mair-23-add-release-and-tag-creation-for-db
