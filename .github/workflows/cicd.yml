@@ -11,6 +11,15 @@ permissions:
 
 jobs:
   call-database-cicd:
-    uses: mairie360/CICD/.github/workflows/database_cicd.yml@feat/mair-23-add-release-and-tag-creation-for-db
-    with:
-      package_name: database
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CICD repository
+        uses: actions/checkout@v4.2.2
+        with:
+          repository: mairie360/CICD
+          ref: feat/mair-23-add-release-and-tag-creation-for-db
+
+      - name: Call the reusable workflow manually
+        uses: ./github/workflows/database_cicd.yml
+        with:
+          package_name: database
