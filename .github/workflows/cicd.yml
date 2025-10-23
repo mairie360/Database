@@ -3,6 +3,7 @@ name: Database CI/CD
 on:
   workflow_dispatch:
   push:
+  # todo: only on main
 
 permissions:
   contents: read
