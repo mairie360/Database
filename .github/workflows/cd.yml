@@ -16,12 +16,12 @@ jobs:
       job: "release"
       environment: "dev"
 
-  # dev-deploy:
-  #   needs: dev-release
-  #   uses: mairie360/CICD/.github/workflows/database_cd.yml@feat/mair-23-add-release-and-tag-creation-for-db
-  #   with:
-  #     job: "deploy"
-  #     environment: "dev"
+  dev-deploy:
+    needs: dev-release
+    uses: mairie360/CICD/.github/workflows/database_cd.yml@feat/mair-23-add-release-and-tag-creation-for-db
+    with:
+      job: "deploy"
+      environment: "dev"
 
   # staging-release:
   #   needs: dev-deploy
