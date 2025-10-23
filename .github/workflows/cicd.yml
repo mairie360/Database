@@ -15,4 +15,5 @@ jobs:
     with:
       package_name: database
       ref: feat/mair-23-add-release-and-tag-creation-for-db
-      github_token: ${{ secrets.GITHUB_TOKEN }}
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
