@@ -9,6 +9,6 @@ permissions:
 
 jobs:
   call-cicd:
-    uses: mairie360/CICD/.github/workflows/docker_manual_build.yml@main
+    uses: mairie360/CICD/.github/actions/docker/docker_manual_build/action.yml@feat/mair-23-add-release-and-tag-creation-for-db
     with:
       package_name: database
