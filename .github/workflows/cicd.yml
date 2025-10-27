@@ -3,7 +3,8 @@ name: Database CI/CD
 on:
   workflow_dispatch:
   push:
-  # todo: only on main branch
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -14,4 +15,3 @@ jobs:
     uses: mairie360/CICD/.github/workflows/database_cicd.yml@feat/mair-23-add-release-and-tag-creation-for-db
     with:
       package_name: database
-      # ref: feat/mair-23-add-release-and-tag-creation-for-db
