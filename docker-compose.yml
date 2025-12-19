@@ -1,48 +1,37 @@
-version: "3.8"
-
-volumes:
-  postgres-data:
-  redis-data:
-
-networks:
-  backend:
-
 services:
-  postgres:
-    image: postgres:17.4-bookworm
-    restart: always
+  # --- DATABASE ---
+  database:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mairie360-db
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    networks:
-      - backend
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: core
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD", "pg_isready", "-q", "-d", "${DB_NAME}", "-U", "${DB_USER}"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
+  # --- LIQUIBASE ---
   liquibase:
-    image: liquibase/liquibase
+    build:
+      context: ./liquibase
+      dockerfile: Dockerfile
+    container_name: mairie360-liquibase
     depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./liquibase/changelog.xml:/liquibase/changelog.xml
-      - ./liquibase/liquibase.properties:/liquibase/liquibase.properties
-      - ./liquibase/scripts:/liquibase/scripts
+      database:
+        condition: service_healthy # Attend que la DB soit prête (comme l'initContainer K8s)
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      # On utilise les mêmes noms de variables que dans le job.yaml K8s
+      - LIQUIBASE_COMMAND_URL=jdbc:postgresql://database:5432/core
+      - LIQUIBASE_COMMAND_USERNAME=postgres
+      - LIQUIBASE_COMMAND_PASSWORD=password
+      - LIQUIBASE_SEARCH_PATH=/liquibase/changelog
     command: >
-      --defaultsFile=/liquibase/liquibase.properties
+      --changelog-file=changelog.xml
       update
-    networks:
-      - backend
