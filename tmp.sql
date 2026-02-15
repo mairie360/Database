@@ -1,3 +1,5 @@
+-- tmp previous init
+-- 
 -- CREATE DATABASE mairie_360_database;
 
 -- GRANT ALL PRIVILEGES ON DATABASE mairie_360_database TO postgres;
