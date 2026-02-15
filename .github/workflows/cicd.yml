@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   call-database-cicd:
-    uses: mairie360/CICD/.github/workflows/database_cicd.yml@feat/mair-23-add-release-and-tag-creation-for-db
+    uses: mairie360/CICD/.github/workflows/database_cicd.yml@main
     with:
       package_name: database
     secrets:
