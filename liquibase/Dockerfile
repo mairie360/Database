@@ -1,4 +1,4 @@
-FROM liquibase/liquibase:4.24
+FROM liquibase/liquibase:4.33
 
 # On s'assure que le répertoire de travail est le bon
 WORKDIR /liquibase/changelog
