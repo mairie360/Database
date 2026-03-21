@@ -1,1 +1,1 @@
-FROM postgres:17.4-bookworm
+FROM postgres:17.9-bookworm
