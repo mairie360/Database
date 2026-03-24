@@ -53,5 +53,17 @@
     <changeSet id="7" author="you">
         <sqlFile path="scripts/V1__resources.sql" splitStatements="false" stripComments="true"/>
     </changeSet>
+    
+    <changeSet id="8" author="you">
+        <sqlFile path="scripts/V1__permissions.sql" splitStatements="false" stripComments="true"/>
+    </changeSet>
+    
+    <changeSet id="9" author="you">
+        <sqlFile path="scripts/V1__rights.sql" splitStatements="false" stripComments="true"/>
+    </changeSet>
+    
+    <changeSet id="10" author="you">
+        <sqlFile path="scripts/V1__access.sql" splitStatements="false" stripComments="true"/>
+    </changeSet>
 
 </databaseChangeLog>
