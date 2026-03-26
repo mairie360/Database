@@ -70,3 +70,106 @@ BEGIN
     LIMIT 1;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Création du type ENUM (ajusté avec tes besoins)
+DO $$ BEGIN
+    CREATE TYPE session_action AS ENUM (
+        'LOGIN', 
+        'LOGOUT', 
+        'REFRESH', 
+        'EXPIRED',
+        'CLEANUP'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Table des logs
+CREATE TABLE IF NOT EXISTS connection_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    ip_address INET,
+    device_info TEXT,
+    timestamp TIMESTAMPTZ DEFAULT now(),
+    action_type session_action NOT NULL
+);
+
+-- Table de jointure
+CREATE TABLE IF NOT EXISTS session_log_map (
+    session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
+    log_id INT REFERENCES connection_logs(id) ON DELETE CASCADE,
+    PRIMARY KEY (session_id, log_id)
+);
+
+-- TRIGGER 1: LOGIN (Après insertion)
+CREATE OR REPLACE FUNCTION log_session_start()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_log_id INT;
+BEGIN
+    INSERT INTO connection_logs (user_id, ip_address, device_info, timestamp, action_type)
+    VALUES (NEW.user_id, NEW.ip_address, NEW.device_info, NEW.created_at, 'LOGIN')
+    RETURNING id INTO v_log_id;
+
+    INSERT INTO session_log_map (session_id, log_id)
+    VALUES (NEW.id, v_log_id);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- TRIGGER 2: REFRESH (Après mise à jour du token)
+CREATE OR REPLACE FUNCTION log_session_refresh()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_log_id INT;
+BEGIN
+    -- On logue le refresh (potentiellement avec une nouvelle IP/Device)
+    INSERT INTO connection_logs (user_id, ip_address, device_info, timestamp, action_type)
+    VALUES (NEW.user_id, NEW.ip_address, NEW.device_info, now(), 'REFRESH')
+    RETURNING id INTO v_log_id;
+
+    INSERT INTO session_log_map (session_id, log_id)
+    VALUES (NEW.id, v_log_id);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- TRIGGER 3: END / CLEANUP (Avant suppression)
+CREATE OR REPLACE FUNCTION log_session_end()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_action session_action;
+BEGIN
+    -- Détermination de la raison de la fin de session
+    v_action := CASE 
+        WHEN OLD.revoked_at IS NOT NULL THEN 'LOGOUT'::session_action
+        WHEN OLD.expires_at < now() THEN 'EXPIRED'::session_action
+        ELSE 'CLEANUP'::session_action
+    END;
+
+    INSERT INTO connection_logs (user_id, ip_address, device_info, timestamp, action_type)
+    VALUES (OLD.user_id, OLD.ip_address, OLD.device_info, now(), v_action);
+    
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Liaison Login
+DROP TRIGGER IF EXISTS trigger_log_login ON sessions;
+CREATE TRIGGER trigger_log_login
+AFTER INSERT ON sessions
+FOR EACH ROW EXECUTE FUNCTION log_session_start();
+
+-- Liaison Refresh
+DROP TRIGGER IF EXISTS trigger_log_refresh ON sessions;
+CREATE TRIGGER trigger_log_refresh
+AFTER UPDATE OF token_hash ON sessions
+FOR EACH ROW EXECUTE FUNCTION log_session_refresh();
+
+-- Liaison End
+DROP TRIGGER IF EXISTS trigger_log_cleanup ON sessions;
+CREATE TRIGGER trigger_log_cleanup
+BEFORE DELETE ON sessions
+FOR EACH ROW EXECUTE FUNCTION log_session_end();
