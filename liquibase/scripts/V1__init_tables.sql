@@ -1,35 +1,41 @@
--- On renomme la table brute pour la partitionner
-CREATE TABLE users_raw (
-    id SERIAL,
+---
+-- 1. STRUCTURE DES TABLES (SANS PARTITIONNEMENT POUR COMPATIBILITÉ FK)
+---
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
     first_name VARCHAR(64) NOT NULL,
     last_name VARCHAR(64) NOT NULL,
-    email VARCHAR(320) NOT NULL, -- Note: l'unicité globale est complexe sur les partitions
+    email VARCHAR(320) NOT NULL,
     password VARCHAR(255) NOT NULL,
     phone_number VARCHAR(15),
     photo bytea,
     status VARCHAR(16) NOT NULL CHECK (status IN ('active', 'inactive', 'pending', 'offline', 'archived')) DEFAULT 'offline',
-    is_archived BOOLEAN DEFAULT FALSE, -- Notre clé de partition
+    is_archived BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
-    PRIMARY KEY (id, is_archived)
-) PARTITION BY LIST (is_archived);
+    CONSTRAINT uq_users_email UNIQUE (email),
+    CONSTRAINT uq_users_identity UNIQUE (id, is_archived)
+);
 
--- Création des segments physiques
-CREATE TABLE users_active PARTITION OF users_raw FOR VALUES IN (FALSE);
-CREATE TABLE users_archive PARTITION OF users_raw FOR VALUES IN (TRUE);
+-- Performances : Index filtré pour simuler la rapidité d'une partition
+CREATE INDEX idx_users_not_archived ON users (id) WHERE is_archived = FALSE;
 
-CREATE UNIQUE INDEX idx_users_active_email ON users_active (email);
+-- Vues pour l'abstraction logique (ne change pas pour votre app)
+CREATE OR REPLACE VIEW v_users_active AS 
+SELECT * FROM users WHERE is_archived = FALSE;
 
-CREATE VIEW users AS 
-SELECT * FROM users_raw 
-WHERE is_archived = FALSE;
+CREATE OR REPLACE VIEW v_users_archived AS 
+SELECT * FROM users WHERE is_archived = TRUE;
 
--- Type d'action unifié
+---
+-- 2. SYSTÈME D'AUDIT
+---
+
 DO $$ BEGIN
     CREATE TYPE user_audit_action AS ENUM ('CREATE', 'UPDATE', 'ARCHIVE', 'RESTORE');
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
--- Table d'audit (Immutable)
 CREATE TABLE IF NOT EXISTS users_audit_log (
     audit_id SERIAL PRIMARY KEY,
     user_id INT,
@@ -41,19 +47,26 @@ CREATE TABLE IF NOT EXISTS users_audit_log (
     reason TEXT
 );
 
--- Trigger d'immuabilité pour l'audit
-CREATE OR REPLACE FUNCTION protect_audit_log() RETURNS TRIGGER AS $$
-BEGIN RAISE EXCEPTION 'Interdit : Modification de l’audit impossible.'; END; $$ LANGUAGE plpgsql;
+---
+-- 3. LOGIQUE DES TRIGGERS
+---
 
-CREATE TRIGGER tr_immutable_audit BEFORE UPDATE OR DELETE ON users_audit_log
-FOR EACH ROW EXECUTE FUNCTION protect_audit_log();
+CREATE OR REPLACE FUNCTION fn_refresh_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION fn_audit_and_mutate_user()
 RETURNS TRIGGER AS $$
 DECLARE
     v_action user_audit_action;
+    v_user_id INT;
 BEGIN
-    -- 1. Déterminer l'action
+    v_user_id := COALESCE(NULLIF(current_setting('myapp.current_user_id', true), ''), '0')::INT;
+
     IF (TG_OP = 'INSERT') THEN 
         v_action := 'CREATE';
     ELSIF (TG_OP = 'UPDATE') THEN
@@ -63,53 +76,62 @@ BEGIN
         END IF;
     END IF;
 
-    -- 2. Insérer le log
     INSERT INTO users_audit_log (user_id, action_type, action_by, previous_data, new_data)
     VALUES (
         COALESCE(NEW.id, OLD.id),
         v_action,
-        current_setting('myapp.current_user_id', true)::INT,
+        v_user_id,
         CASE WHEN TG_OP = 'UPDATE' THEN to_jsonb(OLD) ELSE NULL END,
-        CASE WHEN TG_OP = 'DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END
+        to_jsonb(NEW)
     );
-
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger sur la table physique pour ne rien rater
-CREATE TRIGGER tr_user_lifecycle
-AFTER INSERT OR UPDATE ON users_raw
-FOR EACH ROW EXECUTE FUNCTION fn_audit_and_mutate_user();
-
-CREATE OR REPLACE FUNCTION fn_soft_delete_user()
+CREATE OR REPLACE FUNCTION fn_soft_delete_user_from_view()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- On ne supprime pas, on bascule le flag sur la table brute
-    UPDATE users_raw 
+    UPDATE users 
     SET is_archived = TRUE, 
-        status = 'archived',
-        updated_at = now()
-    WHERE id = OLD.id;
-    
-    RETURN NULL; -- Annule la suppression réelle
+        status = 'archived'
+    WHERE id = OLD.id AND is_archived = FALSE;
+    RETURN NULL; 
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER tr_view_soft_delete
-INSTEAD OF DELETE ON users
-FOR EACH ROW EXECUTE FUNCTION fn_soft_delete_user();
+CREATE OR REPLACE FUNCTION fn_protect_audit_log() RETURNS TRIGGER AS $$
+BEGIN RAISE EXCEPTION 'Interdit : Modification de l’audit impossible.'; END; $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION restore_user(target_id INT, p_reason TEXT DEFAULT 'Restauration administrative') 
+---
+-- 4. ATTACHEMENT DES TRIGGERS
+---
+
+CREATE TRIGGER tr_10_users_updated_at
+    BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION fn_refresh_updated_at();
+
+CREATE TRIGGER tr_20_user_lifecycle_audit
+    AFTER INSERT OR UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION fn_audit_and_mutate_user();
+
+CREATE TRIGGER tr_view_soft_delete
+    INSTEAD OF DELETE ON v_users_active
+    FOR EACH ROW EXECUTE FUNCTION fn_soft_delete_user_from_view();
+
+CREATE TRIGGER tr_immutable_audit 
+    BEFORE UPDATE OR DELETE ON users_audit_log
+    FOR EACH ROW EXECUTE FUNCTION fn_protect_audit_log();
+
+---
+-- 5. FONCTIONS UTILES
+---
+
+CREATE OR REPLACE FUNCTION restore_user(target_id INT) 
 RETURNS VOID AS $$
 BEGIN
-    -- L'UPDATE ici déclenchera automatiquement le trigger d'audit tr_user_lifecycle
-    UPDATE users_raw 
+    UPDATE users 
     SET is_archived = FALSE, 
-        status = 'offline',
-        updated_at = now()
+        status = 'offline'
     WHERE id = target_id AND is_archived = TRUE;
-    
-    -- On peut ajouter la raison manuellement si besoin dans l'audit (via une variable temporaire ou un UPDATE du dernier log)
 END;
 $$ LANGUAGE plpgsql;
