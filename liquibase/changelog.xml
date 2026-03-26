@@ -63,6 +63,10 @@
     </changeSet>
     
     <changeSet id="10" author="you">
+        <sqlFile path="scripts/V1__group.sql" splitStatements="false" stripComments="true"/>
+    </changeSet>
+    
+    <changeSet id="11" author="you">
         <sqlFile path="scripts/V1__access.sql" splitStatements="false" stripComments="true"/>
     </changeSet>
 
