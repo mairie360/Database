@@ -49,5 +49,9 @@
     <changeSet id="6" author="you">
         <sqlFile path="scripts/V1__roles.sql" splitStatements="false" stripComments="true"/>
     </changeSet>
+    
+    <changeSet id="7" author="you">
+        <sqlFile path="scripts/V1__resources.sql" splitStatements="false" stripComments="true"/>
+    </changeSet>
 
 </databaseChangeLog>
