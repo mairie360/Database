@@ -20,12 +20,12 @@
 
     <!-- Création des tables modules, users, etc. -->
     <changeSet id="2" author="you">
-        <sqlFile path="scripts/V1__init_tables.sql"/>
+        <sqlFile path="scripts/V1__init_tables.sql"  splitStatements="false" stripComments="true"/>
     </changeSet>
 
     <!-- Création des triggers -->
     <changeSet id="3" author="you">
-        <sqlFile path="scripts/V1__triggers.sql"/>
+        <sqlFile path="scripts/V1__triggers.sql"  splitStatements="false" stripComments="true"/>
     </changeSet>
 
     <!-- Insertion de l'utilisateur admin -->
@@ -33,9 +33,9 @@
         <sql splitStatements="false" stripComments="true">
             DO $do$
             BEGIN
-            IF NOT EXISTS (SELECT 1 FROM users) THEN
-                INSERT INTO users (first_name, last_name, email, password, status)
-                VALUES ('Admin', 'User', 'template.email@gmail.com', 'password_template', 'active');
+            IF NOT EXISTS (SELECT 1 FROM users WHERE email = 'template.email@gmail.com') THEN
+                INSERT INTO users (first_name, last_name, email, password, status, is_archived)
+                VALUES ('Admin', 'User', 'template.email@gmail.com', 'password_template', 'active', FALSE);
             END IF;
             END;
             $do$ LANGUAGE plpgsql;
@@ -68,6 +68,10 @@
     
     <changeSet id="11" author="you">
         <sqlFile path="scripts/V1__access.sql" splitStatements="false" stripComments="true"/>
+    </changeSet>
+    
+    <changeSet id="12" author="you">
+        <sqlFile path="scripts/V1__archives.sql" splitStatements="false" stripComments="true"/>
     </changeSet>
 
 </databaseChangeLog>
