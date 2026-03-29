@@ -1,16 +1,24 @@
 CREATE TABLE access_control (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    group_id INT REFERENCES groups(id) ON DELETE CASCADE, -- La nouveauté
     resource_id INT REFERENCES resources(id) ON DELETE CASCADE,
     resource_instance_id INT NOT NULL,
     permission_id INT REFERENCES permissions(id) ON DELETE CASCADE,
     
-    -- Empêche les doublons de permissions pour un même utilisateur sur un même objet
-    CONSTRAINT uq_user_access UNIQUE (user_id, resource_id, resource_instance_id, permission_id)
+    -- Contrainte : Soit user_id est rempli, soit group_id, pas les deux.
+    CONSTRAINT xor_user_group CHECK (
+        (user_id IS NOT NULL AND group_id IS NULL) OR 
+        (user_id IS NULL AND group_id IS NOT NULL)
+    ),
+    
+    -- Mise à jour de l'unicité pour inclure le groupe
+    CONSTRAINT uq_access_entry UNIQUE (user_id, group_id, resource_id, resource_instance_id, permission_id)
 );
 
 -- Un seul index suffit
-CREATE INDEX idx_acl_lookup ON access_control(user_id, resource_id, resource_instance_id);
+CREATE INDEX idx_acl_user_lookup ON access_control(user_id, resource_id, resource_instance_id);
+CREATE INDEX idx_acl_group_lookup ON access_control(group_id, resource_id, resource_instance_id);
 
 CREATE OR REPLACE FUNCTION fn_block_global_in_acl()
 RETURNS TRIGGER AS $$
@@ -35,14 +43,14 @@ CREATE OR REPLACE FUNCTION check_access(
 DECLARE
     v_has_access BOOLEAN := FALSE;
 BEGIN
-    -- 1. PRIORITÉ ABSOLUE : Le droit Global (_all)
-    -- Vérifie si l'utilisateur possède un rôle avec la permission "action_all"
+    -- 1. NIVEAU GLOBAL : L'utilisateur a-t-il le droit "_all" ?
+    -- (Ex: Un Admin qui a 'read_all' sur 'groups')
     SELECT EXISTS (
         SELECT 1 
-        FROM rights r
+        FROM user_roles ur
+        JOIN rights r ON ur.role_id = r.role_id
         JOIN permissions p ON r.permission_id = p.id
         JOIN resources res ON p.resource_id = res.id
-        JOIN user_roles ur ON ur.role_id = r.role_id
         WHERE ur.user_id = p_user_id
           AND res.name = p_resource_name
           AND p.action = (p_action || '_all')
@@ -50,27 +58,22 @@ BEGIN
 
     IF v_has_access THEN RETURN TRUE; END IF;
 
-    -- 2. NIVEAU INTERMÉDIAIRE : Propriété (Ownership / Identité)
+    -- 2. NIVEAU PROPRIÉTÉ : L'utilisateur possède-t-il la ressource ?
+    -- On vérifie dynamiquement si l'ID de l'instance appartient à l'user_id
     IF p_instance_id IS NOT NULL THEN
         BEGIN
-            IF p_resource_name = 'users' THEN
-                -- Cas spécial : l'utilisateur est l'instance elle-même (Identité)
-                v_has_access := (p_instance_id = p_user_id);
-            ELSE
-                -- Cas général : vérifie si la table a une colonne user_id liée à l'utilisateur (Propriété)
-                EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I WHERE id = $1 AND user_id = $2)', p_resource_name)
-                USING p_instance_id, p_user_id 
-                INTO v_has_access;
-            END IF;
-        EXCEPTION WHEN OTHERS THEN
-            v_has_access := FALSE; -- Sécurité si la table ou la colonne user_id n'existe pas
+            -- On vérifie les colonnes standard de propriété : user_id ou owner_id
+            EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I WHERE id = $1 AND (user_id = $2 OR owner_id = $2))', p_resource_name)
+            USING p_instance_id, p_user_id 
+            INTO v_has_access;
+        EXCEPTION WHEN OTHERS THEN 
+            v_has_access := FALSE; 
         END;
         
         IF v_has_access THEN RETURN TRUE; END IF;
     END IF;
 
-    -- 3. DERNIER RECOURS : Accès spécifique (ACL / Partage)
-    -- Vérifie si un droit explicite a été donné dans la table access_control
+    -- 3. NIVEAU ACL INDIVIDUEL : Un droit spécifique a-t-il été donné à cet User ?
     IF p_instance_id IS NOT NULL THEN
         SELECT EXISTS (
             SELECT 1
@@ -82,8 +85,28 @@ BEGIN
               AND p.action = p_action
               AND ac.resource_instance_id = p_instance_id
         ) INTO v_has_access;
+        
+        IF v_has_access THEN RETURN TRUE; END IF;
     END IF;
 
-    RETURN COALESCE(v_has_access, FALSE);
+    -- 4. NIVEAU ACL GROUPE : L'utilisateur appartient-il à un groupe ayant le droit ?
+    IF p_instance_id IS NOT NULL THEN
+        SELECT EXISTS (
+            SELECT 1
+            FROM access_control ac
+            JOIN group_users gu ON ac.group_id = gu.group_id
+            JOIN permissions p ON ac.permission_id = p.id
+            JOIN resources res ON ac.resource_id = res.id
+            WHERE gu.user_id = p_user_id
+              AND res.name = p_resource_name
+              AND p.action = p_action
+              AND ac.resource_instance_id = p_instance_id
+        ) INTO v_has_access;
+        
+        IF v_has_access THEN RETURN TRUE; END IF;
+    END IF;
+
+    -- Si aucune étape n'a renvoyé TRUE, l'accès est refusé
+    RETURN FALSE;
 END;
 $$ LANGUAGE plpgsql;
