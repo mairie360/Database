@@ -73,5 +73,17 @@
     <changeSet id="12" author="you">
         <sqlFile path="scripts/V1__archives.sql" splitStatements="false" stripComments="true"/>
     </changeSet>
+    
+    <changeSet id="13" author="you">
+        <sqlFile path="scripts/V1__archived_user_logout.sql" splitStatements="false" stripComments="true"/>
+    </changeSet>
+    
+    <changeSet id="14" author="you">
+        <sqlFile path="scripts/V1__fix_ressources_name.sql" splitStatements="false" stripComments="true"/>
+    </changeSet>
+    
+    <changeSet id="15" author="you">
+        <sqlFile path="scripts/V1__fix_rights_setup.sql" splitStatements="false" stripComments="true"/>
+    </changeSet>
 
 </databaseChangeLog>
