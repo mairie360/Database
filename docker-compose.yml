@@ -1,3 +1,6 @@
+networks:
+  default:
+
 services:
   # --- DATABASE ---
   database:
@@ -5,12 +8,14 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: mairie360-db
+    networks:
+      - default
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: core
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -23,15 +28,18 @@ services:
       context: ./liquibase
       dockerfile: Dockerfile
     container_name: mairie360-liquibase
+    networks:
+      - default
     depends_on:
       database:
-        condition: service_healthy # Attend que la DB soit prête (comme l'initContainer K8s)
+        condition: service_healthy
     environment:
-      # On utilise les mêmes noms de variables que dans le job.yaml K8s
-      - LIQUIBASE_COMMAND_URL=jdbc:postgresql://database:5432/core
+      # 1. Utiliser le nom du container_name défini plus haut
+      - LIQUIBASE_COMMAND_URL=jdbc:postgresql://mairie360-db:5432/core
       - LIQUIBASE_COMMAND_USERNAME=postgres
       - LIQUIBASE_COMMAND_PASSWORD=password
-      - LIQUIBASE_SEARCH_PATH=/liquibase/changelog
+      # 2. Pointer vers le répertoire où vous avez réellement copié les fichiers
+      - LIQUIBASE_SEARCH_PATH=/workspace
     command: >
       --changelog-file=changelog.xml
       update
