@@ -37,7 +37,7 @@ SELECT is(
 SELECT has_view('v_securable_session_settings');
 SELECT is(
     (SELECT resource_id FROM v_securable_session_settings LIMIT 1),
-    (SELECT id FROM resources WHERE name = 'session_settings'),
+    (SELECT id FROM resources WHERE name = 'session_setting' LIMIT 1),
     'La vue v_securable_session_settings doit fonctionner même pour une table à ligne unique'
 );
 
