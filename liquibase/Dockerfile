@@ -1,15 +1,24 @@
 FROM liquibase/liquibase:5.0
 
-# On s'assure que le répertoire de travail est le bon
-WORKDIR /liquibase/changelog
-
-# On ne copie que ce qui est nécessaire pour les migrations
-COPY changelog.xml .
-COPY liquibase.properties .
-COPY scripts/ ./scripts/
-
-# Liquibase utilise l'UID 1001 par défaut, on s'assure que les fichiers lui appartiennent
-# (Optionnel mais recommandé pour éviter les problèmes de droits en K8s)
 USER root
-RUN chown -R liquibase:liquibase /liquibase/changelog
+
+# Installation du driver JDBC + Outils PostgreSQL pour les tests
+RUN apt-get update && apt-get install -y \
+    wget \
+    postgresql-client \
+    perl \
+    libtap-parser-sourcehandler-pgtap-perl \
+    && wget https://jdbc.postgresql.org/download/postgresql-42.7.2.jar -P /liquibase/lib/ \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+
+# On copie le CONTENU du dossier liquibase local à la racine de /workspace
+COPY liquibase/ . 
+
+# On copie le dossier tests
+COPY tests/ ./tests/
+
+RUN chown -R liquibase:liquibase /workspace
+
 USER liquibase
