@@ -32,83 +32,6 @@ CREATE TRIGGER tr_check_acl_permission
 BEFORE INSERT OR UPDATE ON access_control
 FOR EACH ROW EXECUTE FUNCTION fn_block_global_in_acl();
 
-CREATE OR REPLACE FUNCTION check_access(
-    p_user_id INT,
-    p_resource_name VARCHAR,
-    p_action VARCHAR,
-    p_instance_id INT DEFAULT NULL
-) RETURNS BOOLEAN AS $$
-DECLARE
-    v_has_access BOOLEAN := FALSE;
-BEGIN
-    -- 1. NIVEAU GLOBAL : L'utilisateur a-t-il le droit "_all" ?
-    -- (Ex: Un Admin qui a 'read_all' sur 'groups')
-    SELECT EXISTS (
-        SELECT 1 
-        FROM user_roles ur
-        JOIN rights r ON ur.role_id = r.role_id
-        JOIN permissions p ON r.permission_id = p.id
-        JOIN resources res ON p.resource_id = res.id
-        WHERE ur.user_id = p_user_id
-          AND res.name = p_resource_name
-          AND p.action = (p_action || '_all')
-    ) INTO v_has_access;
-
-    IF v_has_access THEN RETURN TRUE; END IF;
-
-    -- 2. NIVEAU PROPRIÉTÉ : L'utilisateur possède-t-il la ressource ?
-    -- On vérifie dynamiquement si l'ID de l'instance appartient à l'user_id
-    IF p_instance_id IS NOT NULL THEN
-        BEGIN
-            -- On vérifie les colonnes standard de propriété : user_id ou owner_id
-            EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I WHERE id = $1 AND (user_id = $2 OR owner_id = $2))', p_resource_name)
-            USING p_instance_id, p_user_id 
-            INTO v_has_access;
-        EXCEPTION WHEN OTHERS THEN 
-            v_has_access := FALSE; 
-        END;
-        
-        IF v_has_access THEN RETURN TRUE; END IF;
-    END IF;
-
-    -- 3. NIVEAU ACL INDIVIDUEL : Un droit spécifique a-t-il été donné à cet User ?
-    IF p_instance_id IS NOT NULL THEN
-        SELECT EXISTS (
-            SELECT 1
-            FROM access_control ac
-            JOIN permissions p ON ac.permission_id = p.id
-            JOIN resources res ON ac.resource_id = res.id
-            WHERE ac.user_id = p_user_id
-              AND res.name = p_resource_name
-              AND p.action = p_action
-              AND ac.resource_instance_id = p_instance_id
-        ) INTO v_has_access;
-        
-        IF v_has_access THEN RETURN TRUE; END IF;
-    END IF;
-
-    -- 4. NIVEAU ACL GROUPE : L'utilisateur appartient-il à un groupe ayant le droit ?
-    IF p_instance_id IS NOT NULL THEN
-        SELECT EXISTS (
-            SELECT 1
-            FROM access_control ac
-            JOIN group_users gu ON ac.group_id = gu.group_id
-            JOIN permissions p ON ac.permission_id = p.id
-            JOIN resources res ON ac.resource_id = res.id
-            WHERE gu.user_id = p_user_id
-              AND res.name = p_resource_name
-              AND p.action = p_action
-              AND ac.resource_instance_id = p_instance_id
-        ) INTO v_has_access;
-        
-        IF v_has_access THEN RETURN TRUE; END IF;
-    END IF;
-
-    -- Si aucune étape n'a renvoyé TRUE, l'accès est refusé
-    RETURN FALSE;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE TYPE access_result AS ENUM ('GRANTED', 'DENIED');
 
 CREATE TABLE access_logs (
@@ -141,6 +64,7 @@ CREATE OR REPLACE FUNCTION check_access(
 DECLARE
     v_has_access BOOLEAN := FALSE;
     v_reason TEXT := 'NO_MATCH';
+    v_query TEXT;    
 BEGIN
     -- On utilise un bloc étiqueté pour pouvoir en sortir (simule le GOTO)
     <<logic_flow>>
@@ -163,10 +87,31 @@ BEGIN
 
         -- 2. NIVEAU PROPRIÉTÉ
         IF p_instance_id IS NOT NULL THEN
+            DECLARE
+                v_owner_found INT;
             BEGIN
-                EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I WHERE id = $1 AND (user_id = $2 OR owner_id = $2))', p_resource_name)
-                USING p_instance_id, p_user_id INTO v_has_access;
-            EXCEPTION WHEN OTHERS THEN v_has_access := FALSE; END;
+                -- Tentative 1 : owner_id
+                BEGIN
+                    EXECUTE format('SELECT owner_id FROM public.%I WHERE id = $1', p_resource_name)
+                    USING p_instance_id INTO v_owner_found;
+                    IF v_owner_found = p_user_id THEN 
+                        v_has_access := TRUE; 
+                    END IF;
+                EXCEPTION WHEN OTHERS THEN NULL; 
+                END;
+
+                -- Tentative 2 : user_id (si pas encore trouvé)
+                IF NOT v_has_access THEN
+                    BEGIN
+                        EXECUTE format('SELECT user_id FROM public.%I WHERE id = $1', p_resource_name)
+                        USING p_instance_id INTO v_owner_found;
+                        IF v_owner_found = p_user_id THEN 
+                            v_has_access := TRUE; 
+                        END IF;
+                    EXCEPTION WHEN OTHERS THEN NULL;
+                    END;
+                END IF;
+            END;
             
             IF v_has_access THEN 
                 v_reason := 'OWNERSHIP'; 

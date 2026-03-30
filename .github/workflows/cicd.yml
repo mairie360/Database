@@ -3,17 +3,16 @@ name: Database CI/CD
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
 
 permissions:
   contents: write
   packages: write
 
 jobs:
-  call-database-cicd:
-    uses: mairie360/CICD/.github/workflows/database_cicd.yml@main
+  Database-cicd:
+    uses: mairie360/CICD/.github/workflows/database_cicd.yml@v1.4.0
     with:
       package_name: database
+      cicd_version: v1.4.0
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}

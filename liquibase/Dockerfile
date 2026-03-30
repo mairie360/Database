@@ -1,18 +1,24 @@
 FROM liquibase/liquibase:5.0
 
-# On télécharge le driver JDBC Postgres (indispensable pour la version 5.0+)
-# On le place dans /liquibase/lib/ pour qu'il soit chargé automatiquement
 USER root
-ADD https://jdbc.postgresql.org/download/postgresql-42.7.2.jar /liquibase/lib/postgresql.jar
-RUN chmod 644 /liquibase/lib/postgresql.jar
 
-# On s'assure que le répertoire de travail est le bon
-WORKDIR /liquibase/changelog
+# Installation du driver JDBC + Outils PostgreSQL pour les tests
+RUN apt-get update && apt-get install -y \
+    wget \
+    postgresql-client \
+    perl \
+    libtap-parser-sourcehandler-pgtap-perl \
+    && wget https://jdbc.postgresql.org/download/postgresql-42.7.2.jar -P /liquibase/lib/ \
+    && rm -rf /var/lib/apt/lists/*
 
-# On copie tes fichiers
-COPY changelog.xml .
-COPY liquibase.properties .
-COPY scripts/ ./scripts/
+WORKDIR /workspace
 
-RUN chown -R liquibase:liquibase /liquibase/changelog
+# On copie le CONTENU du dossier liquibase local à la racine de /workspace
+COPY liquibase/ . 
+
+# On copie le dossier tests
+COPY tests/ ./tests/
+
+RUN chown -R liquibase:liquibase /workspace
+
 USER liquibase

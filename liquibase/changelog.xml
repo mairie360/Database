@@ -73,5 +73,9 @@
     <changeSet id="12" author="you">
         <sqlFile path="scripts/V1__archives.sql" splitStatements="false" stripComments="true"/>
     </changeSet>
+    
+    <changeSet id="13" author="you">
+        <sqlFile path="scripts/V1__archived_user_logout.sql" splitStatements="false" stripComments="true"/>
+    </changeSet>
 
 </databaseChangeLog>

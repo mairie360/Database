@@ -44,6 +44,9 @@ FOR EACH ROW
 EXECUTE FUNCTION add_owner_to_group_members();
 
 -- --- LOGIQUE DE PERMISSIONS (Inchangée mais incluse pour complétude) ---
+-- 
+INSERT INTO resources (name, description) VALUES
+    ('groups', 'Gestion des groupes d''utilisateurs');
 
 CREATE OR REPLACE VIEW v_securable_groups AS
 SELECT 
