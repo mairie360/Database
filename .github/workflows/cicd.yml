@@ -12,8 +12,9 @@ permissions:
 
 jobs:
   call-database-cicd:
-    uses: mairie360/CICD/.github/workflows/database_cicd.yml@main
+    uses: mairie360/CICD/.github/workflows/database_cicd.yml@1.4.0
     with:
       package_name: database
+      cicd_version: 1.4.0
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
