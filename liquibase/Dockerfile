@@ -13,8 +13,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /workspace
 
-# On copie le CONTENU du dossier liquibase local à la racine de /workspace
-COPY liquibase/ . 
+COPY . .
 
 RUN chown -R liquibase:liquibase /workspace
 
