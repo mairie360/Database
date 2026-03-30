@@ -16,9 +16,6 @@ WORKDIR /workspace
 # On copie le CONTENU du dossier liquibase local à la racine de /workspace
 COPY liquibase/ . 
 
-# On copie le dossier tests
-COPY tests/ ./tests/
-
 RUN chown -R liquibase:liquibase /workspace
 
 USER liquibase
