@@ -9,7 +9,7 @@ permissions:
   packages: write
 
 jobs:
-  call-database-cicd:
+  Database-cicd:
     uses: mairie360/CICD/.github/workflows/database_cicd.yml@v1.4.0
     with:
       package_name: database
