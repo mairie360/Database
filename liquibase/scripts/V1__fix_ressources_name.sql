@@ -4,6 +4,9 @@ UPDATE resources SET name = 'roles' WHERE name IN ('roles', 'role');
 UPDATE resources SET name = 'sessions' WHERE name IN ('sessions', 'session');
 UPDATE resources SET name = 'session_setting' WHERE name IN ('session settings', 'session_settings');
 
+INSERT INTO resources (name, description) VALUES
+    ('groups', 'Gestion des groupes d''utilisateurs');
+
 -- 2. Insertion des permissions avec les noms CORRIGÉS
 INSERT INTO permissions (resource_id, action)
 SELECT id, action FROM resources, 
@@ -28,6 +31,16 @@ SELECT id, action FROM resources,
 (VALUES ('read_all'), ('read'), ('update_all'), ('update')) AS t(action)
 WHERE name = 'session_setting'
 ON CONFLICT DO NOTHING;
+
+INSERT INTO permissions (resource_id, action)
+SELECT res.id, t.action 
+FROM resources res, 
+(VALUES 
+    ('read_all'), ('read'), ('create'), 
+    ('update_all'), ('update'), 
+    ('delete_all'), ('delete')
+) AS t(action)
+WHERE res.name = 'groups';
 
 -- Vue pour les Utilisateurs
 CREATE OR REPLACE VIEW v_securable_users AS
@@ -56,3 +69,9 @@ SELECT
     ss.*, 
     (SELECT id FROM resources WHERE name = 'session_settings') as resource_id
 FROM session_settings ss;
+
+CREATE OR REPLACE VIEW v_securable_groups AS
+SELECT 
+    g.*, 
+    (SELECT id FROM resources WHERE name = 'groups') as resource_id
+FROM groups g;

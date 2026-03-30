@@ -11,7 +11,8 @@ AND (
     (res.name = 'users' AND p.action IN ('read_all', 'create', 'update', 'delete')) OR
     (res.name = 'roles' AND p.action IN ('read_all', 'create', 'update', 'delete')) OR
     (res.name = 'sessions' AND p.action IN ('read_all', 'create', 'update', 'delete')) OR
-    (res.name = 'session_settings' AND p.action IN ('read_all', 'update'))
+    (res.name = 'session_settings' AND p.action IN ('read_all', 'update')) OR
+    (res.name = 'groups' AND p.action IN ('read_all', 'create', 'update_all', 'delete_all'))
 );
 
 
@@ -24,7 +25,8 @@ AND (
     -- Liste des permissions pour un user
     (res.name = 'users' AND p.action IN ('read', 'update', 'delete')) OR
     (res.name = 'roles' AND p.action IN ('read')) OR
-    (res.name = 'sessions' AND p.action IN ('read', 'create', 'update', 'delete'))
+    (res.name = 'sessions' AND p.action IN ('read', 'create', 'update', 'delete')) OR
+    (res.name = 'groups' AND p.action IN ('read'))
 );
 
 INSERT INTO rights (role_id, permission_id)
@@ -35,5 +37,6 @@ WHERE r.name = 'Guest'
 AND (
     -- Liste des permissions pour un user
     (res.name = 'users' AND p.action IN ('read')) OR
-    (res.name = 'sessions' AND p.action IN ('read', 'create', 'update', 'delete'))
+    (res.name = 'sessions' AND p.action IN ('read', 'create', 'update', 'delete')) OR
+    (res.name = 'groups' AND p.action IN ('read'))
 );
