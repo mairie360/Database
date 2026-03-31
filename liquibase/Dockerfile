@@ -11,10 +11,12 @@ RUN apt-get update && apt-get install -y \
     && wget https://jdbc.postgresql.org/download/postgresql-42.7.2.jar -P /liquibase/lib/ \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace
+# On utilise un dossier différent pour éviter les conflits de nom
+WORKDIR /migrations
 
-COPY . .
+# On copie explicitement le contenu
+COPY liquibase/ . 
 
-RUN chown -R liquibase:liquibase /workspace
+RUN chown -R liquibase:liquibase /migrations
 
 USER liquibase
