@@ -139,4 +139,12 @@
         />
     </changeSet>
 
+    <changeSet id="16" author="you">
+        <sqlFile
+            path="scripts/V1__refacto_check_access.sql"
+            splitStatements="false"
+            stripComments="true"
+        />
+    </changeSet>
+
 </databaseChangeLog>
