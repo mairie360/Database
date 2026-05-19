@@ -147,4 +147,12 @@
         />
     </changeSet>
 
+    <changeSet id="17" author="you">
+        <sqlFile
+            path="scripts/V1__auth_improve.sql"
+            splitStatements="false"
+            stripComments="true"
+        />
+    </changeSet>
+
 </databaseChangeLog>
