@@ -163,4 +163,12 @@
         />
     </changeSet>
 
+    <changeSet id="19" author="you">
+        <sqlFile
+            path="scripts/V1__calendar.sql"
+            splitStatements="false"
+            stripComments="true"
+        />
+    </changeSet>
+
 </databaseChangeLog>
