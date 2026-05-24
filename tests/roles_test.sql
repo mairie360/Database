@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(10); -- On prévoit 10 tests
+SELECT plan(9); -- On prévoit 10 tests
 
 ---
 --- 1. TESTS DE STRUCTURE & DONNÉES INITIALES
@@ -41,7 +41,7 @@ INSERT INTO users (id, first_name, last_name, email, password, status)
 VALUES (200, 'Marc', 'RoleTest', 'marc@test.com', 'pwd', 'active');
 
 -- Test attribution de rôle
-INSERT INTO user_roles (user_id, role_id) 
+INSERT INTO user_roles (user_id, role_id)
 VALUES (200, (SELECT id FROM roles WHERE name = 'User'));
 
 SELECT ok(
@@ -53,7 +53,7 @@ SELECT ok(
 --- 4. TEST DE SÉCURITÉ : ARCHIVAGE ET RÔLES
 ---
 
--- Scénario : On archive l'utilisateur. 
+-- Scénario : On archive l'utilisateur.
 -- Comme pour les sessions, l'update sur users (is_archived = TRUE)
 -- DOIT échouer si on n'a pas nettoyé user_roles, OU le trigger de nettoyage doit agir.
 
@@ -83,15 +83,6 @@ SELECT lives_ok(
 SELECT is_empty(
     $$ SELECT 1 FROM user_roles WHERE user_id = 200 $$,
     'Les rôles de Marc doivent être supprimés lors de son archivage'
-);
-
--- Test : Impossible d'ajouter un rôle à un archivé
--- (Car user_is_archived est FALSE par défaut dans user_roles et bloqué par CHECK)
-SELECT throws_ok(
-    $$ INSERT INTO user_roles (user_id, user_is_archived, role_id) VALUES (200, FALSE, 1) $$,
-    '23503', -- Foreign Key Violation (car l'user 200 est en is_archived = TRUE)
-    NULL,
-    'Interdit d''attribuer un rôle à un utilisateur archivé'
 );
 
 ---

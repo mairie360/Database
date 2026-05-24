@@ -155,4 +155,12 @@
         />
     </changeSet>
 
+    <changeSet id="18" author="you">
+        <sqlFile
+            path="scripts/V1__refacto_roles.sql"
+            splitStatements="false"
+            stripComments="true"
+        />
+    </changeSet>
+
 </databaseChangeLog>
