@@ -187,4 +187,12 @@
         />
     </changeSet>
 
+    <changeSet id="22" author="you">
+        <sqlFile
+            path="scripts/V1__project.sql"
+            splitStatements="false"
+            stripComments="true"
+        />
+    </changeSet>
+
 </databaseChangeLog>
