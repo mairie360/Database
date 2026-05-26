@@ -195,4 +195,12 @@
         />
     </changeSet>
 
+    <changeSet id="23" author="you">
+        <sqlFile
+            path="scripts/V1__delete_user_function.sql"
+            splitStatements="false"
+            stripComments="true"
+        />
+    </changeSet>
+
 </databaseChangeLog>
