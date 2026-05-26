@@ -179,4 +179,12 @@
         />
     </changeSet>
 
+    <changeSet id="21" author="you">
+        <sqlFile
+            path="scripts/V1__elearning.sql"
+            splitStatements="false"
+            stripComments="true"
+        />
+    </changeSet>
+
 </databaseChangeLog>
