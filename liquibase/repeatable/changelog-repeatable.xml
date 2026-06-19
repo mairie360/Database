@@ -93,6 +93,14 @@
             splitStatements="false"
         />
     </changeSet>
+    <changeSet id="rep-triggers-users-archived" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/trigger_user_archived.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
 
     <changeSet id="rep-functions-roles-admin" author="dev" runOnChange="true">
         <sqlFile
@@ -144,6 +152,13 @@
     <changeSet id="rep-functions-sessions-logs" author="dev" runOnChange="true">
         <sqlFile
             path="sessions/fn_session_logs_triggers.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-sessions-archive" author="dev" runOnChange="true">
+        <sqlFile
+            path="sessions/fn_archive_session.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />

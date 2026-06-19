@@ -40,8 +40,8 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 CREATE TABLE IF NOT EXISTS connection_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- FK simple
+    session_id UUID,
+    user_id INT NOT NULL REFERENCES users(id), -- FK simple
     ip_address INET,
     device_info TEXT,
     timestamp TIMESTAMPTZ DEFAULT now(),

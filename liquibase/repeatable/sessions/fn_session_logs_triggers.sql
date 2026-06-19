@@ -28,7 +28,7 @@ CREATE TRIGGER trigger_log_refresh
     AFTER UPDATE OF token_hash ON sessions
     FOR EACH ROW EXECUTE FUNCTION log_session_refresh();
 
--- 3. Log de Cleanup/Logout
+-- 3. Log de Logout
 CREATE OR REPLACE FUNCTION log_session_end() RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO connection_logs (user_id, session_id, ip_address, device_info, timestamp, action_type)
