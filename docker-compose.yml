@@ -37,7 +37,7 @@ services:
       - LIQUIBASE_COMMAND_URL=jdbc:postgresql://mairie360-db:5432/core
       - LIQUIBASE_COMMAND_USERNAME=postgres
       - LIQUIBASE_COMMAND_PASSWORD=password
-      - LIQUIBASE_SEARCH_PATH=/migrations
+      - LIQUIBASE_SEARCH_PATH=/migrations,/migrations/releases/v1.0.0,/migrations/repeatable
     command: >
-      --changelog-file=/changelog.xml
+      --changelog-file=changelog-master.xml
       update

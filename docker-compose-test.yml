@@ -17,7 +17,7 @@ services:
 
   # --- TESTER ---
   tester:
-    build: 
+    build:
       context: .
       dockerfile: tests/test.Dockerfile
     container_name: mairie360-tester
@@ -26,10 +26,10 @@ services:
       - LIQUIBASE_COMMAND_URL=jdbc:postgresql://database:5432/core
       - LIQUIBASE_COMMAND_USERNAME=postgres
       - LIQUIBASE_COMMAND_PASSWORD=password
-      - LIQUIBASE_COMMAND_CHANGELOG_FILE=changelog.xml
+      - LIQUIBASE_COMMAND_CHANGELOG_FILE=changelog-master.xml
       - LIQUIBASE_COMMAND_DRIVER=org.postgresql.Driver
       # On pointe précisément là où sont tes fichiers (vu dans ton ls -la)
-      - LIQUIBASE_SEARCH_PATH=/workspace/liquibase
+      - LIQUIBASE_SEARCH_PATH=/workspace/liquibase,/workspace/liquibase/releases/v1.0.0,/workspace/liquibase/repeatable
     depends_on:
       database:
         condition: service_healthy
@@ -37,10 +37,10 @@ services:
       sh -c "
       echo '--- RUNNING MIGRATIONS ---' &&
       liquibase update &&
-      
+
       echo '--- INSTALLING PGTAP ---' &&
       psql -h database -U postgres -d core -c 'CREATE EXTENSION IF NOT EXISTS pgtap;' &&
-      
+
       echo '--- RUNNING TESTS ---' &&
       pg_prove -h database -U postgres -d core /workspace/tests/*.sql
       "
