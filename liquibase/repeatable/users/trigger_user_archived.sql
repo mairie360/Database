@@ -1,8 +1,17 @@
 CREATE OR REPLACE FUNCTION fn_archive_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- archive sessions
+    -- Suppression effective des liens de l'utilisateur archivé
     DELETE FROM sessions WHERE user_id = OLD.id;
+    DELETE FROM project_members WHERE user_id = OLD.id;
+
+    -- Désassignation des tâches
+    UPDATE tasks SET assigned_to = NULL WHERE assigned_to = OLD.id;
+
+    -- Suppression des compteurs non lus (si nécessaire)
+    DELETE FROM unread_counters WHERE user_id = OLD.id;
+
+    RETURN NULL;
     -- delete from group_members
     -- DELETE FROM group_members WHERE user_id = OLD.id;
     -- -- archive all access controls
