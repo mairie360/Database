@@ -48,7 +48,7 @@ CREATE TABLE events (
 
     created_by INT REFERENCES users(id) ON DELETE SET NULL,
     recurrence_id INT REFERENCES recurrence_rules(id) ON DELETE SET NULL,
-    is_exception BOOLEAN DEFAULT FALSE,
+    is_exception BOOLEAN DEFAULT NULL,
     visibility event_visibility DEFAULT 'private' NOT NULL,
 
     -- Remplacement du polymorphisme par des clés étrangères natives
