@@ -17,7 +17,7 @@ CREATE TABLE conversation_members (
 
 -- 3. Table des Messages
 CREATE TABLE messages (
-    id BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     conversation_id INT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     owner_id INT REFERENCES users(id) ON DELETE SET NULL,
     content TEXT NOT NULL,

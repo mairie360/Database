@@ -13,7 +13,7 @@ BEGIN
         SELECT NEW.conversation_id, gu.user_id, 1
         FROM group_members gu
         WHERE gu.group_id = v_group_id
-          AND gu.user_id != NEW.sender_id
+          AND gu.user_id != NEW.owner_id
           AND gu.user_id NOT IN (
               SELECT user_id FROM conversation_members
               WHERE conversation_id = NEW.conversation_id AND is_excluded = TRUE
@@ -27,7 +27,7 @@ BEGIN
         SELECT NEW.conversation_id, cm.user_id, 1
         FROM conversation_members cm
         WHERE cm.conversation_id = NEW.conversation_id
-          AND cm.user_id != NEW.sender_id
+          AND cm.user_id != NEW.owner_id
           AND cm.is_excluded = FALSE
         ON CONFLICT (conversation_id, user_id)
         DO UPDATE SET unread_count = unread_counters.unread_count + 1;

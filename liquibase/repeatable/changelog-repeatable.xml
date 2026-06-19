@@ -100,7 +100,11 @@
             splitStatements="false"
         />
     </changeSet>
-    <changeSet id="rep-triggers-users-can-delete" author="dev" runOnChange="true">
+    <changeSet
+        id="rep-triggers-users-can-delete"
+        author="dev"
+        runOnChange="true"
+    >
         <sqlFile
             path="users/fn_check_can_delete_user.sql"
             relativeToChangelogFile="true"
@@ -163,7 +167,11 @@
             splitStatements="false"
         />
     </changeSet>
-    <changeSet id="rep-functions-sessions-archive" author="dev" runOnChange="true">
+    <changeSet
+        id="rep-functions-sessions-archive"
+        author="dev"
+        runOnChange="true"
+    >
         <sqlFile
             path="sessions/fn_archive_session.sql"
             relativeToChangelogFile="true"
@@ -223,12 +231,23 @@
         />
     </changeSet>
     <changeSet
-        id="rep-functions-messages-counter"
+        id="rep-functions-messages-counter-update"
         author="dev"
         runOnChange="true"
     >
         <sqlFile
             path="messages/fn_auto_increment_unread_counter.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet
+        id="rep-functions-messages-counter_delete"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="messages/fn_delete_unread_counter_on_read.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />
