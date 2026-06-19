@@ -25,7 +25,7 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 CREATE TABLE access_logs (
     id SERIAL,
-    user_id INT REFERENCES users(id) NOT NULL,
+    user_id INT REFERENCES users(id),
     resource_name VARCHAR(64) NOT NULL,
     instance_id INT,
     action VARCHAR(32) NOT NULL,
