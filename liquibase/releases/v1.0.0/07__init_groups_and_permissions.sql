@@ -12,13 +12,13 @@ CREATE TABLE groups (
 );
 
 -- 2. Table de Liaison (Membres)
-CREATE TABLE group_users (
+CREATE TABLE group_members (
     group_id INT REFERENCES groups(id) ON DELETE CASCADE,
     user_id INT NOT NULL,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (group_id, user_id),
-    CONSTRAINT fk_group_users_user FOREIGN KEY (user_id)
+    CONSTRAINT fk_group_members_user FOREIGN KEY (user_id)
         REFERENCES users(id) ON DELETE CASCADE
 );
 

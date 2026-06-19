@@ -8,7 +8,6 @@ CREATE TABLE conversations (
 
 -- 2. Table de liaison des Membres
 CREATE TABLE conversation_members (
-    id SERIAL PRIMARY KEY,
     conversation_id INT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     is_excluded BOOLEAN DEFAULT FALSE NOT NULL,
@@ -18,7 +17,7 @@ CREATE TABLE conversation_members (
 
 -- 3. Table des Messages
 CREATE TABLE messages (
-    id SERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     conversation_id INT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     owner_id INT REFERENCES users(id) ON DELETE SET NULL,
     content TEXT NOT NULL,

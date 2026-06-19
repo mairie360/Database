@@ -11,7 +11,7 @@ BEGIN
         -- Chat de groupe
         INSERT INTO unread_counters (conversation_id, user_id, unread_count)
         SELECT NEW.conversation_id, gu.user_id, 1
-        FROM group_users gu
+        FROM group_members gu
         WHERE gu.group_id = v_group_id
           AND gu.user_id != NEW.sender_id
           AND gu.user_id NOT IN (

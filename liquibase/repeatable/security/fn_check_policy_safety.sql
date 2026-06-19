@@ -12,7 +12,7 @@ DECLARE
         'resources',
         'rights',
         'roles',
-        'group_users',
+        'group_members',
         'user_roles'
     ];
 BEGIN

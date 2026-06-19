@@ -100,7 +100,7 @@ BEGIN
         IF p_instance_id IS NOT NULL THEN
             SELECT EXISTS (
                 SELECT 1 FROM access_control ac
-                JOIN group_users gu ON ac.group_id = gu.group_id
+                JOIN group_members gu ON ac.group_id = gu.group_id
                 JOIN permissions p ON ac.permission_id = p.id
                 JOIN resources res ON ac.resource_id = res.id
                 WHERE gu.user_id = p_user_id

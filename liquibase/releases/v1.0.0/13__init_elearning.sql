@@ -32,7 +32,7 @@ CREATE TABLE course_attachments (
 );
 
 CREATE TABLE user_courses (
-    user_id INT NOT NULL REFERENCES usev_users_activers(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     course_id INT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
     status progress_status DEFAULT 'not_started' NOT NULL,
     started_at TIMESTAMP,

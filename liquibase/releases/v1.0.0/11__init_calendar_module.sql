@@ -10,28 +10,19 @@ CREATE TABLE recurrence_rules (
     id SERIAL PRIMARY KEY,
     type_recurrence recurrence_type NOT NULL,
     intervalle INT DEFAULT 1,
-    date_fin TIMESTAMPTZ DEFAULT NULL
-);
 
--- 3. Table Événements
-CREATE TABLE events (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    description TEXT,
+    -- On garde le début de série pour savoir QUAND ça commence
     start_date TIMESTAMPTZ NOT NULL,
-    end_date TIMESTAMPTZ NOT NULL,
+    end_date TIMESTAMPTZ DEFAULT (now() + interval '5 years'),
 
-    created_by INT REFERENCES users(id) ON DELETE SET NULL,
-    recurrence_id INT REFERENCES recurrence_rules(id) ON DELETE SET NULL,
-    visibility event_visibility DEFAULT 'private' NOT NULL,
+    -- On stocke l'heure locale et la durée (indépendante de la date)
+    start_time TIME NOT NULL,
+    duration INTERVAL NOT NULL,
 
-    -- Remplacement du polymorphisme par des clés étrangères natives (Correction : INT au lieu de INT INT)
     owner_id INT REFERENCES users(id) ON DELETE SET NULL,
     owner_group_id INT REFERENCES groups(id) ON DELETE SET NULL,
 
-    -- Dates de mise à jour et de création
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    visibility event_visibility DEFAULT 'private' NOT NULL,
 
     -- Garantit que les dates de fin sont après les dates de début
     CONSTRAINT chk_dates CHECK (end_date > start_date),
@@ -45,15 +36,57 @@ CREATE TABLE events (
         OR
         (owner_id IS NULL AND owner_group_id IS NOT NULL)
     )
-); -- Correction : Ajout de la parenthèse fermante manquante
+);
+
+-- 3. Table Événements
+CREATE TABLE events (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    description TEXT,
+    start_date TIMESTAMPTZ NOT NULL,
+    end_date TIMESTAMPTZ NOT NULL,
+
+    created_by INT REFERENCES users(id) ON DELETE SET NULL,
+    recurrence_id INT REFERENCES recurrence_rules(id) ON DELETE SET NULL,
+    is_exception BOOLEAN DEFAULT FALSE,
+    visibility event_visibility DEFAULT 'private' NOT NULL,
+
+    -- Remplacement du polymorphisme par des clés étrangères natives
+    owner_id INT REFERENCES users(id) ON DELETE SET NULL,
+    owner_group_id INT REFERENCES groups(id) ON DELETE SET NULL,
+
+    -- Garantit que les dates de fin sont après les dates de début
+    CONSTRAINT chk_dates CHECK (end_date > start_date),
+
+    CONSTRAINT chk_recurrence CHECK (
+        (recurrence_id IS NOT NULL AND is_exception IS NOT NULL)
+        OR
+        (recurrence_id IS NULL AND is_exception IS NULL)
+    ),
+
+    -- Garantit que l'événement a un propriétaire (soit un user, soit un groupe)
+    CONSTRAINT chk_member_presence CHECK (owner_id IS NOT NULL OR owner_group_id IS NOT NULL),
+
+    -- Empêche le doublon (soit l'un, soit l'autre, jamais les deux sur la même ligne)
+    CONSTRAINT chk_exclusive_member CHECK (
+        (owner_id IS NOT NULL AND owner_group_id IS NULL)
+        OR
+        (owner_id IS NULL AND owner_group_id IS NOT NULL)
+    )
+);
 
 -- 4. Table de liaison des membres (Inscriptions)
 CREATE TABLE event_members (
-    id SERIAL PRIMARY KEY,
     event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
-    group_id INT REFERENCES groups(id) ON DELETE CASCADE,
     validation_status event_validation_status DEFAULT 'pending' NOT NULL,
+);
+
+-- 5. Table de liaison des membres (Sauvegarde)
+CREATE TABLE recurrence_members (
+    recurrence_id INT NOT NULL REFERENCES recurrence_rules(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    group_id INT REFERENCES groups(id) ON DELETE CASCADE,
 
     CONSTRAINT chk_member_presence CHECK (user_id IS NOT NULL OR group_id IS NOT NULL),
 
@@ -68,7 +101,7 @@ CREATE TABLE event_members (
 -- 5. Table des paramètres de calendrier
 CREATE TABLE user_calendar_params (
     default_event_visibility event_visibility DEFAULT 'private' NOT NULL,
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE
 ); -- Correction : Retrait de la virgule en trop avant la parenthèse
 
 -- 6. Index de performance

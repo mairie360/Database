@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION add_owner_to_group_members()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO group_users (group_id, user_id)
+    INSERT INTO group_members (group_id, user_id)
     VALUES (NEW.id, NEW.owner_id);
     RETURN NEW;
 END;
