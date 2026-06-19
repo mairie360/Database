@@ -1,36 +1,31 @@
 CREATE OR REPLACE FUNCTION fn_check_can_delete_user()
 RETURNS TRIGGER AS $$
-DECLARE
-    group_ids INT[];
-    event_ids INT[];
-    project_ids INT[];
-    error_msg TEXT := '';
 BEGIN
-    -- 1. Récupération des IDs dans des tableaux
-    SELECT array_agg(id) FROM groups WHERE owner_id = OLD.id INTO group_ids;
-    SELECT array_agg(id) FROM events WHERE owner_id = OLD.id INTO event_ids;
-    SELECT array_agg(id) FROM projects WHERE owner_id = OLD.id INTO project_ids;
-
-    -- 2. Construction du message d'erreur si des dépendances existent
-    IF group_ids IS NOT NULL THEN
-        error_msg := error_msg || ' Groupes possédés: ' || array_to_string(group_ids, ', ');
-    END IF;
-
-    IF event_ids IS NOT NULL THEN
-        error_msg := error_msg || ' | Events possédés: ' || array_to_string(event_ids, ', ');
-    END IF;
-
-    IF project_ids IS NOT NULL THEN
-        error_msg := error_msg || ' | Projects possédés: ' || array_to_string(project_ids, ', ');
-    END IF;
-
-    -- 3. Si le message n'est pas vide, on bloque la suppression
-    IF error_msg != '' THEN
-        RAISE EXCEPTION 'Impossible de supprimer l''utilisateur % car il est encore propriétaire de ressources:%', OLD.id, error_msg
+    -- Utilisation de EXISTS pour la performance
+    IF EXISTS (SELECT 1 FROM groups WHERE owner_id = OLD.id) THEN
+        RAISE EXCEPTION 'Utilisateur % est propriétaire de groupes.', OLD.id
         USING ERRCODE = 'restrict_violation';
     END IF;
 
-    -- Si tout est vide, on procède à l'archivage (ou la logique de ton choix)
-    RETURN OLD;
+    IF EXISTS (SELECT 1 FROM events WHERE owner_id = OLD.id) THEN
+        RAISE EXCEPTION 'Utilisateur % est propriétaire d''événements.', OLD.id
+        USING ERRCODE = 'restrict_violation';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM projects WHERE owner_id = OLD.id) THEN
+        RAISE EXCEPTION 'Utilisateur % est propriétaire de projets.', OLD.id
+        USING ERRCODE = 'restrict_violation';
+    END IF;
+
+    -- On retourne NEW pour valider le passage à is_archived = TRUE
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 1. Validation : On vérifie les dépendances AVANT l'UPDATE
+DROP TRIGGER IF EXISTS tr_validate_archive_user ON users;
+CREATE TRIGGER tr_validate_archive_user
+    BEFORE UPDATE OF is_archived ON users
+    FOR EACH ROW
+    WHEN (NEW.is_archived IS TRUE AND OLD.is_archived IS FALSE)
+    EXECUTE FUNCTION fn_check_can_delete_user();

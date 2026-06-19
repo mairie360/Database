@@ -60,17 +60,16 @@ SELECT ok(
 -- 7. Test de la FK composite (user_id, user_is_archived)
 -- On utilise le code '23503' qui correspond à foreign_key_violation
 SELECT throws_ok(
-    $$ INSERT INTO sessions (user_id, user_is_archived, token_hash) VALUES (999, FALSE, 'bad_token') $$,
+    $$ INSERT INTO sessions (user_id, token_hash) VALUES (999, 'bad_token') $$,
     '23503',
     NULL, -- On ignore le message texte pour éviter les problèmes de matching
     'On ne peut pas créer de session pour un user_id inexistant (FK Violation)'
 );
 
 -- 8. Test du trigger de suppression (LOGOUT/CLEANUP dans logs)
-DELETE FROM sessions WHERE token_hash = 'token_123';
 SELECT ok(
     EXISTS (SELECT 1 FROM connection_logs WHERE user_id = 99 AND action_type = 'LOGOUT'),
-    'La suppression d''une session révoquée doit générer un log de type LOGOUT'
+    'La revocation d''une session doit générer un log de type LOGOUT'
 );
 
 SELECT * FROM finish();

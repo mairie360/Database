@@ -1,14 +1,10 @@
 -- 1. Table des Groupes
 CREATE TABLE groups (
     id SERIAL PRIMARY KEY,
-    owner_id INT NOT NULL,
+    owner_id INT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     name VARCHAR(64) UNIQUE NOT NULL,
     description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    -- La FK doit pointer vers la clé composite de users
-    CONSTRAINT fk_groups_owner FOREIGN KEY (owner_id)
-        REFERENCES users(id) ON DELETE RESTRICT
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 2. Table de Liaison (Membres)

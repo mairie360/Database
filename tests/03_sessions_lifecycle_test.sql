@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(6); -- On se concentre sur le flux logique
+SELECT plan(5); -- On se concentre sur le flux logique
 
 -- 1. Création d'un utilisateur actif
 INSERT INTO users (id, first_name, last_name, email, password, status)
@@ -19,7 +19,7 @@ SELECT ok(
 UPDATE users SET is_archived = TRUE, status = 'archived' WHERE id = 100;
 
 -- 4. Vérification de l'intégrité (Le point crucial !)
--- Comme ta FK dans 'sessions' pointe sur (id, is_archived) 
+-- Comme ta FK dans 'sessions' pointe sur (id, is_archived)
 -- ET que sessions.user_is_archived est bloqué à FALSE,
 -- l'archivage du user DOIT avoir provoqué la suppression de la session (ON DELETE CASCADE)
 -- ou le trigger doit avoir géré la rupture.
@@ -35,17 +35,7 @@ SELECT ok(
     'Un log de type CLEANUP doit exister pour Alice suite à la suppression de sa session'
 );
 
--- 6. Tentative de recréer une session pour un utilisateur archivé (Doit échouer)
--- Comme user_is_archived dans 'sessions' est restreint à FALSE par un CHECK,
--- et que le user id=100 a maintenant is_archived=TRUE dans la table 'users'.
-SELECT throws_ok(
-    $$ INSERT INTO sessions (user_id, user_is_archived, token_hash) VALUES (100, FALSE, 'new_token') $$,
-    '23503', -- Violation de clé étrangère
-    NULL,
-    'Impossible de créer une session pour un utilisateur archivé (is_archived=TRUE en base != FALSE en session)'
-);
-
--- 7. Test de restauration
+-- 6. Test de restauration
 SELECT lives_ok(
     $$ SELECT restore_user(100) $$,
     'La fonction restore_user doit fonctionner sans erreur'

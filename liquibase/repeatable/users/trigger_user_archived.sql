@@ -28,9 +28,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS tr_archive_user ON users;
-CREATE TRIGGER tr_archive_user
-    AFTER UPDATE OF is_archived ON users -- 1. Préciser l'événement
+-- 2. Action : On nettoie les ressources APRÈS l'UPDATE réussi
+DROP TRIGGER IF EXISTS tr_archive_user_cleanup ON users;
+CREATE TRIGGER tr_archive_user_cleanup
+    AFTER UPDATE OF is_archived ON users
     FOR EACH ROW
-    WHEN (NEW.is_archived IS TRUE AND OLD.is_archived IS FALSE) -- 2. Condition de déclenchement
+    WHEN (NEW.is_archived IS TRUE AND OLD.is_archived IS FALSE)
     EXECUTE FUNCTION fn_archive_user();

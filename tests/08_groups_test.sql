@@ -17,7 +17,7 @@ VALUES
 --- 2. STRUCTURE & TRIGGERS
 ---
 SELECT has_table('groups');
-SELECT has_table('group_users');
+SELECT has_table('group_members');
 SELECT has_trigger('groups', 'trigger_add_owner_as_member');
 
 -- Test du trigger automatique d'adhésion de l'owner
@@ -25,7 +25,7 @@ INSERT INTO groups (id, owner_id, name, description)
 VALUES (1, 300, 'Groupe Alpha', 'Premier groupe de test');
 
 SELECT ok(
-    EXISTS (SELECT 1 FROM group_users WHERE group_id = 1 AND user_id = 300),
+    EXISTS (SELECT 1 FROM group_members WHERE group_id = 1 AND user_id = 300),
     'L''owner doit être automatiquement ajouté aux membres du groupe via trigger'
 );
 
@@ -33,10 +33,10 @@ SELECT ok(
 --- 3. GESTION DES MEMBRES
 ---
 -- Ajout d'un membre manuellement
-INSERT INTO group_users (group_id, user_id) VALUES (1, 301);
+INSERT INTO group_members (group_id, user_id) VALUES (1, 301);
 
 SELECT is(
-    (SELECT count(*)::INT FROM group_users WHERE group_id = 1),
+    (SELECT count(*)::INT FROM group_members WHERE group_id = 1),
     2,
     'Le groupe Alpha doit avoir 2 membres'
 );
@@ -49,7 +49,7 @@ SELECT is(
 -- Ton schéma utilise ON DELETE RESTRICT sur fk_groups_owner
 SELECT throws_ok(
     $$ UPDATE users SET is_archived = TRUE WHERE id = 300 $$,
-    '23503', -- Foreign key violation
+    '23001', -- Foreign key violation
     NULL,
     'On ne peut pas archiver un utilisateur qui possède encore un groupe (RESTRICT)'
 );
@@ -61,7 +61,7 @@ CREATE OR REPLACE FUNCTION fn_cleanup_group_members_on_archive()
 RETURNS TRIGGER AS $$
 BEGIN
     IF (OLD.is_archived = FALSE AND NEW.is_archived = TRUE) THEN
-        DELETE FROM group_users WHERE user_id = NEW.id;
+        DELETE FROM group_members WHERE user_id = NEW.id;
     END IF;
     RETURN NEW;
 END;
@@ -78,7 +78,7 @@ SELECT lives_ok(
 );
 
 SELECT is(
-    (SELECT count(*)::INT FROM group_users WHERE group_id = 1),
+    (SELECT count(*)::INT FROM group_members WHERE group_id = 1),
     1,
     'Paul doit avoir été retiré du groupe automatiquement après archivage'
 );

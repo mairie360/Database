@@ -100,6 +100,13 @@
             splitStatements="false"
         />
     </changeSet>
+    <changeSet id="rep-triggers-users-can-delete" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/fn_check_can_delete_user.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
 
 
     <changeSet id="rep-functions-roles-admin" author="dev" runOnChange="true">
