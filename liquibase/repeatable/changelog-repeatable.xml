@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+>
+
+    <changeSet id="rep-views-users" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/v_user.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-views-sessions" author="dev" runOnChange="true">
+        <sqlFile
+            path="sessions/v_sessions.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-views-calendar" author="dev" runOnChange="true">
+        <sqlFile
+            path="calendar/v_securable_events.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-views-groups" author="dev" runOnChange="true">
+        <sqlFile
+            path="groups/v_securable_groups.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-views-ressources" author="dev" runOnChange="true">
+        <sqlFile
+            path="ressources/v_securable_entities.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
+
+    <changeSet id="rep-common-upd" author="dev" runOnChange="true">
+        <sqlFile
+            path="common/function_update_updated_at_column.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-common-admin" author="dev" runOnChange="true">
+        <sqlFile
+            path="common/create_admin.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
+    <changeSet id="rep-functions-users-audit" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/fn_audit_and_mutate_user.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-users-refresh" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/fn_refresh_updated_at.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-users-protect" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/fn_protect_audit_log.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-users-delete" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/fn_soft_delete_user.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-users-restore" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/restore_user.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
+    <changeSet id="rep-functions-roles-admin" author="dev" runOnChange="true">
+        <sqlFile
+            path="roles/fn_is_admin.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-roles-protect" author="dev" runOnChange="true">
+        <sqlFile
+            path="roles/fn_protect_critical_roles.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-roles-names" author="dev" runOnChange="true">
+        <sqlFile
+            path="roles/fn_protect_role_names.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-roles-modtime" author="dev" runOnChange="true">
+        <sqlFile
+            path="roles/fn_update_roles_modtime.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
+    <changeSet
+        id="rep-functions-sessions-valid"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="sessions/fn_is_session_valid.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-sessions-exp" author="dev" runOnChange="true">
+        <sqlFile
+            path="sessions/fn_set_session_expiration.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-sessions-logs" author="dev" runOnChange="true">
+        <sqlFile
+            path="sessions/fn_session_logs_triggers.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
+    <changeSet
+        id="rep-functions-security-safety"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="security/fn_check_policy_safety.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-access-acl" author="dev" runOnChange="true">
+        <sqlFile
+            path="access/fn_block_global_in_acl.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-access-check" author="dev" runOnChange="true">
+        <sqlFile
+            path="access/fn_check_access.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-groups-owner" author="dev" runOnChange="true">
+        <sqlFile
+            path="groups/fn_add_owner_to_group.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-auth-logout" author="dev" runOnChange="true">
+        <sqlFile
+            path="auth/fn_logout_on_archive.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
+    <changeSet
+        id="rep-functions-calendar-group"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="calendar/fn_set_group_accesses.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet
+        id="rep-functions-messages-counter"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="messages/fn_auto_increment_unread_counter.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet
+        id="rep-functions-elearning-progress"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="elearning/fn_update_user_course_progress.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-project-log" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/fn_log_task_status_change.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
+
+    <changeSet id="rep-triggers-users" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/trigger_user_update.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-triggers-ressources" author="dev" runOnChange="true">
+        <sqlFile
+            path="ressources/trg_resources_updated_at.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
+</databaseChangeLog>
