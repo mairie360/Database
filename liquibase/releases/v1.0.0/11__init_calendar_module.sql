@@ -79,7 +79,7 @@ CREATE TABLE events (
 CREATE TABLE event_members (
     event_id INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
-    validation_status event_validation_status DEFAULT 'pending' NOT NULL,
+    validation_status event_validation_status DEFAULT 'pending' NOT NULL
 );
 
 -- 5. Table de liaison des membres (Sauvegarde)
@@ -107,13 +107,11 @@ CREATE TABLE user_calendar_params (
 -- 6. Index de performance
 CREATE INDEX idx_events_dates ON events(start_date, end_date);
 CREATE INDEX idx_members_user ON event_members(user_id) WHERE user_id IS NOT NULL;
-CREATE INDEX idx_members_group ON event_members(group_id) WHERE group_id IS NOT NULL;
 CREATE INDEX idx_members_event_status ON event_members(event_id, validation_status);
 CREATE INDEX idx_user_calendar_params ON user_calendar_params(user_id);
 
 -- Anti-doublons d'inscription
 CREATE UNIQUE INDEX idx_unique_user_event ON event_members(event_id, user_id) WHERE user_id IS NOT NULL;
-CREATE UNIQUE INDEX idx_unique_group_event ON event_members(event_id, group_id) WHERE group_id IS NOT NULL;
 
 ---
 -- 7. INSERTION DES DONNÉES DE SÉCURITÉ
