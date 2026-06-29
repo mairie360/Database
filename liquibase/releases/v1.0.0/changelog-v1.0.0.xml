@@ -9,58 +9,72 @@
     <changeSet id="rel-1.0.0-01" author="dev"><sqlFile
             path="01__init_tables.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-02" author="dev"><sqlFile
             path="02__init_sessions.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-03" author="dev"><sqlFile
             path="03__init_roles.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-04" author="dev"><sqlFile
             path="04__init_resources.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-05" author="dev"><sqlFile
             path="05__init_permissions.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-06" author="dev"><sqlFile
             path="06__init_rights.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-07" author="dev"><sqlFile
             path="07__init_groups_and_permissions.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-08" author="dev"><sqlFile
             path="08__init_access_control.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-09" author="dev"><sqlFile
             path="09__init_retention_policies.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-10" author="dev"><sqlFile
             path="10__alter_users_first_connect.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-11" author="dev"><sqlFile
             path="11__init_calendar_module.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-12" author="dev"><sqlFile
             path="12__init_messaging.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-13" author="dev"><sqlFile
             path="13__init_elearning.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
     <changeSet id="rel-1.0.0-14" author="dev"><sqlFile
             path="14__init_projects.sql"
             splitStatements="false"
+            relativeToChangelogFile="true"
         /></changeSet>
 
 </databaseChangeLog>
