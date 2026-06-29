@@ -39,5 +39,5 @@ services:
       - LIQUIBASE_COMMAND_PASSWORD=password
       - LIQUIBASE_SEARCH_PATH=/migrations,/migrations/releases/v1.0.0,/migrations/repeatable
     command: >
-      --changelog-file=changelog-master.xml
+      --changelog-file=changelog.xml
       update
