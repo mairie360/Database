@@ -3,7 +3,7 @@ CREATE TABLE conversations (
     id SERIAL PRIMARY KEY,
     title VARCHAR(150),
     group_id INT REFERENCES groups(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 2. Table de liaison des Membres
@@ -11,7 +11,7 @@ CREATE TABLE conversation_members (
     conversation_id INT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     is_excluded BOOLEAN DEFAULT FALSE NOT NULL,
-    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    joined_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT u_conversation_user UNIQUE (conversation_id, user_id)
 );
 
@@ -21,7 +21,7 @@ CREATE TABLE messages (
     conversation_id INT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
     owner_id INT REFERENCES users(id) ON DELETE SET NULL,
     content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. Table des compteurs de non-lus
