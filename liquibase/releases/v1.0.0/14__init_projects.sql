@@ -13,6 +13,7 @@ CREATE TABLE projects (
     description TEXT,
     status project_status DEFAULT 'active' NOT NULL,
     owner_id INT REFERENCES users(id) ON DELETE RESTRICT,
+    custom_field_schema JSONB DEFAULT '[]',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -29,6 +30,7 @@ CREATE TABLE tasks (
     status task_status DEFAULT 'todo' NOT NULL,
     priority task_priority DEFAULT 'medium' NOT NULL,
     due_date TIMESTAMP,
+    custom_fields JSONB DEFAULT '{}',
     assigned_to INT REFERENCES users(id) ON DELETE SET NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -41,36 +43,6 @@ CREATE TABLE task_history (
     old_status task_status,
     new_status task_status,
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE project_field_templates (
-    id SERIAL PRIMARY KEY,
-    project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    label VARCHAR(100) NOT NULL,
-    type_champ field_type NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE field_select_options (
-    id SERIAL PRIMARY KEY,
-    template_id INT NOT NULL REFERENCES project_field_templates(id) ON DELETE CASCADE,
-    option_value VARCHAR(100) NOT NULL,
-    sort_order INT DEFAULT 1
-);
-
-CREATE TABLE task_custom_values (
-    id SERIAL PRIMARY KEY,
-    task_id INT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-    template_id INT NOT NULL REFERENCES project_field_templates(id) ON DELETE CASCADE,
-    value_date TIMESTAMP DEFAULT NULL,
-    value_text TEXT DEFAULT NULL,
-    CONSTRAINT u_task_field UNIQUE (task_id, template_id)
-);
-
-CREATE TABLE task_custom_options (
-    custom_value_id INT NOT NULL REFERENCES task_custom_values(id) ON DELETE CASCADE,
-    option_id INT NOT NULL REFERENCES field_select_options(id) ON DELETE CASCADE,
-    PRIMARY KEY (custom_value_id, option_id)
 );
 
 -- Droits Admin
