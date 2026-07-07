@@ -1,13 +1,14 @@
 {
   "branches": ["main"],
   "plugins": [
-    "@semantic-release/commit-analyzer",
-    "@semantic-release/release-notes-generator",
     [
-      "@semantic-release/github",
+      "@semantic-release/commit-analyzer",
       {
-        "assets": []
+        "preset": "angular",
+        "releaseRules": [{ "breaking": true, "release": "major" }]
       }
-    ]
+    ],
+    "@semantic-release/release-notes-generator",
+    ["@semantic-release/github", { "assets": [] }]
   ]
 }
