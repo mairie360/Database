@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+>
+
+    <changeSet id="rel-1.1.0-01" author="dev"><sqlFile
+            path="01__add_fk_indexes.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.1.0-02" author="dev"><sqlFile
+            path="02__add_missing_primary_keys.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+
+</databaseChangeLog>
