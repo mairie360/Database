@@ -29,7 +29,7 @@ services:
       - LIQUIBASE_COMMAND_CHANGELOG_FILE=changelog.xml
       - LIQUIBASE_COMMAND_DRIVER=org.postgresql.Driver
       # On pointe précisément là où sont tes fichiers (vu dans ton ls -la)
-      - LIQUIBASE_SEARCH_PATH=/workspace/liquibase,/workspace/liquibase/releases/v1.0.0,/workspace/liquibase/repeatable
+      - LIQUIBASE_SEARCH_PATH=/workspace/liquibase,/workspace/liquibase/releases/v1.0.0,/workspace/liquibase/releases/v1.1.0,/workspace/liquibase/repeatable
     depends_on:
       database:
         condition: service_healthy
