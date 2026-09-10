@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+>
+
+    <changeSet id="rel-1.2.0-01" author="dev"><sqlFile
+            path="01__extend_enums.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-02" author="dev"><sqlFile
+            path="02__users_profile.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-03" author="dev"><sqlFile
+            path="03__user_settings.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-04" author="dev"><sqlFile
+            path="04__calendar_metadata.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-05" author="dev"><sqlFile
+            path="05__projects_tasks.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-06" author="dev"><sqlFile
+            path="06__elearning.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-07" author="dev"><sqlFile
+            path="07__messaging.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+
+</databaseChangeLog>
