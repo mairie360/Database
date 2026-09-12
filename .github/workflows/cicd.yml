@@ -13,6 +13,6 @@ jobs:
     uses: mairie360/CICD/.github/workflows/database_cicd.yml@v1.14.1
     with:
       package_name: database
-      cicd_version: v1.5.5
+      cicd_version: v1.14.0
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}

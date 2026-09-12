@@ -33,8 +33,8 @@ INSERT INTO course_modules (id, course_id, title, sort_order) VALUES
 -- Test 1 : Vérification de la liaison du fichier externe (S3 / Stockage hors base)
 SELECT lives_ok(
     $$
-    INSERT INTO course_attachments (module_id, file_name, file_type, file_url)
-    VALUES (101, 'guide_rgpd_mairie.pdf', 'pdf', 'https://s3.mairie360.local/elearning/guides/guide_rgpd_mairie.pdf');
+    INSERT INTO course_attachments (module_id, title, file_name, file_type, file_url)
+    VALUES (101, 'Guide RGPD', 'guide_rgpd_mairie.pdf', 'pdf', 'https://s3.mairie360.local/elearning/guides/guide_rgpd_mairie.pdf');
     $$,
     'La base de données doit pouvoir stocker des URLs pointant vers des fichiers stockés en dehors de la DB'
 );
