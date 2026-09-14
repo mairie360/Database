@@ -16,4 +16,5 @@ jobs:
       cicd_version: v2.1.0
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
+      N8N_WEBHOOK_SECRET: ${{ secrets.N8N_WEBHOOK_SECRET }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
