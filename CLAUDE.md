@@ -30,6 +30,19 @@ docker compose up -d database
 docker compose run --rm liquibase --changelog-file=changelog.xml update
 ```
 
+`./test.sh` also produces a line-coverage report of the PL/pgSQL functions exercised
+by the test suite, at `coverage/coverage.lcov` (gitignored). The `database` service
+runs with `plpgsql_check` preloaded and `plpgsql_check.profiler=on`
+(`docker-compose-test.yml`); after `pg_prove`, `tests/coverage/generate_lcov.py`
+queries `plpgsql_profiler_function_tb()` for every plpgsql function in `public`,
+maps its body-relative line numbers back to the defining file under
+`liquibase/repeatable/` (by locating `CREATE [OR REPLACE] FUNCTION` and the
+following `AS $$`), and writes an LCOV file. CI uploads it to Codecov as a separate
+`Database-coverage` job in `.github/workflows/cicd.yml` (needs a `CODECOV_TOKEN`
+repo secret). `plpgsql_check` is built from source in `tests/db.Dockerfile` — the
+precompiled `postgresql-18-plpgsql-check` apt package is not ABI-compatible with
+the official `postgres:18.3-bookworm` image (`undefined symbol: palloc_mul`).
+
 There is no lint step and no way to run a single test file through `test.sh` — it
 always runs `pg_prove` over `tests/*.sql`. To run one file, exec into a running
 db container: `psql -U postgres -d core -f /path/to/tests/NN_x_test.sql` (each test
