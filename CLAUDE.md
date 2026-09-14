@@ -30,6 +30,19 @@ docker compose up -d database
 docker compose run --rm liquibase --changelog-file=changelog.xml update
 ```
 
+`./test.sh` also produces a line-coverage report of the PL/pgSQL functions exercised
+by the test suite, at `coverage/coverage.lcov` (gitignored). The `database` service
+runs with `plpgsql_check` preloaded and `plpgsql_check.profiler=on`
+(`docker-compose-test.yml`); after `pg_prove`, `tests/coverage/generate_lcov.py`
+queries `plpgsql_profiler_function_tb()` for every plpgsql function in `public`,
+maps its body-relative line numbers back to the defining file under
+`liquibase/repeatable/` (by locating `CREATE [OR REPLACE] FUNCTION` and the
+following `AS $$`), and writes an LCOV file. CI uploads it to Codecov as a separate
+`Database-coverage` job in `.github/workflows/cicd.yml` (needs a `CODECOV_TOKEN`
+repo secret). `plpgsql_check` is built from source in `tests/db.Dockerfile` — the
+precompiled `postgresql-18-plpgsql-check` apt package is not ABI-compatible with
+the official `postgres:18.3-bookworm` image (`undefined symbol: palloc_mul`).
+
 There is no lint step and no way to run a single test file through `test.sh` — it
 always runs `pg_prove` over `tests/*.sql`. To run one file, exec into a running
 db container: `psql -U postgres -d core -f /path/to/tests/NN_x_test.sql` (each test
@@ -41,7 +54,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 
 ## Migration architecture
 
-`liquibase/changelog.xml` is the root. It includes exactly two things, in order:
+`liquibase/changelog.xml` is the root. It `<include>`s, in order:
 
 1. **`releases/v1.0.0/changelog-v1.0.0.xml`** — versioned, run-once changesets.
    Ordered `NN__init_*.sql` files (`01__init_tables` → `14__init_projects`) that
@@ -51,19 +64,40 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    All use `splitStatements="false"` because the files contain `DO $$ … $$` blocks
    and function bodies.
 
-2. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+2. **`releases/v1.1.0/changelog-v1.1.0.xml`** — the second shipped release
+   (FK indexes + missing primary keys). Changeset ids follow `rel-1.1.0-NN`,
+   `author="dev"`. New releases go in their own `releases/vX.Y.Z/` folder the
+   same way.
+
+3. **`releases/v1.2.0/changelog-v1.2.0.xml`** — front-coverage additions
+   (profile bio, user prefs/notif settings, calendar & e-learning metadata,
+   `task_assignees` multi-assign, `conversations.kind` + message mentions/business
+   links, extended enums). Additive only; `tasks.assigned_to` /
+   `calendar_event_metadata` retirements are deferred to a later release, and the
+   `files` / e-mail modules are out of scope for now. New constraints on
+   pre-existing tables are added `NOT VALID` (enforced going forward, no deploy
+   failure on legacy data — `VALIDATE CONSTRAINT` is a later ops step).
+
+4. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
-   grouped by domain folder (`users/`, `roles/`, `sessions/`, `access/`,
-   `calendar/`, `messages/`, `elearning/`, `project/`, `common/`, `security/`).
-   Order within the file matters: views first, then shared helpers, then per-domain
-   functions, then triggers.
+   grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,
+   `elearning/`, `groups/`, `messages/`, `project/`, `ressources/`, `roles/`,
+   `security/`, `sessions/`, `users/`. Order within the file matters: views first,
+   then shared helpers, then per-domain functions, then triggers. Adding a `.sql`
+   file here does nothing until you also add a `runOnChange="true"` changeset for
+   it in `changelog-repeatable.xml`.
 
 ### Rules for changing the schema
 
 - **Never edit a file under `releases/`** once it has shipped — Liquibase tracks
   checksums and will fail. Add a new `releases/vX.Y.Z/` folder with its own
-  `changelog-vX.Y.Z.xml` and `<include>` it from `changelog.xml`.
+  `changelog-vX.Y.Z.xml` and `<include>` it from `changelog.xml` (before the
+  repeatable include).
+- **A new `releases/vX.Y.Z/` folder must also be added to `LIQUIBASE_SEARCH_PATH`**
+  in both `docker-compose.yml` and `docker-compose-test.yml` — the changesets use
+  `sqlFile path="NN__x.sql"` and Liquibase resolves those against the search path,
+  not the changelog dir. Miss this and `update` fails with a file-not-found.
 - **Repeatable objects** (views/functions/triggers) *are* meant to be edited in
   place. Write them idempotently: `CREATE OR REPLACE` for functions/views,
   `DROP … IF EXISTS` + recreate for triggers, and `DROP FUNCTION IF EXISTS` first
@@ -95,14 +129,23 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 
 ## Tests
 
-`tests/NN_*_test.sql` are pgTAP scripts (`SELECT plan(N); … SELECT * FROM finish();`)
+`tests/NN_*.sql` are pgTAP scripts (`SELECT plan(N); … SELECT * FROM finish();`)
 wrapped in `BEGIN/ROLLBACK`. `docker-compose-test.yml` runs migrations, installs
-the `pgtap` extension, then `pg_prove`s the whole directory. When you add a
-function/trigger/view, add or extend the matching numbered test file and keep the
-`plan(N)` count in sync.
+the `pgtap` extension, then `pg_prove`s the whole directory (glob `tests/*.sql`, so
+the `_test` suffix is not load-bearing — `15_performance_indexes.sql` and
+`16_default_bigint.sql` are schema-invariant checks that don't follow it). When you
+add a function/trigger/view, add or extend the matching numbered test file and keep
+the `plan(N)` count in sync.
 
 ## Known inconsistencies (don't "fix" incidentally)
 
+- The repeatable folder is spelled `ressources/` (French) but the table and the
+  resource name it serves are `resources` (English). Match the existing spelling
+  of whichever you're referencing.
+- `tmp/archives_tests.sql` is scratch, not wired into `pg_prove` or Liquibase.
+- Test filenames are noisy: some carry a `_test` suffix and some don't, and
+  `13_projec_test.sql` is misspelled. `16_default_bigint.sql` actually asserts
+  every table has a primary key, not anything about bigint defaults.
 - Postgres/Liquibase versions differ on purpose-or-neglect across images:
   `Dockerfile` (pg 18.6, Renovate-managed), `tests/db.Dockerfile` (pg 18.3),
   `tests/test.Dockerfile` (pg 16 + Liquibase 4.25.1), `liquibase/Dockerfile`

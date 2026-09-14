@@ -35,8 +35,8 @@ SELECT has_table('messages');
 ---
 
 -- Test 1 : Création d'un chat lié à un GROUPE (ID conversation = 801)
-INSERT INTO conversations (id, title, group_id)
-VALUES (801, 'Chat Officiel - Police Municipale', 20);
+INSERT INTO conversations (id, title, group_id, kind)
+VALUES (801, 'Chat Officiel - Police Municipale', 20, 'group');
 
 SELECT is(
     (SELECT group_id FROM conversations WHERE id = 801),
@@ -45,8 +45,8 @@ SELECT is(
 );
 
 -- Test 2 : Création d'un chat privé entre PLUSIEURS utilisateurs (ID conversation = 802)
-INSERT INTO conversations (id, title, group_id)
-VALUES (802, 'Organisation Pot de Départ', NULL);
+INSERT INTO conversations (id, title, group_id, kind)
+VALUES (802, 'Organisation Pot de Départ', NULL, 'direct');
 
 SELECT lives_ok(
     $$
@@ -99,7 +99,7 @@ SELECT lives_ok(
 );
 
 -- Test 7 : Nettoyage en cascade (ON DELETE CASCADE)
-INSERT INTO conversations (id, title, group_id) VALUES (899, 'Temp Chat', NULL);
+INSERT INTO conversations (id, title, group_id, kind) VALUES (899, 'Temp Chat', NULL, 'direct');
 INSERT INTO conversation_members (conversation_id, user_id) VALUES (899, 500);
 DELETE FROM conversations WHERE id = 899;
 
@@ -137,7 +137,7 @@ SELECT ok(
 -- CAS 2 : Chat de Groupe avec Utilisateur Exclu
 -- Rappel : Robert (502) est exclu de la conversation de groupe 801 via conversation_members
 -- On s'assure qu'un message à l'intérieur du groupe 801 déclenche les règles pour les autres
-INSERT INTO conversations (id, title, group_id) VALUES (803, 'Salon Service Police', 20);
+INSERT INTO conversations (id, title, group_id, kind) VALUES (803, 'Salon Service Police', 20, 'group');
 INSERT INTO conversation_members (conversation_id, user_id, is_excluded) VALUES (803, 502, TRUE);
 
 INSERT INTO messages (conversation_id, owner_id, content)

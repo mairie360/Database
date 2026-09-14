@@ -286,5 +286,12 @@
             splitStatements="false"
         />
     </changeSet>
+    <changeSet id="rep-triggers-course-ratings-updated-at" author="dev" runOnChange="true">
+        <sqlFile
+            path="elearning/trg_course_ratings_updated_at.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
 
 </databaseChangeLog>

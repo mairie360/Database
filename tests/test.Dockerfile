@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     libtap-parser-sourcehandler-pgtap-perl \
     openjdk-17-jre-headless \
     curl \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Installation de Liquibase
