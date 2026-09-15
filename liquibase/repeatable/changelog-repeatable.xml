@@ -93,6 +93,13 @@
             splitStatements="false"
         />
     </changeSet>
+    <changeSet id="rep-functions-users-create" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/create_user.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
     <changeSet id="rep-triggers-users-archived" author="dev" runOnChange="true">
         <sqlFile
             path="users/trigger_user_archived.sql"
@@ -107,6 +114,17 @@
     >
         <sqlFile
             path="users/fn_check_can_delete_user.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet
+        id="rep-triggers-users-default-role"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="users/trigger_default_role.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />
