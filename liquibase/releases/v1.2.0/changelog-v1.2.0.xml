@@ -41,5 +41,10 @@
             splitStatements="false"
             relativeToChangelogFile="true"
         /></changeSet>
+    <changeSet id="rel-1.2.0-08" author="dev"><sqlFile
+            path="08__calendar_metadata_backfill.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
 
 </databaseChangeLog>
