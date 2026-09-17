@@ -1,4 +1,6 @@
 -- 1. Log de Login
+-- These functions are SECURITY DEFINER: API roles have no access to
+-- connection_logs (MAIR-114).
 CREATE OR REPLACE FUNCTION log_session_start() RETURNS TRIGGER AS $$
 DECLARE v_log_id UUID;
 BEGIN
@@ -6,7 +8,7 @@ BEGIN
     VALUES (NEW.user_id, NEW.id, NEW.ip_address, NEW.device_info, NEW.created_at, 'LOGIN')
     RETURNING id INTO v_log_id;
     RETURN NEW;
-END; $$ LANGUAGE plpgsql;
+END; $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 DROP TRIGGER IF EXISTS trigger_log_login ON sessions;
 CREATE TRIGGER trigger_log_login
@@ -21,7 +23,7 @@ BEGIN
     VALUES (NEW.user_id, NEW.id, NEW.ip_address, NEW.device_info, now(), 'REFRESH')
     RETURNING id INTO v_log_id;
     RETURN NEW;
-END; $$ LANGUAGE plpgsql;
+END; $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 DROP TRIGGER IF EXISTS trigger_log_refresh ON sessions;
 CREATE TRIGGER trigger_log_refresh
@@ -34,7 +36,7 @@ BEGIN
     INSERT INTO connection_logs (user_id, session_id, ip_address, device_info, timestamp, action_type)
     VALUES (OLD.user_id, OLD.id, OLD.ip_address, OLD.device_info, now(), 'LOGOUT');
     RETURN NEW;
-END; $$ LANGUAGE plpgsql;
+END; $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 DROP TRIGGER IF EXISTS trigger_log_logout ON sessions;
 CREATE TRIGGER trigger_log_logout

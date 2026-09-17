@@ -41,7 +41,12 @@ services:
     command: >
       sh -c "
       echo '--- RUNNING MIGRATIONS ---' &&
-      liquibase update &&
+      liquibase update
+      -Dcore_api_password=password
+      -Dproject_api_password=password
+      -Dcalendar_api_password=password
+      -Dmessage_api_password=password
+      -Delearning_api_password=password &&
 
       echo '--- INSTALLING PGTAP + PLPGSQL_CHECK ---' &&
       psql -h database -U postgres -d core -c 'CREATE EXTENSION IF NOT EXISTS pgtap;' &&

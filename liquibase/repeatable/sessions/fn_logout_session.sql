@@ -1,3 +1,4 @@
+-- SECURITY DEFINER: API roles have no access to connection_logs (MAIR-114).
 CREATE OR REPLACE FUNCTION fn_log_logout_on_revocation()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -22,7 +23,7 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 DROP TRIGGER IF EXISTS tr_log_logout_on_revocation ON sessions;
 
