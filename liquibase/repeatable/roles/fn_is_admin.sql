@@ -1,6 +1,9 @@
 -- Vrai uniquement si l'utilisateur possède le rôle Admin (nom protégé par
 -- protect_role_names). Ne pas se contenter de l'existence d'un rôle : depuis
 -- tr_users_default_role_guest, tout utilisateur en a au moins un (Guest).
+--
+-- SECURITY DEFINER: every API calls it (API_lib AdminMiddleware) without
+-- necessarily reading user_roles / roles (MAIR-114).
 CREATE OR REPLACE FUNCTION is_admin(
     p_user_id INT
 )
@@ -15,4 +18,4 @@ BEGIN
           AND r.name = 'Admin'
     );
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;

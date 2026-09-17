@@ -312,4 +312,23 @@
         />
     </changeSet>
 
+    <!-- Per-API Postgres roles and their privileges (MAIR-114). Must stay last:
+         grants reference every table and view created above. runAlways so a
+         rotated -D<role>_password is applied and tables recreated by a
+         release get their grants back. -->
+    <changeSet id="rep-security-api-roles" author="dev" runAlways="true" runOnChange="true">
+        <sqlFile
+            path="security/api_roles.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-security-api-grants" author="dev" runAlways="true" runOnChange="true">
+        <sqlFile
+            path="security/api_grants.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
 </databaseChangeLog>

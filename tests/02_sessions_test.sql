@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(10); -- Nombre de tests prévus
+SELECT plan(12); -- Nombre de tests prévus
 
 -- 1. Préparation : Créer un utilisateur de test
 INSERT INTO users (id, first_name, last_name, email, password, status)
@@ -12,6 +12,7 @@ VALUES (99, 'Jean', 'Test', 'jean.test@example.com', 'hash_pw', 'active');
 SELECT has_table('sessions');
 SELECT has_trigger('sessions', 'trigger_set_expiration');
 SELECT has_trigger('sessions', 'trigger_log_login');
+SELECT has_trigger('sessions', 'trigger_log_refresh');
 
 ---
 --- TESTS DE LOGIQUE FONCTIONNELLE
@@ -45,19 +46,27 @@ SELECT ok(
     'La fonction is_session_valid doit valider un token correct et actif'
 );
 
--- 6. Test de révocation (LOGOUT)
-UPDATE sessions SET revoked_at = now() WHERE token_hash = 'token_123';
+-- 6. Test du trigger de refresh (connection_logs)
+UPDATE sessions SET token_hash = 'token_123_refreshed' WHERE token_hash = 'token_123';
+
+SELECT ok(
+    EXISTS (SELECT 1 FROM connection_logs WHERE user_id = 99 AND action_type = 'REFRESH'),
+    'Le renouvellement du token_hash doit générer un log de type REFRESH'
+);
+
+-- 8. Test de révocation (LOGOUT)
+UPDATE sessions SET revoked_at = now() WHERE token_hash = 'token_123_refreshed';
 
 SELECT ok(
     is_active = FALSE,
     'Une session révoquée ne doit plus être active dans v_sessions'
-) FROM v_sessions WHERE token_hash = 'token_123';
+) FROM v_sessions WHERE token_hash = 'token_123_refreshed';
 
 ---
 --- TESTS DE SÉCURITÉ ET CONTRAINTES
 ---
 
--- 7. Test de la FK composite (user_id, user_is_archived)
+-- 9. Test de la FK composite (user_id, user_is_archived)
 -- On utilise le code '23503' qui correspond à foreign_key_violation
 SELECT throws_ok(
     $$ INSERT INTO sessions (user_id, token_hash) VALUES (999, 'bad_token') $$,
@@ -66,7 +75,7 @@ SELECT throws_ok(
     'On ne peut pas créer de session pour un user_id inexistant (FK Violation)'
 );
 
--- 8. Test du trigger de suppression (LOGOUT/CLEANUP dans logs)
+-- 10. Test du trigger de suppression (LOGOUT/CLEANUP dans logs)
 SELECT ok(
     EXISTS (SELECT 1 FROM connection_logs WHERE user_id = 99 AND action_type = 'LOGOUT'),
     'La revocation d''une session doit générer un log de type LOGOUT'

@@ -1,5 +1,7 @@
 DROP FUNCTION IF EXISTS check_access(integer, character varying, character varying, integer);
 
+-- SECURITY DEFINER: every API calls it (API_lib RightMiddleware) without
+-- access to the RBAC/ACL tables nor to access_logs (MAIR-114).
 CREATE OR REPLACE FUNCTION check_access(
     p_user_id INT,
     p_resource_name VARCHAR,
@@ -132,4 +134,4 @@ BEGIN
     -- Retourne 1 (Autorisé) ou 0 (Interdit)
     RETURN CASE WHEN v_has_access THEN 1 ELSE 0 END;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;

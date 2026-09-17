@@ -1,3 +1,4 @@
+-- SECURITY DEFINER: API roles have no access to connection_logs (MAIR-114).
 CREATE OR REPLACE FUNCTION fn_handle_session_deletion()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -25,7 +26,7 @@ BEGIN
 
     RETURN OLD;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- On ne garde qu'un seul trigger
 DROP TRIGGER IF EXISTS tr_handle_session_deletion ON sessions;

@@ -1,3 +1,4 @@
+-- SECURITY DEFINER: API roles have no access to users_audit_log (MAIR-114).
 CREATE OR REPLACE FUNCTION fn_audit_and_mutate_user()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -25,7 +26,7 @@ BEGIN
     );
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 DROP TRIGGER IF EXISTS tr_20_user_lifecycle_audit ON users;
 CREATE TRIGGER tr_20_user_lifecycle_audit

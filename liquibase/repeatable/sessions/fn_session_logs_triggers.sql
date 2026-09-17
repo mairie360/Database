@@ -42,3 +42,14 @@ CREATE TRIGGER trigger_log_logout
     FOR EACH ROW
     WHEN (NEW.revoked_at IS NOT NULL AND OLD.revoked_at IS NULL) -- Uniquement à la première révocation
     EXECUTE FUNCTION log_session_end();
+
+-- SECURITY DEFINER: API roles have no access to connection_logs (MAIR-114).
+-- Applied via ALTER rather than inline in the LANGUAGE clause above so the
+-- diff never touches the "END; $$ LANGUAGE ...;" line: plpgsql_check's
+-- profiler always reports 0 hits for it (RETURN exits the function before
+-- reaching END), so touching that line makes generate_lcov.py report a
+-- permanently-uncovered patch line regardless of how well the trigger is
+-- tested (see coverage/generate_lcov.py, codecov/patch check on MAIR-114).
+ALTER FUNCTION log_session_start() SECURITY DEFINER SET search_path = public, pg_temp;
+ALTER FUNCTION log_session_refresh() SECURITY DEFINER SET search_path = public, pg_temp;
+ALTER FUNCTION log_session_end() SECURITY DEFINER SET search_path = public, pg_temp;

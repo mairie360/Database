@@ -1,4 +1,5 @@
 -- Fonction corrigée aux standards PostgreSQL
+-- SECURITY DEFINER: writes the ACL (core domain) on behalf of calendar_api (MAIR-114).
 CREATE OR REPLACE FUNCTION fn_set_group_accesses() RETURNS TRIGGER AS $$
 BEGIN
     -- Insertion dans l'ACL en utilisant l'objet NEW pour récupérer les valeurs de la ligne insérée
@@ -10,7 +11,7 @@ BEGIN
 
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- Attachement du trigger (en AFTER INSERT pour garantir que l'ID de l'événement existe)
 DROP TRIGGER IF EXISTS trigger_set_group_accesses ON events;

@@ -1,3 +1,4 @@
+-- SECURITY DEFINER: reads groups, events and projects, which core_api cannot (MAIR-114).
 CREATE OR REPLACE FUNCTION fn_check_can_delete_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -20,7 +21,7 @@ BEGIN
     -- On retourne NEW pour valider le passage à is_archived = TRUE
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 1. Validation : On vérifie les dépendances AVANT l'UPDATE
 DROP TRIGGER IF EXISTS tr_validate_archive_user ON users;

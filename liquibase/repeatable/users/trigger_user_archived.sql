@@ -1,3 +1,5 @@
+-- SECURITY DEFINER: cleans up tables of other domains (projects, tasks,
+-- messaging) that core_api has no access to (MAIR-114).
 CREATE OR REPLACE FUNCTION fn_archive_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -35,7 +37,7 @@ BEGIN
     -- UPDATE tasks SET assigned_to = NULL WHERE assigned_to = OLD.id;
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 2. Action : On nettoie les ressources APRÈS l'UPDATE réussi
 DROP TRIGGER IF EXISTS tr_archive_user_cleanup ON users;
