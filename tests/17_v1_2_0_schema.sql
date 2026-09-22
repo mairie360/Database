@@ -6,9 +6,9 @@ SELECT plan(63);
 ---
 INSERT INTO users (id, first_name, last_name, email, password)
 VALUES
-    (8801, 'Ada',  'Test', 'ada.v120@test.fr',  'pwd'),
-    (8802, 'Bob',  'Test', 'bob.v120@test.fr',  'pwd'),
-    (8803, 'Cléo', 'Test', 'cleo.v120@test.fr', 'pwd')
+    (8801, 'Ada',  'Test', 'ada.v120@test.fr',  '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g'),
+    (8802, 'Bob',  'Test', 'bob.v120@test.fr',  '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g'),
+    (8803, 'Cléo', 'Test', 'cleo.v120@test.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO groups (id, name, owner_id) VALUES (8810, 'Service Test v120', 8801)

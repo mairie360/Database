@@ -100,6 +100,13 @@
             splitStatements="false"
         />
     </changeSet>
+    <changeSet id="rep-functions-users-migrate-legacy-password" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/migrate_legacy_password.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
     <changeSet id="rep-triggers-users-archived" author="dev" runOnChange="true">
         <sqlFile
             path="users/trigger_user_archived.sql"

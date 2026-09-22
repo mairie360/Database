@@ -6,7 +6,7 @@ SELECT plan(18);
 ---
 
 INSERT INTO users (id, first_name, last_name, email, password, status, is_archived)
-VALUES (411, 'Random', 'User', 'random@test.com', 'pwd', 'active', false);
+VALUES (411, 'Random', 'User', 'random@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active', false);
 INSERT INTO roles (name) VALUES ('Admin'), ('User') ON CONFLICT DO NOTHING;
 -- On n'utilise QUE la ressource 'groups'
 INSERT INTO resources (name) VALUES ('groups') ON CONFLICT DO NOTHING;
@@ -39,9 +39,9 @@ DELETE FROM users WHERE id IN (400, 401, 402);
 
 INSERT INTO users (id, first_name, last_name, email, password, status, is_archived)
 VALUES
-    (400, 'Admin', 'User', 'admin_acl@test.com', 'pwd', 'active', false),
-    (401, 'Standard', 'User', 'user_acl@test.com', 'pwd', 'active', false),
-    (402, 'Guest', 'User', 'guest_acl@test.com', 'pwd', 'active', false);
+    (400, 'Admin', 'User', 'admin_acl@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active', false),
+    (401, 'Standard', 'User', 'user_acl@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active', false),
+    (402, 'Guest', 'User', 'guest_acl@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active', false);
 
 INSERT INTO user_roles (user_id, role_id)
 VALUES (400, (SELECT id FROM roles WHERE name = 'Admin'));

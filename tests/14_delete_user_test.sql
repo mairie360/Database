@@ -9,12 +9,12 @@ SELECT plan(8);
 
 -- Précaution : S'assurer qu'un utilisateur 1 (Admin) existe pour posséder le 2ème projet
 INSERT INTO users (id, first_name, last_name, email, password, status, is_archived)
-VALUES (1, 'Admin', 'System', 'admin.test@example.com', 'hash', 'active', FALSE)
+VALUES (1, 'Admin', 'System', 'admin.test@example.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active', FALSE)
 ON CONFLICT (id) DO NOTHING;
 
 -- Création de l'utilisateur de test
 INSERT INTO users (id, first_name, last_name, email, password, status, is_archived)
-VALUES (9999, 'Alice', 'Merveille', 'alice.test@example.com', 'hash_pw', 'active', FALSE);
+VALUES (9999, 'Alice', 'Merveille', 'alice.test@example.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active', FALSE);
 
 -- Activité : Création d'une session (le trigger log_login fait le reste)
 INSERT INTO sessions (user_id, token_hash, device_info)

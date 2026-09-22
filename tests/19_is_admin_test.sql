@@ -6,7 +6,7 @@ SELECT plan(6);
 -- via SET CONSTRAINTS ALL IMMEDIATE après chaque création.
 
 INSERT INTO users (first_name, last_name, email, password)
-VALUES ('Ada', 'Admin', 'ada.admin@test.com', 'hash');
+VALUES ('Ada', 'Admin', 'ada.admin@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r
 WHERE u.email = 'ada.admin@test.com' AND r.name = 'Admin';
@@ -14,7 +14,7 @@ SET CONSTRAINTS ALL IMMEDIATE;
 SET CONSTRAINTS ALL DEFERRED;
 
 INSERT INTO users (first_name, last_name, email, password)
-VALUES ('Ulysse', 'User', 'ulysse.user@test.com', 'hash');
+VALUES ('Ulysse', 'User', 'ulysse.user@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r
 WHERE u.email = 'ulysse.user@test.com' AND r.name = 'User';
@@ -22,7 +22,7 @@ SET CONSTRAINTS ALL IMMEDIATE;
 SET CONSTRAINTS ALL DEFERRED;
 
 INSERT INTO users (first_name, last_name, email, password)
-VALUES ('Mathis', 'Multi', 'mathis.multi@test.com', 'hash');
+VALUES ('Mathis', 'Multi', 'mathis.multi@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r
 WHERE u.email = 'mathis.multi@test.com' AND r.name IN ('User', 'Admin');
@@ -30,7 +30,7 @@ SET CONSTRAINTS ALL IMMEDIATE;
 
 -- Guest attribué par le filet de sécurité
 INSERT INTO users (first_name, last_name, email, password)
-VALUES ('Gaston', 'Guest', 'gaston.guest@test.com', 'hash');
+VALUES ('Gaston', 'Guest', 'gaston.guest@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 SET CONSTRAINTS ALL IMMEDIATE;
 
 -- Test 1: un Admin est admin
