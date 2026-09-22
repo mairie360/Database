@@ -8,9 +8,9 @@ SELECT plan(11); -- Nous programmons 14 tests unitaires
 -- Création des utilisateurs requis par le plan de test
 INSERT INTO users (id, first_name, last_name, email, password)
 VALUES
-    (400, 'Jean', 'Responsable', 'jean.responsable@mairie.fr', 'password'),
-    (401, 'Alice', 'Employé', 'alice.employe@mairie.fr', 'password'),
-    (402, 'Robert', 'Maire', 'robert.maire@mairie.fr', 'password')
+    (400, 'Jean', 'Responsable', 'jean.responsable@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g'),
+    (401, 'Alice', 'Employé', 'alice.employe@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g'),
+    (402, 'Robert', 'Maire', 'robert.maire@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g')
 ON CONFLICT (id) DO NOTHING;
 
 -- Création d'un groupe pour les tests

@@ -5,7 +5,7 @@ SELECT plan(9); -- Nous programmons 9 tests unitaires
 --- 1. PRÉPARATION DES DONNÉES (SEED)
 ---
 INSERT INTO users (id, first_name, last_name, email, password)
-VALUES (600, 'Charles', 'Formateur', 'charles.elearning@mairie.fr', 'pwd')
+VALUES (600, 'Charles', 'Formateur', 'charles.elearning@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g')
 ON CONFLICT (id) DO NOTHING;
 
 ---

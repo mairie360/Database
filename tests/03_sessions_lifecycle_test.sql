@@ -3,7 +3,7 @@ SELECT plan(5); -- On se concentre sur le flux logique
 
 -- 1. Création d'un utilisateur actif
 INSERT INTO users (id, first_name, last_name, email, password, status)
-VALUES (100, 'Alice', 'Lifecycle', 'alice@test.com', 'pwd', 'active');
+VALUES (100, 'Alice', 'Lifecycle', 'alice@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active');
 
 -- 2. Création d'une session pour Alice
 INSERT INTO sessions (user_id, token_hash)

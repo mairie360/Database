@@ -7,8 +7,8 @@ SELECT plan(10);
 ---
 INSERT INTO users (id, first_name, last_name, email, password)
 VALUES
-    (700, 'Jean', 'Responsable', 'jean.project@mairie.fr', 'pwd'),
-    (701, 'Alice', 'Employé', 'alice.project@mairie.fr', 'pwd')
+    (700, 'Jean', 'Responsable', 'jean.project@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g'),
+    (701, 'Alice', 'Employé', 'alice.project@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g')
 ON CONFLICT (id) DO NOTHING;
 
 ---

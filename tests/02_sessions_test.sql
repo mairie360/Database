@@ -3,7 +3,7 @@ SELECT plan(12); -- Nombre de tests prévus
 
 -- 1. Préparation : Créer un utilisateur de test
 INSERT INTO users (id, first_name, last_name, email, password, status)
-VALUES (99, 'Jean', 'Test', 'jean.test@example.com', 'hash_pw', 'active');
+VALUES (99, 'Jean', 'Test', 'jean.test@example.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active');
 
 ---
 --- TESTS DE STRUCTURE

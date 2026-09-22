@@ -6,7 +6,7 @@ SELECT has_table('users', 'La table users doit exister');
 
 -- Test 2: Vérification du statut par défaut
 INSERT INTO users (first_name, last_name, email, password) 
-VALUES ('Unit', 'Test', 'unit@test.com', 'hash');
+VALUES ('Unit', 'Test', 'unit@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 
 SELECT results_eq(
     'SELECT status FROM users WHERE email = ''unit@test.com''',

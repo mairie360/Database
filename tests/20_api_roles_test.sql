@@ -137,8 +137,8 @@ SELECT results_eq(
 
 INSERT INTO users (id, first_name, last_name, email, password)
 VALUES
-    (2000, 'Paul', 'Owner', 'paul.owner@roles.test', 'hash'),
-    (2001, 'Lea', 'Member', 'lea.member@roles.test', 'hash');
+    (2000, 'Paul', 'Owner', 'paul.owner@roles.test', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g'),
+    (2001, 'Lea', 'Member', 'lea.member@roles.test', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 
 INSERT INTO groups (id, name, owner_id) VALUES (2000, 'Roles test group', 2000);
 INSERT INTO group_members (group_id, user_id) VALUES (2000, 2001);

@@ -78,7 +78,15 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    pre-existing tables are added `NOT VALID` (enforced going forward, no deploy
    failure on legacy data — `VALIDATE CONSTRAINT` is a later ops step).
 
-4. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+4. **`releases/v1.3.0/changelog-v1.3.0.xml`** — `chk_users_password_hashed`
+   (`NOT VALID`, MAIR-169): `users.password` must hold an argon2id PHC hash
+   from now on. Existing plaintext rows are grandfathered by the constraint
+   and migrated in place by `repeatable/users/migrate_legacy_password.sql`
+   (called from the API login path, or a one-off admin script for accounts
+   that never reconnect); hashing itself happens outside Postgres (pgcrypto
+   has no argon2id), so this repo only stores and validates the hash shape.
+
+5. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,
