@@ -53,6 +53,11 @@ GRANT SELECT, INSERT, UPDATE ON users TO core_api;
 GRANT SELECT, DELETE ON v_users_active TO core_api;
 GRANT SELECT ON v_users_archived TO core_api;
 GRANT SELECT, INSERT, UPDATE, DELETE ON user_preferences, user_notification_settings TO core_api;
+-- SSO identities (MAIR-141): the login path resolves a Keycloak subject and
+-- the migration job links accounts through link_user_identity(), both as
+-- core_api. v_users_sso_export is what the job reads to provision Keycloak.
+GRANT SELECT, INSERT, UPDATE, DELETE ON user_identities TO core_api;
+GRANT SELECT ON v_users_sso_export TO core_api;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON sessions TO core_api;
 GRANT SELECT ON v_sessions, session_settings TO core_api;

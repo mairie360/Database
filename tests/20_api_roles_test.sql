@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(29);
+SELECT plan(30);
 
 -- Per-API Postgres roles (MAIR-114): security/api_roles.sql and
 -- security/api_grants.sql. The migration is run with -D<role>_password in
@@ -81,6 +81,17 @@ SELECT results_eq(
     'Only core_api can read users.password'
 );
 
+-- Test 4b: SSO identities (MAIR-141) are core's business only
+SELECT results_eq(
+    $$
+    SELECT r.name FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api']) AS r(name)
+    WHERE has_table_privilege(r.name, 'user_identities', 'SELECT')
+       OR has_table_privilege(r.name, 'v_users_sso_export', 'SELECT')
+    $$,
+    $$VALUES ('core_api')$$,
+    'Only core_api can read user_identities and v_users_sso_export'
+);
+
 -- Test 5: users are never hard-deleted, not even by core_api
 SELECT is(
     (SELECT count(*)::INT
@@ -103,8 +114,8 @@ SELECT is(
 SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('core_api')$$,
     $$VALUES ('access_control'), ('group_members'), ('groups'), ('roles'), ('sessions'),
-             ('user_notification_settings'), ('user_preferences'), ('user_roles'), ('users'),
-             ('v_users_active')$$,
+             ('user_identities'), ('user_notification_settings'), ('user_preferences'),
+             ('user_roles'), ('users'), ('v_users_active')$$,
     'core_api writes only to the core domain'
 );
 SELECT results_eq(
