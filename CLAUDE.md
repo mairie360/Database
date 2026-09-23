@@ -39,7 +39,8 @@ maps its body-relative line numbers back to the defining file under
 `liquibase/repeatable/` (by locating `CREATE [OR REPLACE] FUNCTION` and the
 following `AS $$`), and writes an LCOV file. CI uploads it to Codecov as a separate
 `Database-coverage` job in `.github/workflows/cicd.yml` (needs a `CODECOV_TOKEN`
-repo secret). `plpgsql_check` is built from source in `tests/db.Dockerfile` — the
+repo secret). `codecov.yml` makes both Codecov statuses `informational`: coverage
+is reported but no minimum is enforced. `plpgsql_check` is built from source in `tests/db.Dockerfile` — the
 precompiled `postgresql-18-plpgsql-check` apt package is not ABI-compatible with
 the official `postgres:18.3-bookworm` image (`undefined symbol: palloc_mul`).
 
