@@ -170,3 +170,7 @@ the `plan(N)` count in sync.
   schema (e.g. it shows a `modules` table and a bcrypt `CHAR(60)` password;
   `01__init_tables.sql` is authoritative). Treat the `releases/` SQL as the source
   of truth.
+
+## Pull request reviewers
+
+Every PR requests a review from the whole team, minus its author: `CarolinHugo`, `LAURETbenjamin`, `MathTek` and `Quentintnrl` (`gh pr create … --reviewer CarolinHugo,LAURETbenjamin,MathTek`). `.github/CODEOWNERS` makes GitHub request them automatically as well.
