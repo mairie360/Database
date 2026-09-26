@@ -10,8 +10,8 @@ INSERT INTO resources (name) VALUES ('groups') ON CONFLICT DO NOTHING;
 -- Création d'utilisateurs de test
 INSERT INTO users (id, first_name, last_name, email, password, status)
 VALUES 
-    (300, 'Jean', 'Owner', 'owner@test.com', 'pwd', 'active'),
-    (301, 'Paul', 'Member', 'member@test.com', 'pwd', 'active');
+    (300, 'Jean', 'Owner', 'owner@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active'),
+    (301, 'Paul', 'Member', 'member@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active');
 
 ---
 --- 2. STRUCTURE & TRIGGERS

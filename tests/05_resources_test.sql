@@ -65,7 +65,7 @@ SELECT ok(
 
 -- Vérifier que si on crée un utilisateur, il apparaît dans la vue avec son resource_id
 INSERT INTO users (first_name, last_name, email, password)
-VALUES ('Jean', 'Ressource', 'test.res@mairie.fr', 'pwd');
+VALUES ('Jean', 'Ressource', 'test.res@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 
 SELECT ok(
     EXISTS (SELECT 1 FROM v_securable_users WHERE email = 'test.res@mairie.fr' AND resource_id IS NOT NULL),

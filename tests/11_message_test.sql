@@ -8,9 +8,9 @@ SELECT plan(15); -- Nous programmons désormais 15 tests unitaires
 -- Création des utilisateurs requis
 INSERT INTO users (id, first_name, last_name, email, password)
 VALUES
-    (500, 'Jean', 'Responsable', 'jean.responsable@mairie.fr', 'password'),
-    (501, 'Alice', 'Employé', 'alice.employe@mairie.fr', 'password'),
-    (502, 'Robert', 'Maire', 'robert.maire@mairie.fr', 'password')
+    (500, 'Jean', 'Responsable', 'jean.responsable@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g'),
+    (501, 'Alice', 'Employé', 'alice.employe@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g'),
+    (502, 'Robert', 'Maire', 'robert.maire@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g')
 ON CONFLICT (id) DO NOTHING;
 
 -- Création d'un groupe (Service Police Municipale)

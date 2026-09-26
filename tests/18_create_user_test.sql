@@ -6,7 +6,7 @@ SELECT plan(6);
 
 -- Test 1: create_user exige un rôle (NULL rejeté)
 SELECT throws_ok(
-    $$SELECT create_user('Jean', 'Dupont', 'jean.dupont1@test.com', 'hash', NULL)$$,
+    $$SELECT create_user('Jean', 'Dupont', 'jean.dupont1@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', NULL)$$,
     '23502',
     NULL,
     'create_user doit rejeter un rôle NULL'
@@ -14,7 +14,7 @@ SELECT throws_ok(
 
 -- Test 2: create_user rejette un rôle inexistant
 SELECT throws_ok(
-    $$SELECT create_user('Jean', 'Dupont', 'jean.dupont2@test.com', 'hash', -1)$$,
+    $$SELECT create_user('Jean', 'Dupont', 'jean.dupont2@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', -1)$$,
     '23503',
     NULL,
     'create_user doit rejeter un rôle inexistant'
@@ -23,7 +23,7 @@ SELECT throws_ok(
 -- Test 3: create_user réussit avec un rôle valide
 SELECT lives_ok(
     format(
-        'SELECT create_user(''Jean'', ''Dupont'', ''jean.dupont3@test.com'', ''hash'', %L)',
+        'SELECT create_user(''Jean'', ''Dupont'', ''jean.dupont3@test.com'', ''$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g'', %L)',
         (SELECT id FROM roles WHERE name = 'User')
     ),
     'create_user doit réussir avec un rôle valide'
@@ -44,7 +44,7 @@ SELECT results_eq(
 -- Test 5: sécurité - un utilisateur inséré sans rôle reçoit Guest une fois la
 -- transaction "terminée" (on force le trigger différé pour le test).
 INSERT INTO users (first_name, last_name, email, password)
-VALUES ('Sans', 'Role', 'sans.role@test.com', 'hash');
+VALUES ('Sans', 'Role', 'sans.role@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 
 SET CONSTRAINTS ALL IMMEDIATE;
 
@@ -65,7 +65,7 @@ SELECT results_eq(
 SET CONSTRAINTS ALL DEFERRED;
 
 INSERT INTO users (first_name, last_name, email, password)
-VALUES ('Avec', 'Role', 'avec.role@test.com', 'hash');
+VALUES ('Avec', 'Role', 'avec.role@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r

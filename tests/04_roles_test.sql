@@ -38,7 +38,7 @@ SELECT throws_ok(
 
 -- Préparation : Un utilisateur de test
 INSERT INTO users (id, first_name, last_name, email, password, status)
-VALUES (200, 'Marc', 'RoleTest', 'marc@test.com', 'pwd', 'active');
+VALUES (200, 'Marc', 'RoleTest', 'marc@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active');
 
 -- Test attribution de rôle
 INSERT INTO user_roles (user_id, role_id)
