@@ -10,10 +10,11 @@ jobs:
       contents: write
     if: github.actor == 'renovate[bot]'
     steps:
-      - uses: hmarr/auto-approve-action@v4
+      # Non-critical: only approves Renovate PRs, so the mutable tag is accepted.
+      - uses: hmarr/auto-approve-action@v4 # nosemgrep: yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       # - uses: hmarr/auto-approve-action@v4
       #   with:
       #     github-token: ${{ secrets.MY_TECH_ACCOUNT_PAT }}
