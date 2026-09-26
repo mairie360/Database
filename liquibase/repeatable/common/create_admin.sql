@@ -39,9 +39,23 @@ BEGIN
         VALUES ('Admin', 'User', v_template_email, v_template_password, 'active', FALSE)
         ON CONFLICT (email) DO NOTHING;
 
+        -- Instances created before MAIR-169 still hold the seed password in
+        -- plaintext (grandfathered by the NOT VALID chk_users_password_hashed).
+        -- v_template_password is the argon2id hash of that same value, so
+        -- swap it in: the password does not change, only its storage.
+        UPDATE users
+        SET password = v_template_password
+        WHERE id = 1
+          AND email = v_template_email
+          AND password = 'password_template';
+
+        -- Any other plaintext row must not be updated here: the constraint
+        -- is enforced again on UPDATE and would fail the whole migration.
         UPDATE users
         SET first_connect = FALSE
-        WHERE id = 1;
+        WHERE id = 1
+          AND first_connect IS DISTINCT FROM FALSE
+          AND password LIKE '$argon2id$%';
 
         INSERT INTO user_roles (user_id, role_id)
         VALUES (1, 1)
