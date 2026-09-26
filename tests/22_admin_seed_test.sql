@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(7);
+SELECT plan(10);
 
 -- MAIR-170: repeatable/common/create_admin.sql seeds the id = 1 admin
 -- account. docker-compose-test.yml runs the migration without
@@ -81,6 +81,45 @@ SELECT is(
     (SELECT password FROM users WHERE id = 1),
     '$argon2id$v=19$m=19456,t=2,p=1$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'::varchar,
     'A customized admin account keeps its own password across a later changeset replay'
+);
+
+-- Test 8-10: an instance created before MAIR-169 still holds the seed
+-- password in plaintext on id = 1 (grandfathered by the NOT VALID
+-- constraint). The unparameterized branch must replace it with the template
+-- hash (same password, hashed) and replay without failing
+-- chk_users_password_hashed.
+UPDATE users
+SET email = 'template.email@gmail.com'
+WHERE id = 1;
+ALTER TABLE users DROP CONSTRAINT chk_users_password_hashed;
+UPDATE users SET password = 'password_template', first_connect = TRUE WHERE id = 1;
+ALTER TABLE users ADD CONSTRAINT chk_users_password_hashed
+    CHECK (password ~ '^\$argon2id\$v=\d+\$m=\d+,t=\d+,p=\d+\$[A-Za-z0-9+/]+\$[A-Za-z0-9+/]+$') NOT VALID;
+
+SELECT lives_ok(
+    $$UPDATE users
+      SET password = '$argon2id$v=19$m=19456,t=2,p=1$/iKF9PbiDRDs4EKPjlIIhg$UKx9vfwwps250mEP/bYp63CXbEnQGULeUAhDq+az9Aw'
+      WHERE id = 1
+        AND email = 'template.email@gmail.com'
+        AND password = 'password_template';
+      UPDATE users
+      SET first_connect = FALSE
+      WHERE id = 1
+        AND first_connect IS DISTINCT FROM FALSE
+        AND password LIKE '$argon2id$%'$$,
+    'Replaying the unparameterized seed on a legacy plaintext admin does not fail'
+);
+
+SELECT is(
+    (SELECT password FROM users WHERE id = 1),
+    '$argon2id$v=19$m=19456,t=2,p=1$/iKF9PbiDRDs4EKPjlIIhg$UKx9vfwwps250mEP/bYp63CXbEnQGULeUAhDq+az9Aw'::varchar,
+    'A legacy plaintext admin password is replaced by its argon2id hash'
+);
+
+SELECT is(
+    (SELECT first_connect FROM users WHERE id = 1),
+    FALSE,
+    'The migrated template admin account does not force a first-connect password change'
 );
 
 SELECT * FROM finish();
