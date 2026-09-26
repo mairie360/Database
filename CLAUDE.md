@@ -87,7 +87,17 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    that never reconnect); hashing itself happens outside Postgres (pgcrypto
    has no argon2id), so this repo only stores and validates the hash shape.
 
-5. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+5. **`releases/v1.4.0/changelog-v1.4.0.xml`** — SSO identities (MAIR-141):
+   `user_identities` (`user_id`, `provider`, `subject`; unique per
+   `(provider, subject)` and per `(user_id, provider)`) and `users.password`
+   made nullable for SSO-only accounts (`chk_users_password_hashed` still
+   applies to non-NULL values). The behaviour lives in `repeatable/auth/`:
+   `link_user_identity()` (idempotent write path of the Keycloak migration
+   job), `resolve_user_identity()` (SSO login, NULL for archived users) and
+   `v_users_sso_export` (users + role names + provider links the job reads).
+   The migration job itself (Keycloak side) is not in this repo.
+
+6. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,

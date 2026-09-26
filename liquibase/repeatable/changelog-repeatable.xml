@@ -13,6 +13,13 @@
             splitStatements="false"
         />
     </changeSet>
+    <changeSet id="rep-views-users-sso-export" author="dev" runOnChange="true">
+        <sqlFile
+            path="auth/v_users_sso_export.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
     <changeSet id="rep-views-sessions" author="dev" runOnChange="true">
         <sqlFile
             path="sessions/v_sessions.sql"
@@ -103,6 +110,20 @@
     <changeSet id="rep-functions-users-migrate-legacy-password" author="dev" runOnChange="true">
         <sqlFile
             path="users/migrate_legacy_password.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-auth-link-identity" author="dev" runOnChange="true">
+        <sqlFile
+            path="auth/link_user_identity.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-functions-auth-resolve-identity" author="dev" runOnChange="true">
+        <sqlFile
+            path="auth/resolve_user_identity.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />
@@ -300,6 +321,13 @@
     <changeSet id="rep-triggers-users" author="dev" runOnChange="true">
         <sqlFile
             path="users/trigger_user_update.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet id="rep-triggers-user-identities-updated-at" author="dev" runOnChange="true">
+        <sqlFile
+            path="auth/trg_user_identities_updated_at.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />

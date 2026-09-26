@@ -27,6 +27,11 @@
     />
 
     <include
+        file="releases/v1.4.0/changelog-v1.4.0.xml"
+        relativeToChangelogFile="true"
+    />
+
+    <include
         file="repeatable/changelog-repeatable.xml"
         relativeToChangelogFile="true"
     />
