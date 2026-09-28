@@ -97,7 +97,22 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    `v_users_sso_export` (users + role names + provider links the job reads).
    The migration job itself (Keycloak side) is not in this repo.
 
-6. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+6. **`releases/v1.5.0/changelog-v1.5.0.xml`** — explicit read acknowledgement (MAIR-269):
+   `conversation_read_cursors` (`user_id`, `conversation_id`, `last_read_message_id`; kept apart
+   from `unread_counters` because those rows are deleted when they reach zero, which would forget
+   the cursor), `idx_messages_conversation_id_id` for the recount, and `messages.id` loses its
+   column default. The behaviour lives in `repeatable/messages/`: `fn_acknowledge_read()` moves the
+   cursor forward only (`GREATEST`), recounts the messages after it written by someone else
+   (recipients only: group members of a group conversation, non-excluded members of a direct one)
+   and rewrites `unread_counters`; it answers NULL when the message is not in the conversation.
+   `fn_before_message_insert()` (`BEFORE INSERT` on `messages`) takes
+   `pg_advisory_xact_lock(360, conversation_id)` — the same lock as the acknowledgement, held until
+   commit — and only then draws the id (`nextval` when none is given, explicit ids are kept), so
+   within a conversation a message committed later always has a higher id and one cursor is enough.
+   No backfill: existing counters are left as is and corrected by the first acknowledgement.
+   Deploy it before (or with) the Message_API release that calls `fn_acknowledge_read`.
+
+7. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,

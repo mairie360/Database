@@ -98,7 +98,8 @@ GRANT SELECT ON roles, user_roles, group_members TO calendar_api;
 -- message_api: conversations and messages
 -- ---------------------------------------------------------------------------
 GRANT SELECT, INSERT, UPDATE, DELETE ON conversations, conversation_members,
-    messages, unread_counters, message_mentions, message_business_links TO message_api;
+    messages, unread_counters, conversation_read_cursors, message_mentions,
+    message_business_links TO message_api;
 
 -- Group conversations notify every member of the group
 -- (fn_auto_increment_unread_counter).
