@@ -299,6 +299,28 @@
         />
     </changeSet>
     <changeSet
+        id="rep-functions-messages-serialize-inserts"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="messages/fn_serialize_message_inserts.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet
+        id="rep-functions-messages-acknowledge-read"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="messages/fn_acknowledge_read.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+    <changeSet
         id="rep-functions-elearning-progress"
         author="dev"
         runOnChange="true"
