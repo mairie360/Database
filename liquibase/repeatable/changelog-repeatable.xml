@@ -369,6 +369,14 @@
         />
     </changeSet>
 
+    <changeSet id="rep-retention-policies" author="dev" runOnChange="true">
+        <sqlFile
+            path="retention/fn_apply_retention_policies.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+    </changeSet>
+
     <!-- Per-API Postgres roles and their privileges (MAIR-114). Must stay last:
          grants reference every table and view created above. runAlways so a
          rotated -D<role>_password is applied and tables recreated by a
