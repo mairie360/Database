@@ -112,7 +112,19 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    No backfill: existing counters are left as is and corrected by the first acknowledgement.
    Deploy it before (or with) the Message_API release that calls `fn_acknowledge_read`.
 
-7. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+7. **`releases/v1.6.0/changelog-v1.6.0.xml`** — validates the constraints left `NOT VALID` by
+   v1.2.0/v1.3.0 (MAIR-236). Legacy rows are repaired first with the least destructive fix (dangling
+   reference or out-of-range value reset to NULL/default, a file-based attachment without URL is
+   re-typed `other`; nothing is deleted), then `VALIDATE CONSTRAINT` runs. `chk_users_password_hashed`
+   is validated only when no plaintext password remains, otherwise it stays `NOT VALID` with a
+   NOTICE. The retention side lives in `repeatable/retention/`: `fn_ensure_access_logs_partitions()`
+   (monthly `access_logs_yYYYYmMM` partitions, moves rows out of the DEFAULT partition, also run at
+   deploy) and `fn_apply_retention_policies()` (deletes expired `sessions`, drops expired
+   `access_logs` partitions; `COLD_STORAGE` policies are skipped, no target exists yet). Neither is
+   executable by PUBLIC/API roles; the platform must schedule the latter (CronJob in Deploiment,
+   not part of this repo).
+
+8. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,
