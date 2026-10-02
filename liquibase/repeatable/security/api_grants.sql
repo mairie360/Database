@@ -41,9 +41,12 @@ $$;
 -- ---------------------------------------------------------------------------
 -- API_lib JwtMiddleware checks that the token's user exists (DoesUserExistById).
 GRANT SELECT (id) ON users TO core_api, project_api, calendar_api, message_api, elearning_api;
--- check_access() and is_admin() are SECURITY DEFINER and executable by
--- PUBLIC (the default), so RightMiddleware / AdminMiddleware work for every
--- API without reading the RBAC tables.
+-- check_access() and is_admin() are SECURITY DEFINER, so RightMiddleware /
+-- AdminMiddleware work for every API without reading the RBAC tables.
+-- check_access() writes access_logs, so it is revoked from PUBLIC
+-- (access/fn_check_access.sql) and granted to the API roles only (MAIR-413).
+GRANT EXECUTE ON FUNCTION check_access(INT, VARCHAR, VARCHAR, INT)
+    TO core_api, project_api, calendar_api, message_api, elearning_api;
 
 -- ---------------------------------------------------------------------------
 -- core_api: users, auth, sessions, roles, groups, RBAC and ACL

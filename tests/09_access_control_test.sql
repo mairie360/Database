@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(18);
+SELECT plan(22);
 
 ---
 --- 1. PRÉPARATION
@@ -112,6 +112,28 @@ SELECT is(
     (SELECT COUNT(*)::INT FROM access_logs WHERE reason IN ('INSTANCE_NOT_FOUND', 'RESOURCE_TABLE_NOT_FOUND')),
     0,
     'Vérification qu''aucun log d''audit n''est écrit pour les erreurs 404'
+);
+
+---
+--- 9. MAIR-413 (4 tests)
+---
+-- Only tables declared in `resources` can be queried: an existing table that
+-- is not a resource is not an existence oracle.
+SELECT is(check_access(402, 'access_logs', 'read', 1), -1, 'A table that is not a resource is refused as unknown');
+
+-- An unknown user is denied without writing a log.
+SELECT is(check_access(-1, 'groups', 'read', 50), 0, 'An unknown user is denied');
+
+-- An archived admin keeps its roles but is denied, and the reason is logged.
+INSERT INTO users (id, first_name, last_name, email, password, status, is_archived)
+VALUES (403, 'Archived', 'Admin', 'archived_acl@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'archived', true);
+INSERT INTO user_roles (user_id, role_id)
+VALUES (403, (SELECT id FROM roles WHERE name = 'Admin'));
+SELECT is(check_access(403, 'groups', 'delete', 50), 0, 'An archived admin is denied');
+SELECT is(
+    (SELECT reason FROM access_logs ORDER BY id DESC LIMIT 1),
+    'USER_ARCHIVED',
+    'Log: USER_ARCHIVED'
 );
 
 SELECT * FROM finish();

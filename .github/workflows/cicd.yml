@@ -14,7 +14,7 @@ jobs:
     uses: mairie360/CICD/.github/workflows/database_cicd.yml@v3.2.0
     with:
       package_name: database
-      cicd_version: v3.1.1
+      cicd_version: v3.2.0
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       N8N_WEBHOOK_SECRET: ${{ secrets.N8N_WEBHOOK_SECRET }}

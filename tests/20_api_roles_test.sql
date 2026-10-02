@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(30);
+SELECT plan(31);
 
 -- Per-API Postgres roles (MAIR-114): security/api_roles.sql and
 -- security/api_grants.sql. The migration is run with -D<role>_password in
@@ -324,6 +324,13 @@ SELECT is(
      WHERE pg_temp.run_as(r.name, $$SELECT check_access(2000, 'groups', 'read', 2000), is_admin(2000)$$) = 'ok'),
     5,
     'Every API role can call check_access and is_admin'
+);
+
+-- Test 30: check_access writes access_logs, so only the API roles may call it
+-- (MAIR-413).
+SELECT ok(
+    NOT has_function_privilege('public', 'check_access(integer, character varying, character varying, integer)', 'EXECUTE'),
+    'PUBLIC cannot call check_access'
 );
 
 SELECT * FROM finish();

@@ -1,0 +1,42 @@
+# Upgrade test (MAIR-413), run by test.sh after the unit tests: migrates an
+# empty database to the release deployed in prod (UPGRADE_BASELINE, extracted
+# by test.sh into .upgrade-baseline/), loads a data set, then applies HEAD on
+# top of it. See tests/upgrade/run.sh.
+name: database-upgrade
+
+services:
+  database:
+    build:
+      context: .
+      dockerfile: tests/db.Dockerfile
+    container_name: mairie360-upgrade-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: core
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d core"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  tester:
+    build:
+      context: .
+      dockerfile: tests/test.Dockerfile
+    container_name: mairie360-upgrade-tester
+    environment:
+      - PGHOST=database
+      - PGUSER=postgres
+      - PGPASSWORD=password
+      - PGDATABASE=core
+      - LIQUIBASE_COMMAND_URL=jdbc:postgresql://database:5432/core
+      - LIQUIBASE_COMMAND_USERNAME=postgres
+      - LIQUIBASE_COMMAND_PASSWORD=password
+      - LIQUIBASE_COMMAND_DRIVER=org.postgresql.Driver
+    volumes:
+      - ./.upgrade-baseline/liquibase:/baseline/liquibase:ro
+    depends_on:
+      database:
+        condition: service_healthy
+    command: sh /workspace/tests/upgrade/run.sh

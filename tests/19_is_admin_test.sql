@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(6);
+SELECT plan(7);
 
 -- Les rôles de base (Admin, Maire, Responsable, User, Guest) sont seedés par
 -- 03__init_roles.sql. Le trigger différé tr_users_default_role_guest est forcé
@@ -72,6 +72,15 @@ SELECT ok(
 SELECT ok(
     NOT is_admin(-1),
     'is_admin doit renvoyer faux pour un utilisateur inexistant'
+);
+
+-- Test 6: an archived account keeps its Admin role (restore_user gives it
+-- back) but is no longer admin (MAIR-413).
+UPDATE users SET is_archived = TRUE WHERE email = 'ada.admin@test.com';
+
+SELECT ok(
+    NOT is_admin((SELECT id FROM users WHERE email = 'ada.admin@test.com')),
+    'is_admin returns false for an archived Admin'
 );
 
 SELECT * FROM finish();
