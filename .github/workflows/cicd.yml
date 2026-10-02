@@ -8,14 +8,14 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write  # cosign keyless signature in release-dev (CICD v4)
 
 jobs:
   Database-cicd:
     uses: mairie360/CICD/.github/workflows/database_cicd.yml@v4.0.0
     with:
       package_name: database
-      cicd_version: v3.1.1
+      cicd_version: v4.0.0
     secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
       N8N_WEBHOOK_SECRET: ${{ secrets.N8N_WEBHOOK_SECRET }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
