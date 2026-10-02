@@ -51,7 +51,8 @@ default `v1.3.0`, fetched with `git fetch --depth 1` when the tag is missing)
 into `.upgrade-baseline/`, migrates an empty database with it, loads
 `tests/upgrade/seed.sql`, checks that HEAD refuses to migrate without admin
 credentials, applies HEAD twice with credentials (runAlways replay), rolls back
-to the last release tag and updates again, then `pg_prove`s
+to the previous release tag (so the newest release's `<rollback>`s run) and updates
+again, then `pg_prove`s
 `tests/upgrade/*_test.sql`. Bump `UPGRADE_BASELINE` together with the prod
 `liquibase.image.tag` in Deploiment. Git tags (semantic-release versions) and
 `releases/vX.Y.Z/` folder names are unrelated: tag `v1.3.0` only contains
@@ -142,18 +143,39 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    differ only by case. First release with a `<rollback>` on each changeset and a closing
    `tagDatabase` (`v1.7.0`): keep doing both in every new release. Older releases have no
    rollback, going back past v1.7.0 means restoring a dump.
-8. **`releases/v1.8.0/changelog-v1.8.0.xml`** — task description, comments and history (MAIR-393).
-   `tasks.description` (`TEXT NOT NULL DEFAULT ''`, ≤ 5000 chars) and `tasks.updated_by` (author of the
-   last write, set by Project_API on every INSERT/UPDATE; NULL = system write, e.g. `fn_archive_user()`).
-   `task_comments` (`task_id`, `author_id`, `message` 1–2000 chars, `created_at`) replaces
-   `tasks.custom_fields->'comments'`. `task_history` gains `action` (`task_created` / `task_updated` /
-   `status_changed`), `changes` (`{"<field>": {"from", "to"}}`) and `label` (free text of migrated legacy
-   entries only), and is written exclusively by `repeatable/project/fn_log_task_change.sql`
-   (`SECURITY DEFINER`, `AFTER INSERT OR UPDATE ON tasks`, signs with `NEW.updated_by`); project_api only
-   has `SELECT` on it. The legacy `custom_fields` `comments` / `history` arrays are moved into the tables
-   and stripped from the JSONB. Numbered v1.8.0 because v1.7.0 is taken by MAIR-413.
 
-9. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+9. **`releases/v1.8.0/changelog-v1.8.0.xml`** — schema side of the 2 October 2026 audit of the
+   APIs, one changeset per file, each with a `<rollback>` (`NN__x.rollback.sql`), closed by the
+   `v1.8.0` tag. Deploy it before (or with) the API releases that use these columns.
+   - `01__event_approval` (MAIR-392): the approval of an event lives on `events` (`approval_status`
+     `event_validation_status`, `approval_decided_by` → `users` `ON DELETE SET NULL`,
+     `approval_decided_at`; `chk_events_approval_decision`: a pending event carries no decision),
+     backfilled from the member statuses (`refused` > `pending` > `validated`).
+     `event_members.validation_status` is kept but no longer read by Calendar_API.
+     `v_securable_events` (`events.*`) is recreated so it carries the new columns.
+   - `02__task_description_comments_history` (MAIR-393): `tasks.description` (`TEXT NOT NULL
+     DEFAULT ''`, ≤ 5000 chars) and `tasks.updated_by` (author of the last write, set by Project_API
+     on every INSERT/UPDATE; NULL = system write, e.g. `fn_archive_user()`). `task_comments`
+     (`task_id`, `author_id`, `message` 1–2000 chars, `created_at`) replaces
+     `tasks.custom_fields->'comments'`. `task_history` gains `action` (`task_created` /
+     `task_updated` / `status_changed`), `changes` (`{"<field>": {"from", "to"}}`) and `label` (free
+     text of migrated legacy entries only), and is written exclusively by
+     `repeatable/project/fn_log_task_change.sql` (`SECURITY DEFINER`, `AFTER INSERT OR UPDATE ON
+     tasks`, signs with `NEW.updated_by`); project_api only has `SELECT` on it. The legacy
+     `custom_fields` `comments` / `history` arrays are moved into the tables and stripped from the
+     JSONB (the rollback puts them back).
+   - `03__conversation_creator_and_replies` (MAIR-394): `conversations.created_by` (creator,
+     `ON DELETE SET NULL`, backfilled with the earliest member): only the creator or an
+     administrator may add members or remove someone else. `messages.reply_to_id` (the API's
+     `citation`) with a composite foreign key `(conversation_id, reply_to_id) → messages
+     (conversation_id, id)` `ON DELETE SET NULL (reply_to_id)`, so a reply always quotes a message
+     of the same conversation (`uq_messages_conversation_id_id` backs it).
+   - `04__messaging_moderation_log` (MAIR-394): no foreign key, snapshot of the deleted content;
+     one row per message of someone else or conversation deleted by an administrator,
+     INSERT-only for `message_api`.
+
+
+10. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,

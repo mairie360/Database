@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(20);
+SELECT plan(26);
 
 ---
 --- Admin account
@@ -71,10 +71,49 @@ SELECT ok(
     'The database is tagged v1.7.0'
 );
 
+-- Test 17-21: v1.8.0 on existing data (MAIR-392/393/394). run.sh rolled
+-- v1.8.0 back and applied it again, so the legacy task comments went back to
+-- custom_fields and were migrated a second time: they must not be duplicated.
+SELECT is(
+    (SELECT approval_status::TEXT FROM events WHERE id = 100),
+    'pending',
+    'An event with a pending member is pending'
+);
+
+SELECT results_eq(
+    $$SELECT author_id, message FROM task_comments WHERE task_id = 101$$,
+    $$VALUES (100, 'Barriers ordered'::TEXT)$$,
+    'Legacy task comments are migrated once'
+);
+
+SELECT results_eq(
+    $$SELECT changed_by, action::TEXT, label FROM task_history WHERE task_id = 101 AND label IS NOT NULL$$,
+    $$VALUES (101, 'task_updated', 'Title changed'::TEXT)$$,
+    'Legacy task history is migrated once'
+);
+
+SELECT is(
+    (SELECT custom_fields FROM tasks WHERE id = 101),
+    '{"fields": [{"label": "Budget"}]}'::JSONB,
+    'Legacy comments and history are stripped from custom_fields'
+);
+
+SELECT is(
+    (SELECT created_by FROM conversations WHERE id = 101),
+    100,
+    'A conversation creator is backfilled with its earliest member'
+);
+
+-- Test 22
+SELECT ok(
+    EXISTS (SELECT 1 FROM databasechangelog WHERE tag = 'v1.8.0'),
+    'The database is tagged v1.8.0'
+);
+
 ---
 --- Archived accounts and privileges
 ---
--- Test 17-18: archived before the upgrade, the admin keeps its role row but
+-- Test 23-24: archived before the upgrade, the admin keeps its role row but
 -- loses its rights.
 SELECT ok(
     EXISTS (SELECT 1 FROM user_roles WHERE user_id = 103 AND role_id = 1) AND NOT is_admin(103),
@@ -83,7 +122,7 @@ SELECT ok(
 
 SELECT is(check_access(103, 'groups', 'delete', 100), 0, 'An archived admin is denied by check_access');
 
--- Test 19-20: the runAlways grants are applied on the existing database.
+-- Test 25-26: the runAlways grants are applied on the existing database.
 SELECT ok(
     has_table_privilege('core_api', 'users', 'SELECT')
     AND has_function_privilege('core_api', 'check_access(integer, character varying, character varying, integer)', 'EXECUTE'),

@@ -110,6 +110,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON conversations, conversation_members,
 -- (fn_auto_increment_unread_counter).
 GRANT SELECT ON group_members TO message_api;
 
+-- Moderation by administrators (MAIR-394): the log is append-only for the API.
+GRANT INSERT ON messaging_moderation_log TO message_api;
+
 -- ---------------------------------------------------------------------------
 -- elearning_api: courses and learner progress
 -- ---------------------------------------------------------------------------

@@ -6,7 +6,8 @@
 #   3. HEAD without admin credentials: must fail while the template admin
 #      account is still there,
 #   4. HEAD with admin credentials, then a second time (runAlways replay),
-#   5. rollback to the last release tag and update again,
+#   5. rollback to the previous release tag (undoes the newest release) and
+#      update again,
 #   6. pg_prove tests/upgrade/*_test.sql on the result.
 #
 # Runs in the tester container of docker-compose-upgrade.yml.
@@ -63,11 +64,13 @@ for run in 1 2; do
         -Dadmin_email="$ADMIN_EMAIL" -Dadmin_password="$ADMIN_PASSWORD"
 done
 
-echo '--- 5. ROLLBACK TO THE LAST RELEASE TAG, THEN UPDATE ---'
-last_tag="$(psql -At -c "SELECT tag FROM databasechangelog WHERE tag IS NOT NULL ORDER BY orderexecuted DESC LIMIT 1")"
-echo "rolling back to $last_tag"
+echo '--- 5. ROLLBACK TO THE PREVIOUS RELEASE TAG, THEN UPDATE ---'
+# The tag before the last one, so the rollback of the newest release runs; the
+# last one when HEAD only adds one tag.
+rollback_tag="$(psql -At -c "SELECT tag FROM (SELECT tag, orderexecuted FROM databasechangelog WHERE tag IS NOT NULL ORDER BY orderexecuted DESC LIMIT 2) t ORDER BY orderexecuted LIMIT 1")"
+echo "rolling back to $rollback_tag"
 # shellcheck disable=SC2086
-liquibase_at /workspace/liquibase rollback --tag="$last_tag" $ROLE_PARAMS
+liquibase_at /workspace/liquibase rollback --tag="$rollback_tag" $ROLE_PARAMS
 # shellcheck disable=SC2086
 liquibase_at /workspace/liquibase update $ROLE_PARAMS \
     -Dadmin_email="$ADMIN_EMAIL" -Dadmin_password="$ADMIN_PASSWORD"

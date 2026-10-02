@@ -39,3 +39,14 @@ UPDATE events e SET approval_status = CASE
         THEN 'pending'
     ELSE 'validated'
 END::event_validation_status;
+
+-- v_securable_events selects `events.*`, frozen when the view is created: refresh it so it
+-- carries the approval columns on an existing database as on a new one (repeatable
+-- calendar/v_securable_events.sql only re-runs when the file changes, and CREATE OR REPLACE
+-- VIEW cannot insert columns before `resource_id`).
+DROP VIEW IF EXISTS v_securable_events;
+CREATE VIEW v_securable_events AS
+SELECT
+    u.*,
+    (SELECT id FROM resources WHERE name = 'events') as resource_id
+FROM events u;
