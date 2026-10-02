@@ -3,6 +3,7 @@ name: Database CI/CD
 on:
   workflow_dispatch:
   push:
+    branches: [main]  # other branches are covered by the pull_request run
   pull_request:
 
 permissions:
