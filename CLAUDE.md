@@ -124,7 +124,17 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    executable by PUBLIC/API roles; the platform must schedule the latter (CronJob in Deploiment,
    not part of this repo).
 
-8. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+8. **`releases/v1.8.0/changelog-v1.8.0.xml`** — Message_API audit fixes (MAIR-394; `v1.7.0` is left
+   to the MAIR-413 work in progress). `conversations.created_by` (creator, `ON DELETE SET NULL`,
+   backfilled with the earliest member): only the creator or an administrator may add members or
+   remove someone else. `messages.reply_to_id` (the API's `citation`) with a composite foreign key
+   `(conversation_id, reply_to_id) → messages (conversation_id, id)` `ON DELETE SET NULL (reply_to_id)`,
+   so a reply always quotes a message of the same conversation (`uq_messages_conversation_id_id` backs
+   it). `messaging_moderation_log` (no foreign key, snapshot of the deleted content): one row per
+   message of someone else or conversation deleted by an administrator, INSERT-only for `message_api`.
+   Deploy it before (or with) the Message_API release that reads these columns.
+
+9. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,

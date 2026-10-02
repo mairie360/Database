@@ -132,7 +132,8 @@ SELECT results_eq(
 SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('message_api')$$,
     $$VALUES ('conversation_members'), ('conversation_read_cursors'), ('conversations'),
-             ('message_business_links'), ('message_mentions'), ('messages'), ('unread_counters')$$,
+             ('message_business_links'), ('message_mentions'), ('messages'),
+             ('messaging_moderation_log'), ('unread_counters')$$,
     'message_api writes only to the messaging domain'
 );
 SELECT results_eq(
