@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 RUN curl -L https://github.com/liquibase/liquibase/releases/download/v4.25.1/liquibase-4.25.1.tar.gz | tar -xz -C /usr/local/bin
 
 # Téléchargement du driver JDBC (pour que Liquibase puisse parler à la DB)
-RUN curl -L https://jdbc.postgresql.org/download/postgresql-42.7.2.jar -o /usr/local/bin/internal/lib/postgresql.jar
+RUN curl -L https://jdbc.postgresql.org/download/postgresql-42.7.13.jar -o /usr/local/bin/internal/lib/postgresql.jar
 
 WORKDIR /workspace
 COPY liquibase/ ./liquibase/
