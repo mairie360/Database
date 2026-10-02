@@ -120,7 +120,7 @@ SELECT results_eq(
 );
 SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('project_api')$$,
-    $$VALUES ('project_members'), ('projects'), ('task_assignees'), ('task_history'), ('tasks')$$,
+    $$VALUES ('project_members'), ('projects'), ('task_assignees'), ('task_comments'), ('tasks')$$,
     'project_api writes only to the project domain'
 );
 SELECT results_eq(

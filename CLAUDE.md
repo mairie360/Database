@@ -124,7 +124,18 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    executable by PUBLIC/API roles; the platform must schedule the latter (CronJob in Deploiment,
    not part of this repo).
 
-8. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+8. **`releases/v1.8.0/changelog-v1.8.0.xml`** — task description, comments and history (MAIR-393).
+   `tasks.description` (`TEXT NOT NULL DEFAULT ''`, ≤ 5000 chars) and `tasks.updated_by` (author of the
+   last write, set by Project_API on every INSERT/UPDATE; NULL = system write, e.g. `fn_archive_user()`).
+   `task_comments` (`task_id`, `author_id`, `message` 1–2000 chars, `created_at`) replaces
+   `tasks.custom_fields->'comments'`. `task_history` gains `action` (`task_created` / `task_updated` /
+   `status_changed`), `changes` (`{"<field>": {"from", "to"}}`) and `label` (free text of migrated legacy
+   entries only), and is written exclusively by `repeatable/project/fn_log_task_change.sql`
+   (`SECURITY DEFINER`, `AFTER INSERT OR UPDATE ON tasks`, signs with `NEW.updated_by`); project_api only
+   has `SELECT` on it. The legacy `custom_fields` `comments` / `history` arrays are moved into the tables
+   and stripped from the JSONB. Numbered v1.8.0 because v1.7.0 is taken by MAIR-413.
+
+9. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,

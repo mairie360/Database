@@ -76,8 +76,10 @@ GRANT SELECT (id, owner_id) ON events TO core_api;
 -- ---------------------------------------------------------------------------
 -- project_api: projects and tasks
 -- ---------------------------------------------------------------------------
-GRANT SELECT, INSERT, UPDATE, DELETE ON projects, project_members, tasks,
-    task_assignees, task_history TO project_api;
+GRANT SELECT, INSERT, UPDATE, DELETE ON projects, project_members, tasks, task_comments,
+    task_assignees TO project_api;
+-- Written only by the SECURITY DEFINER fn_log_task_change() trigger (MAIR-393).
+GRANT SELECT ON task_history TO project_api;
 
 -- Author names, manager roles and team (group) visibility.
 GRANT SELECT (id, first_name, last_name) ON users TO project_api;

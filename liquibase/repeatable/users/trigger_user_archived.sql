@@ -8,7 +8,8 @@ BEGIN
     DELETE FROM project_members WHERE user_id = OLD.id;
 
     -- Désassignation des tâches
-    UPDATE tasks SET assigned_to = NULL WHERE assigned_to = OLD.id;
+    -- updated_by = NULL: the history entry is a system write, not the last editor's.
+    UPDATE tasks SET assigned_to = NULL, updated_by = NULL WHERE assigned_to = OLD.id;
 
     -- Suppression des compteurs non lus (si nécessaire)
     DELETE FROM unread_counters WHERE user_id = OLD.id;
