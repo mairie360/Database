@@ -377,7 +377,7 @@
     </changeSet>
     <changeSet id="rep-functions-project-log" author="dev" runOnChange="true">
         <sqlFile
-            path="project/fn_log_task_status_change.sql"
+            path="project/fn_log_task_change.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />

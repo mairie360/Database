@@ -12,4 +12,10 @@
             relativeToChangelogFile="true"
         /></changeSet>
 
+    <changeSet id="rel-1.8.0-02" author="dev"><sqlFile
+            path="02__task_description_comments_history.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+
 </databaseChangeLog>
