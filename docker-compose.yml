@@ -37,9 +37,11 @@ services:
       - LIQUIBASE_COMMAND_URL=jdbc:postgresql://mairie360-db:5432/core
       - LIQUIBASE_COMMAND_USERNAME=postgres
       - LIQUIBASE_COMMAND_PASSWORD=password
-      - LIQUIBASE_SEARCH_PATH=/migrations,/migrations/releases/v1.0.0,/migrations/releases/v1.1.0,/migrations/releases/v1.2.0,/migrations/releases/v1.3.0,/migrations/releases/v1.4.0,/migrations/releases/v1.5.0,/migrations/releases/v1.6.0,/migrations/repeatable
+      - LIQUIBASE_SEARCH_PATH=/migrations,/migrations/releases/v1.0.0,/migrations/releases/v1.1.0,/migrations/releases/v1.2.0,/migrations/releases/v1.3.0,/migrations/releases/v1.4.0,/migrations/releases/v1.5.0,/migrations/releases/v1.6.0,/migrations/releases/v1.7.0,/migrations/releases/v1.8.0,/migrations/repeatable
     # -D<role>_password: per-API role passwords (repeatable/security/api_roles.sql),
-    # dev-only values. They must come after the command for Liquibase 5.
+    # dev-only values. -Dallow_template_admin=true seeds the public template admin
+    # account (repeatable/common/create_admin.sql); never pass it on a real
+    # instance. They must come after the command for Liquibase 5.
     command: >
       --changelog-file=changelog.xml
       update
@@ -48,3 +50,4 @@ services:
       -Dcalendar_api_password=password
       -Dmessage_api_password=password
       -Delearning_api_password=password
+      -Dallow_template_admin=true

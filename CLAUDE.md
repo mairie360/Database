@@ -44,6 +44,20 @@ is reported but no minimum is enforced. `plpgsql_check` is built from source in 
 precompiled `postgresql-18-plpgsql-check` apt package is not ABI-compatible with
 the official `postgres:18.3-bookworm` image (`undefined symbol: palloc_mul`).
 
+After the unit tests, `test.sh` runs the **upgrade test** (MAIR-413,
+`docker-compose-upgrade.yml`, compose project `database-upgrade`): it extracts
+the `liquibase/` tree of the release deployed in prod (`UPGRADE_BASELINE`,
+default `v1.3.0`, fetched with `git fetch --depth 1` when the tag is missing)
+into `.upgrade-baseline/`, migrates an empty database with it, loads
+`tests/upgrade/seed.sql`, checks that HEAD refuses to migrate without admin
+credentials, applies HEAD twice with credentials (runAlways replay), rolls back
+to the previous release tag (so the newest release's `<rollback>`s run) and updates
+again, then `pg_prove`s
+`tests/upgrade/*_test.sql`. Bump `UPGRADE_BASELINE` together with the prod
+`liquibase.image.tag` in Deploiment. Git tags (semantic-release versions) and
+`releases/vX.Y.Z/` folder names are unrelated: tag `v1.3.0` only contains
+`releases/v1.0.0`–`v1.2.0`.
+
 There is no lint step and no way to run a single test file through `test.sh` — it
 always runs `pg_prove` over `tests/*.sql`. To run one file, exec into a running
 db container: `psql -U postgres -d core -f /path/to/tests/NN_x_test.sql` (each test
@@ -124,7 +138,44 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    executable by PUBLIC/API roles; the platform must schedule the latter (CronJob in Deploiment,
    not part of this repo).
 
-8. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+8. **`releases/v1.7.0/changelog-v1.7.0.xml`** — `uq_users_email_lower`, unique index on
+   `lower(email)` (MAIR-413); the migration stops and lists the accounts when two e-mails
+   differ only by case. First release with a `<rollback>` on each changeset and a closing
+   `tagDatabase` (`v1.7.0`): keep doing both in every new release. Older releases have no
+   rollback, going back past v1.7.0 means restoring a dump.
+
+9. **`releases/v1.8.0/changelog-v1.8.0.xml`** — schema side of the 2 October 2026 audit of the
+   APIs, one changeset per file, each with a `<rollback>` (`NN__x.rollback.sql`), closed by the
+   `v1.8.0` tag. Deploy it before (or with) the API releases that use these columns.
+   - `01__event_approval` (MAIR-392): the approval of an event lives on `events` (`approval_status`
+     `event_validation_status`, `approval_decided_by` → `users` `ON DELETE SET NULL`,
+     `approval_decided_at`; `chk_events_approval_decision`: a pending event carries no decision),
+     backfilled from the member statuses (`refused` > `pending` > `validated`).
+     `event_members.validation_status` is kept but no longer read by Calendar_API.
+     `v_securable_events` (`events.*`) is recreated so it carries the new columns.
+   - `02__task_description_comments_history` (MAIR-393): `tasks.description` (`TEXT NOT NULL
+     DEFAULT ''`, ≤ 5000 chars) and `tasks.updated_by` (author of the last write, set by Project_API
+     on every INSERT/UPDATE; NULL = system write, e.g. `fn_archive_user()`). `task_comments`
+     (`task_id`, `author_id`, `message` 1–2000 chars, `created_at`) replaces
+     `tasks.custom_fields->'comments'`. `task_history` gains `action` (`task_created` /
+     `task_updated` / `status_changed`), `changes` (`{"<field>": {"from", "to"}}`) and `label` (free
+     text of migrated legacy entries only), and is written exclusively by
+     `repeatable/project/fn_log_task_change.sql` (`SECURITY DEFINER`, `AFTER INSERT OR UPDATE ON
+     tasks`, signs with `NEW.updated_by`); project_api only has `SELECT` on it. The legacy
+     `custom_fields` `comments` / `history` arrays are moved into the tables and stripped from the
+     JSONB (the rollback puts them back).
+   - `03__conversation_creator_and_replies` (MAIR-394): `conversations.created_by` (creator,
+     `ON DELETE SET NULL`, backfilled with the earliest member): only the creator or an
+     administrator may add members or remove someone else. `messages.reply_to_id` (the API's
+     `citation`) with a composite foreign key `(conversation_id, reply_to_id) → messages
+     (conversation_id, id)` `ON DELETE SET NULL (reply_to_id)`, so a reply always quotes a message
+     of the same conversation (`uq_messages_conversation_id_id` backs it).
+   - `04__messaging_moderation_log` (MAIR-394): no foreign key, snapshot of the deleted content;
+     one row per message of someone else or conversation deleted by an administrator,
+     INSERT-only for `message_api`.
+
+
+10. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,
@@ -132,7 +183,8 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    `security/`, `sessions/`, `users/`. Order within the file matters: views first,
    then shared helpers, then per-domain functions, then triggers. Adding a `.sql`
    file here does nothing until you also add a `runOnChange="true"` changeset for
-   it in `changelog-repeatable.xml`.
+   it in `changelog-repeatable.xml`, with an empty `<rollback/>` like the others
+   (a rollback only forgets the changeset, the next `update` re-applies the file).
 
 ### Rules for changing the schema
 
@@ -158,7 +210,10 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
   `resource_instance_id` and granted to either a `user_id` or a `group_id` (XOR
   constraint). `check_access(user_id, resource_name, action, instance_id)` in
   `repeatable/access/fn_check_access.sql` is the single entry point callers use;
-  it returns an int status and dynamically queries `public.<resource_name>` by id.
+  it returns an int status and dynamically queries `public.<resource_name>` by id,
+  only for names listed in `resources` (-1 otherwise). It is executable by the API
+  roles only, not PUBLIC. Archived users keep their `user_roles` (so `restore_user`
+  gives them back) but `is_admin()` and `check_access()` deny them.
 - **Soft delete.** `users` is never hard-deleted. `DELETE` goes through the
   `v_users_active` / `v_users_archived` views, which have `INSTEAD OF` triggers
   that set `is_archived = TRUE` and `status = 'archived'`. `restore_user(id)`
@@ -169,7 +224,12 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
   partition.
 - **Protected rows.** Triggers block renaming/deleting critical roles
   (`roles/fn_protect_critical_roles.sql`, `fn_protect_role_names.sql`). The admin
-  user is row `id = 1`, seeded by `repeatable/common/create_admin.sql`.
+  user is row `id = 1`, seeded by `seed_admin_account()` in
+  `repeatable/common/create_admin.sql` from `-Dadmin_email` / `-Dadmin_password`
+  (argon2id hash). The public template account (`admin@example.invalid`) is only
+  seeded with `-Dallow_template_admin=true` (both compose files here; e2e and the
+  API/BFF test stacks must pass it too). Without credentials nor that flag the
+  migration fails while `id = 1` is missing or still the template account.
 - **Sessions** have server-computed expiration and archive/logout triggers
   (`repeatable/sessions/*`, `auth/fn_logout_on_archive.sql`).
 - **Per-API Postgres roles (MAIR-114).** `core_api`, `project_api`,
@@ -208,7 +268,8 @@ the `plan(N)` count in sync.
 - Postgres/Liquibase versions differ on purpose-or-neglect across images:
   `Dockerfile` (pg 18.6, Renovate-managed), `tests/db.Dockerfile` (pg 18.3),
   `tests/test.Dockerfile` (pg 16 + Liquibase 4.25.1), `liquibase/Dockerfile`
-  (Liquibase 5.0).
+  (Liquibase 5.0.4 pinned by digest, JDBC driver checked by sha256, no test
+  tooling).
 - `liquibase/liquibase.properties` and `.env` are stale (old db name
   `mairie_360_database`, host `postgres`); the compose files inject
   `LIQUIBASE_COMMAND_*` env vars and use db `core` instead.

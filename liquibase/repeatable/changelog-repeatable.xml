@@ -6,12 +6,18 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
 >
 
+    <!-- Every changeset has an empty <rollback/> (MAIR-413): rolling back to a
+         release tag deletes their DATABASECHANGELOG rows without touching the
+         objects, and the next `update` of the older image re-applies its own
+         version of each file. -->
+
     <changeSet id="rep-views-users" author="dev" runOnChange="true">
         <sqlFile
             path="users/v_user.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-views-users-sso-export" author="dev" runOnChange="true">
         <sqlFile
@@ -19,6 +25,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-views-sessions" author="dev" runOnChange="true">
         <sqlFile
@@ -26,6 +33,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-views-calendar" author="dev" runOnChange="true">
         <sqlFile
@@ -33,6 +41,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-views-groups" author="dev" runOnChange="true">
         <sqlFile
@@ -40,6 +49,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-views-ressources" author="dev" runOnChange="true">
         <sqlFile
@@ -47,6 +57,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
 
 
@@ -56,6 +67,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-common-admin" author="dev" runOnChange="true">
         <sqlFile
@@ -63,6 +75,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
 
     <changeSet id="rep-functions-users-audit" author="dev" runOnChange="true">
@@ -71,6 +84,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-users-refresh" author="dev" runOnChange="true">
         <sqlFile
@@ -78,6 +92,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-users-protect" author="dev" runOnChange="true">
         <sqlFile
@@ -85,6 +100,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-users-delete" author="dev" runOnChange="true">
         <sqlFile
@@ -92,6 +108,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-users-restore" author="dev" runOnChange="true">
         <sqlFile
@@ -99,6 +116,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-users-create" author="dev" runOnChange="true">
         <sqlFile
@@ -106,6 +124,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-users-migrate-legacy-password" author="dev" runOnChange="true">
         <sqlFile
@@ -113,6 +132,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-auth-link-identity" author="dev" runOnChange="true">
         <sqlFile
@@ -120,6 +140,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-auth-resolve-identity" author="dev" runOnChange="true">
         <sqlFile
@@ -127,6 +148,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-triggers-users-archived" author="dev" runOnChange="true">
         <sqlFile
@@ -134,6 +156,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet
         id="rep-triggers-users-can-delete"
@@ -145,6 +168,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet
         id="rep-triggers-users-default-role"
@@ -156,6 +180,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
 
 
@@ -165,6 +190,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-roles-protect" author="dev" runOnChange="true">
         <sqlFile
@@ -172,6 +198,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-roles-names" author="dev" runOnChange="true">
         <sqlFile
@@ -179,6 +206,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-roles-modtime" author="dev" runOnChange="true">
         <sqlFile
@@ -186,6 +214,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
 
     <changeSet
@@ -198,6 +227,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-sessions-exp" author="dev" runOnChange="true">
         <sqlFile
@@ -205,6 +235,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-sessions-logs" author="dev" runOnChange="true">
         <sqlFile
@@ -212,6 +243,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet
         id="rep-functions-sessions-archive"
@@ -223,6 +255,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
 
     <changeSet
@@ -235,6 +268,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-access-acl" author="dev" runOnChange="true">
         <sqlFile
@@ -242,6 +276,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-access-check" author="dev" runOnChange="true">
         <sqlFile
@@ -249,6 +284,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-groups-owner" author="dev" runOnChange="true">
         <sqlFile
@@ -256,6 +292,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-auth-logout" author="dev" runOnChange="true">
         <sqlFile
@@ -263,6 +300,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
 
     <changeSet
@@ -275,6 +313,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet
         id="rep-functions-messages-counter-update"
@@ -286,6 +325,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet
         id="rep-functions-messages-counter_delete"
@@ -297,6 +337,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet
         id="rep-functions-messages-serialize-inserts"
@@ -308,6 +349,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet
         id="rep-functions-messages-acknowledge-read"
@@ -319,6 +361,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet
         id="rep-functions-elearning-progress"
@@ -330,13 +373,15 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-functions-project-log" author="dev" runOnChange="true">
         <sqlFile
-            path="project/fn_log_task_status_change.sql"
+            path="project/fn_log_task_change.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
 
 
@@ -346,6 +391,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-triggers-user-identities-updated-at" author="dev" runOnChange="true">
         <sqlFile
@@ -353,6 +399,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-triggers-ressources" author="dev" runOnChange="true">
         <sqlFile
@@ -360,6 +407,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-triggers-course-ratings-updated-at" author="dev" runOnChange="true">
         <sqlFile
@@ -367,6 +415,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
 
     <changeSet id="rep-retention-policies" author="dev" runOnChange="true">
@@ -375,6 +424,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
 
     <!-- Per-API Postgres roles and their privileges (MAIR-114). Must stay last:
@@ -387,6 +437,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
     <changeSet id="rep-security-api-grants" author="dev" runAlways="true" runOnChange="true">
         <sqlFile
@@ -394,6 +445,7 @@
             relativeToChangelogFile="true"
             splitStatements="false"
         />
+        <rollback/>
     </changeSet>
 
 </databaseChangeLog>
