@@ -4,7 +4,9 @@ SELECT plan(10);
 -- 1. STRUCTURE (4 tests)
 SELECT has_table('permissions');
 SELECT col_is_pk('permissions', 'id');
-SELECT has_index('permissions', 'idx_permissions_resource_id');
+-- Lookups by resource_id go through uq_resource_action (idx_permissions_resource_id, its prefix,
+-- is dropped by releases/v1.11.0, MAIR-477).
+SELECT has_index('permissions', 'uq_resource_action', ARRAY['resource_id', 'action']);
 SELECT col_is_unique('permissions', ARRAY['resource_id', 'action'], 'Unicité ressource + action');
 
 -- 2. VÉRIFICATION DES INSERTIONS (2 tests)

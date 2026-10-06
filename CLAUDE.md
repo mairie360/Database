@@ -61,9 +61,9 @@ again, then `pg_prove`s
 `tests/30_schema_lint_test.sql` (MAIR-476) is a static lint of the migrated
 schema: duplicate indexes, non-unique indexes made redundant by a wider one,
 unindexed or mistyped foreign keys, tables without primary key, `SECURITY
-DEFINER` functions without `search_path`, duplicate triggers. Findings that
-already exist are listed in its `lint_known_*` temp tables and tolerated until
-MAIR-477 drops them; anything new fails the suite. `bench/lint.sql` prints the
+DEFINER` functions without `search_path`, duplicate triggers. Its `lint_known_*`
+temp tables (tolerated findings) are empty since `releases/v1.11.0` (MAIR-477):
+any finding fails the suite. `bench/lint.sql` prints the
 same rules plus informational ones (`timestamp` without time zone, `int4`
 surrogate keys).
 
@@ -238,7 +238,24 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    backfill rules; any other number without a country is refused (`23514`). The release rollback
    drops that trigger, the next update recreates it.
 
-12. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+12. **`releases/v1.11.0/changelog-v1.11.0.xml`** — findings of the schema lint and bench of MAIR-476,
+   fixed by MAIR-477, same layout as v1.8.0 (rollback per changeset, `v1.11.0` tag).
+   - `01__drop_redundant_indexes`: drops the five indexes the lint reported as duplicates or
+     prefixes of a wider index (`idx_sessions_token_lookup`, `idx_messages_conversation_id_id`,
+     `idx_task_history_task_id`, `idx_user_roles_user`, `idx_permissions_resource_id`).
+   - `02__users_search_trigram`: `pg_trgm` and GIN trigram indexes on `users.first_name`,
+     `last_name`, `email`, `first_name || ' ' || last_name` and `last_name || ' ' || first_name`,
+     for the `ILIKE '%term%'` searches of Core_API. The APIs must build full names with `||`:
+     `concat_ws` is not IMMUTABLE, cannot be indexed, and one unindexed branch of the `OR` brings
+     back the sequential scan. Do not add a B-tree on `(last_name, first_name, id)`: the planner
+     then walks it for broad searches (22 ms instead of 1.2 ms on 10 000 users).
+   - The duplicate trigger `trg_users_updated_at` is dropped by its repeatable file
+     (`repeatable/users/trigger_user_update.sql` now only holds the `DROP TRIGGER IF EXISTS`).
+   `tests/33_users_search_trigram_test.sql` checks the indexes and that the API search plan uses
+   them; the bench holds `core_directory_search` to the strict thresholds (126 blocks per
+   transaction, growth 1.20).
+
+13. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,
