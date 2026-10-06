@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(35);
+SELECT plan(40);
 
 ---
 --- Admin account
@@ -34,6 +34,30 @@ SELECT is((SELECT count(*)::INT FROM user_roles WHERE user_id BETWEEN 100 AND 19
 SELECT is((SELECT count(*)::INT FROM group_members WHERE group_id = 100), 2, 'Group members are preserved');
 SELECT is((SELECT count(*)::INT FROM tasks WHERE project_id = 100), 2, 'Tasks are preserved');
 SELECT is((SELECT count(*)::INT FROM events WHERE id = 100), 1, 'Events are preserved');
+-- MAIR-481 (releases/v1.12.0): rows outside 1970-01-01 - 3000-01-01 are deleted,
+-- with their members; valid events and rules stay.
+SELECT is(
+    (SELECT array_agg(id ORDER BY id) FROM events WHERE id BETWEEN 100 AND 199),
+    ARRAY[100, 104],
+    'Events outside the date window, or along a rule outside it, are deleted'
+);
+SELECT is(
+    (SELECT array_agg(id ORDER BY id) FROM recurrence_rules WHERE id IN (100, 101)),
+    ARRAY[101],
+    'Recurrence rules outside the date window are deleted'
+);
+SELECT is((SELECT count(*)::INT FROM event_members WHERE event_id = 101), 0, 'Members of a deleted event are deleted');
+SELECT ok(
+    (SELECT bool_and(convalidated) FROM pg_constraint
+     WHERE conname IN ('chk_events_date_window', 'chk_recurrence_date_window')),
+    'The date window constraints are validated'
+);
+SELECT is(
+    (SELECT count(*)::INT FROM pg_constraint
+     WHERE conname IN ('chk_events_date_window', 'chk_recurrence_date_window')),
+    2,
+    'Both date window constraints exist'
+);
 SELECT is((SELECT count(*)::INT FROM messages WHERE conversation_id IN (100, 101)), 3, 'Messages are preserved');
 SELECT is((SELECT count(*)::INT FROM course_attachments WHERE module_id = 100), 1, 'Course attachments are preserved');
 SELECT is((SELECT count(*)::INT FROM access_logs WHERE user_id IN (100, 101)), 2, 'Access logs are preserved');

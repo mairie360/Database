@@ -255,7 +255,18 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    them; the bench holds `core_directory_search` to the strict thresholds (126 blocks per
    transaction, growth 1.20).
 
-13. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+13. **`releases/v1.12.0/changelog-v1.12.0.xml`** — event dates bounded to
+   `[1970-01-01, 3000-01-01)` UTC (MAIR-481), rollback per changeset, `v1.12.0` tag.
+   `01__events_date_window` deletes the events outside that window, or repeating along a rule
+   outside it, with their members, message links and group ACL entries, then the rules outside
+   it (fuzzing pollution: Postgres prints years outside 0001–9999 in a form Calendar_API cannot
+   parse back, so these rows made `GET /events/{id}` and `GET /calendar` answer 500), and adds
+   `chk_events_date_window` and `chk_recurrence_date_window` (a rule's `end_date`, the day after
+   its last occurrence, may equal `3000-01-01`; `NULL` = never ends). The rollback only drops the
+   constraints. Calendar_API applies the same window and answers 400 first.
+   `tests/34_events_date_window_test.sql` covers the constraints, the upgrade test the cleanup.
+
+14. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,

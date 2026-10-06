@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+>
+
+    <!-- Event dates bounded to [1970-01-01, 3000-01-01) UTC, rows outside deleted (MAIR-481). Every
+         changeset carries its <rollback> and the release ends with a
+         tagDatabase changeset (see v1.7.0). -->
+
+    <changeSet id="rel-1.12.0-01" author="dev"><sqlFile
+            path="01__events_date_window.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="01__events_date_window.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="rel-1.12.0-tag" author="dev"><tagDatabase tag="v1.12.0"/></changeSet>
+
+</databaseChangeLog>
