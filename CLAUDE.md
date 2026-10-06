@@ -58,7 +58,30 @@ again, then `pg_prove`s
 `releases/vX.Y.Z/` folder names are unrelated: tag `v1.3.0` only contains
 `releases/v1.0.0`–`v1.2.0`.
 
-There is no lint step and no way to run a single test file through `test.sh` — it
+`tests/30_schema_lint_test.sql` (MAIR-476) is a static lint of the migrated
+schema: duplicate indexes, non-unique indexes made redundant by a wider one,
+unindexed or mistyped foreign keys, tables without primary key, `SECURITY
+DEFINER` functions without `search_path`, duplicate triggers. Findings that
+already exist are listed in its `lint_known_*` temp tables and tolerated until
+MAIR-477 drops them; anything new fails the suite. `bench/lint.sql` prints the
+same rules plus informational ones (`timestamp` without time zone, `int4`
+surrogate keys).
+
+**Load test** (`./performance_test.sh` → `bench/run.sh`, MAIR-476): migrates
+an empty database (`bench/docker-compose-bench.yml`, project `database-bench`,
+`pg_stat_statements` + `auto_explain`), loads `bench/seed.sql` (scale 1 ≈ 20k
+users, 2M messages, 2M access_logs, 200k events; about 1 min 30), then runs each
+`bench/scripts/*.sql` with pgbench. Those scripts replay the SQL the APIs send
+on their hot paths (copied from the `APIs/*/src/database/` views, plus the
+`is_user_active` check API_lib makes on every request): when an API query
+changes, update its script. Each script's average latency must stay under
+`bench/thresholds.conf`; a script without a threshold fails. Results and the
+`pg_stat_statements` report go to `bench/results/` (gitignored). CICD runs
+`./performance_test.sh` in `database_cicd.yml` between `release-dev` and
+`release-staging`, so a breach blocks the promotion to staging but not dev.
+`bench/run.sh --reuse` reruns pgbench on the database left by a previous run.
+
+There is no way to run a single test file through `test.sh` — it
 always runs `pg_prove` over `tests/*.sql`. To run one file, exec into a running
 db container: `psql -U postgres -d core -f /path/to/tests/NN_x_test.sql` (each test
 file is wrapped in `BEGIN; … ROLLBACK;` so it is self-cleaning).
