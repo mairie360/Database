@@ -1,10 +1,12 @@
 # Personal data inventory of the schema (MAIR-285, epic MAIR-284).
 #
 # Every column of every table of the `public` schema is listed here, either under `personal` or
-# under `not_personal`. `tests/35_gdpr_inventory_test.sql` fails when a column of the migrated
-# schema is missing, when an entry names a column that no longer exists, and when a column that
-# references `users` is not classified as a personal identifier. A new column therefore lands
-# together with its classification, reviewed in the same PR.
+# under `not_personal`. The `gdpr_inventory` job of the CICD (database_cicd.yml, after
+# release-staging and before the Prod approval) migrates an empty database with the images
+# promoted to staging and blocks the prod release when a column is missing, when an entry names a
+# column that no longer exists, or when a column that references `users` is not an `identifier`.
+# Its job summary lists the changes of this file since the last release, for the Prod approver,
+# and a classification proposed by Claude for each missing column: review it, then add it here.
 #
 # This file states decisions: it is the basis of the processor's record and of the mairie's DPIA,
 # and the reference that the GDPR checks of the epic read (audit log exclusions MAIR-286, access

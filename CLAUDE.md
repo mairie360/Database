@@ -351,11 +351,13 @@ the `plan(N)` count in sync.
 `public` table (partitions excluded): `personal` columns carry `category`, `erasure`
 (`delete` / `anonymize` / `keep`, the target behaviour MAIR-289 implements), `visibility`,
 optionally `audit_log: false` (audited table `users` only) and a `note`; the others are
-listed under `not_personal`. Before `pg_prove`, `tests/gdpr/load_inventory.py` checks the
-format and loads it into `gdpr.inventory`; `tests/35_gdpr_inventory_test.sql` fails when a
-column is not classified, when an entry names a column that no longer exists, or when a
-column referencing `users` is not an `identifier`. **A migration that adds, renames or
-drops a column updates the inventory in the same PR.**
+listed under `not_personal`. It is not checked by `./test.sh`: the `gdpr_inventory` job of
+`database_cicd.yml` (CICD `tests/gdpr`) runs after `release-staging`, migrates an empty
+database with the staging images and blocks `release-prod` on a gap (unclassified column,
+stale entry, column referencing `users` that is not an `identifier`); its summary lists the
+inventory changes since the last tag for the Prod approver and Claude's proposals for the
+missing columns. Update the inventory in the PR that adds, renames or drops a column, or the
+next prod release stops.
 
 ## Known inconsistencies (don't "fix" incidentally)
 
