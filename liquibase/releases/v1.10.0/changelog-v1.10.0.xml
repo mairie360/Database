@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+>
+
+    <!-- Phone number stored as country + national number (MAIR-480). Every
+         changeset carries its <rollback> and the release ends with a
+         tagDatabase changeset (see v1.7.0). -->
+
+    <changeSet id="rel-1.10.0-01" author="dev"><sqlFile
+            path="01__users_phone_country.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="01__users_phone_country.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="rel-1.10.0-tag" author="dev"><tagDatabase tag="v1.10.0"/></changeSet>
+
+</databaseChangeLog>

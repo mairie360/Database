@@ -36,6 +36,11 @@ INSERT INTO users (id, first_name, last_name, email, password, status, is_archiv
 
 
 INSERT INTO user_roles (user_id, role_id) VALUES (100, 4), (101, 4), (102, 4), (103, 1);
+-- Phone numbers as the APIs wrote them before MAIR-480: a French mobile, a mobile of
+-- La Réunion and a French number written with its calling code; 103 has none.
+UPDATE users SET phone_number = '0612345678' WHERE id = 100;
+UPDATE users SET phone_number = '0692123456' WHERE id = 101;
+UPDATE users SET phone_number = '33145678901' WHERE id = 102;
 INSERT INTO user_preferences (user_id, theme, language) VALUES (100, 'dark', 'fr');
 
 -- Sessions: one live, one expired.
