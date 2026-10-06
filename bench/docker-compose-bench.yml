@@ -1,0 +1,49 @@
+# Load-test stack for the schema: migrated database + pg_stat_statements and
+# auto_explain (both ship with postgres, as does pgbench). Driven by bench/run.sh.
+name: database-bench
+
+services:
+  database:
+    image: postgres:18.3-bookworm
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: core
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements,auto_explain
+      -c pg_stat_statements.track=all
+      -c auto_explain.log_min_duration=50ms
+      -c auto_explain.log_nested_statements=on
+      -c shared_buffers=256MB
+      -c max_connections=200
+    ports:
+      - "127.0.0.1:5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d core"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: tests/test.Dockerfile
+    environment:
+      - LIQUIBASE_COMMAND_URL=jdbc:postgresql://database:5432/core
+      - LIQUIBASE_COMMAND_USERNAME=postgres
+      - LIQUIBASE_COMMAND_PASSWORD=password
+      - LIQUIBASE_COMMAND_CHANGELOG_FILE=changelog.xml
+      - LIQUIBASE_COMMAND_DRIVER=org.postgresql.Driver
+      - LIQUIBASE_SEARCH_PATH=/workspace/liquibase,/workspace/liquibase/releases/v1.0.0,/workspace/liquibase/releases/v1.1.0,/workspace/liquibase/releases/v1.2.0,/workspace/liquibase/releases/v1.3.0,/workspace/liquibase/releases/v1.4.0,/workspace/liquibase/releases/v1.5.0,/workspace/liquibase/releases/v1.6.0,/workspace/liquibase/releases/v1.7.0,/workspace/liquibase/releases/v1.8.0,/workspace/liquibase/repeatable
+    depends_on:
+      database:
+        condition: service_healthy
+    command: >
+      liquibase update
+      -Dcore_api_password=password
+      -Dproject_api_password=password
+      -Dcalendar_api_password=password
+      -Dmessage_api_password=password
+      -Delearning_api_password=password
+      -Dallow_template_admin=true

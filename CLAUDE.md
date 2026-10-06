@@ -58,7 +58,41 @@ again, then `pg_prove`s
 `releases/vX.Y.Z/` folder names are unrelated: tag `v1.3.0` only contains
 `releases/v1.0.0`–`v1.2.0`.
 
-There is no lint step and no way to run a single test file through `test.sh` — it
+`tests/30_schema_lint_test.sql` (MAIR-476) is a static lint of the migrated
+schema: duplicate indexes, non-unique indexes made redundant by a wider one,
+unindexed or mistyped foreign keys, tables without primary key, `SECURITY
+DEFINER` functions without `search_path`, duplicate triggers. Findings that
+already exist are listed in its `lint_known_*` temp tables and tolerated until
+MAIR-477 drops them; anything new fails the suite. `bench/lint.sql` prints the
+same rules plus informational ones (`timestamp` without time zone, `int4`
+surrogate keys).
+
+**Load test** (`./performance_test.sh` → `bench/run.sh`, MAIR-476): for each data
+scale (1, then 2), migrates an empty database (`bench/docker-compose-bench.yml`,
+project `database-bench`, `pg_stat_statements` + `auto_explain`), loads
+`bench/seed.sql` (scale 1 ≈ 20k users, 2M messages, 2M access_logs, 200k events)
+and runs each `bench/scripts/*.sql` with pgbench (`-D scale=N`: the scripts pick
+ids across the whole scaled range). Those scripts replay the SQL the APIs send on
+their hot paths (copied from the `APIs/*/src/database/` views, plus the
+`is_user_active` check API_lib makes on every request): when an API query
+changes, update its script. Each script is checked against
+`bench/thresholds.conf`, mostly on criteria that do not depend on the machine:
+- **blocks**: shared/local/temp blocks touched per transaction at scale 1
+  (top-level statements of `pg_stat_statements`). It depends on the plans and the
+  data only, so the threshold is strict (about 1.5x the measured value);
+- **growth**: blocks per transaction at scale 2 / scale 1, at most 1.3. A query
+  that reads about 2x more blocks when the data doubles scans instead of using an
+  index and will not hold as the data grows;
+- **ms**: average latency at scale 1, a loose safety net (CPU-bound or lock-bound
+  regressions) since it depends on the machine.
+A script without a threshold fails. Results go to `bench/results/` (gitignored,
+`summary.txt` holds the table). The whole run takes about 9 minutes;
+`bench/run.sh --quick` runs scale 1 only (no growth check) to iterate locally.
+CICD runs `./performance_test.sh` in `database_cicd.yml` (job `performance_tests`,
+on PRs too); `release-staging` needs it, so a breach blocks the promotion to
+staging but not dev.
+
+There is no way to run a single test file through `test.sh` — it
 always runs `pg_prove` over `tests/*.sql`. To run one file, exec into a running
 db container: `psql -U postgres -d core -f /path/to/tests/NN_x_test.sql` (each test
 file is wrapped in `BEGIN; … ROLLBACK;` so it is self-cleaning).

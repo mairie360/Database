@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   Database-cicd:
-    uses: mairie360/CICD/.github/workflows/database_cicd.yml@v4.0.4
+    uses: mairie360/CICD/.github/workflows/database_cicd.yml@v4.1.1
     with:
       package_name: database
       cicd_version: v4.0.1
