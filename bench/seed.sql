@@ -51,17 +51,29 @@ SELECT 1 + (g % :n_groups), 2 + (g * 7919) % (:n_users - 1)
 FROM generate_series(1, 40000 * :scale) g
 ON CONFLICT DO NOTHING;
 
--- conversations: 80% direct (2 members), 20% group (members of the group)
-INSERT INTO conversations (title, group_id, kind, created_by, created_at)
+-- conversations: 80% direct (2 members), 20% group (members of the group).
+-- A direct conversation carries its pair (v1.9.0), unique and lowest id
+-- first: low spreads over the first m users, high = low + an offset whose
+-- block (g / m) keeps two values of g sharing a low on different pairs.
+\set m (10000 * :scale)
+INSERT INTO conversations (title, group_id, kind, created_by, created_at,
+                           direct_user_low, direct_user_high)
 SELECT CASE WHEN g % 5 = 0 THEN 'Conv ' || g END,
        CASE WHEN g % 5 = 0 THEN 1 + (g % :n_groups) END,
        CASE WHEN g % 5 = 0 THEN 'group' ELSE 'direct' END,
-       2 + (g * 31) % (:n_users - 1), now() - (g % 700) * interval '1 day'
-FROM generate_series(1, :n_convs) g;
+       CASE WHEN g % 5 = 0 THEN 2 + (g * 31) % (:n_users - 1)
+            WHEN g % 2 = 0 THEN low ELSE high END,
+       now() - (g % 700) * interval '1 day',
+       CASE WHEN g % 5 <> 0 THEN low END,
+       CASE WHEN g % 5 <> 0 THEN high END
+FROM (SELECT g, 2 + (g * 31) % :m AS low,
+             2 + (g * 31) % :m + 1 + ((g % :m) * 7) % 4999 + (g / :m) * 4999 AS high
+      FROM generate_series(1, :n_convs) g) s
+ORDER BY g;
 
 INSERT INTO conversation_members (conversation_id, user_id)
 SELECT c.id, u FROM conversations c,
-LATERAL (VALUES (c.created_by), (2 + (c.id * 7907) % (:n_users - 1))) v(u)
+LATERAL (VALUES (c.direct_user_low), (c.direct_user_high)) v(u)
 WHERE c.kind = 'direct'
 UNION
 SELECT c.id, gm.user_id FROM conversations c JOIN group_members gm ON gm.group_id = c.group_id
