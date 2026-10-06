@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+>
+
+    <!-- MAIR-478: one direct conversation per pair of agents. Every changeset
+         carries its <rollback> and the release ends with a tagDatabase
+         changeset (see v1.7.0). -->
+
+    <changeSet id="rel-1.9.0-01" author="dev"><sqlFile
+            path="01__direct_conversations.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="01__direct_conversations.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="rel-1.9.0-02" author="dev"><sqlFile
+            path="02__conversations_resource.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback>DELETE FROM resources WHERE name = 'conversations';</rollback></changeSet>
+
+    <changeSet id="rel-1.9.0-tag" author="dev"><tagDatabase tag="v1.9.0"/></changeSet>
+
+</databaseChangeLog>

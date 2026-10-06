@@ -21,12 +21,13 @@ INSERT INTO group_members (group_id, user_id) VALUES (2600, 2600), (2600, 2601),
 ON CONFLICT DO NOTHING;
 
 -- 2600: direct chat between 2600 and 2601, 2601: group chat, 2602: direct chat
--- with an excluded member (2602), 2603: another direct chat (foreign cursor).
-INSERT INTO conversations (id, title, group_id, kind) VALUES
-    (2600, 'Direct', NULL, 'direct'),
-    (2601, 'Group', 2600, 'group'),
-    (2602, 'Excluded', NULL, 'direct'),
-    (2603, 'Other', NULL, 'direct');
+-- with an excluded member (2602), 2603: a chat without group of the same two
+-- agents (foreign cursor).
+INSERT INTO conversations (id, title, group_id, kind, direct_user_low, direct_user_high) VALUES
+    (2600, 'Direct', NULL, 'direct', 2600, 2601),
+    (2601, 'Group', 2600, 'group', NULL, NULL),
+    (2602, 'Excluded', NULL, 'direct', 2600, 2602),
+    (2603, 'Other', NULL, 'group', NULL, NULL);
 INSERT INTO conversation_members (conversation_id, user_id, is_excluded) VALUES
     (2600, 2600, FALSE), (2600, 2601, FALSE),
     (2602, 2600, FALSE), (2602, 2602, TRUE),

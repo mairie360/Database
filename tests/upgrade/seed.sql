@@ -82,6 +82,25 @@ INSERT INTO messages (conversation_id, owner_id, content) VALUES
     (101, 100, 'Hello Carol'),
     (101, 102, 'Hello Alice');
 
+-- Chats written by Message_API before MAIR-478: kind = 'direct' whatever they
+-- are, and a participant who left lost their row. 102 and 103 are two direct
+-- chats of the same pair created by the BFF (`Direct <recipient>`); 101 left
+-- 103. 102 left 104. 105 is a group chat. Only 102 is left in 106 and never
+-- wrote: the other participant is unknown.
+INSERT INTO conversations (id, title, group_id, kind) VALUES
+    (102, 'Direct 101', NULL, 'direct'),
+    (103, 'Direct 101', NULL, 'direct'),
+    (104, 'Direct 102', NULL, 'direct'),
+    (105, 'Road works team', NULL, 'direct'),
+    (106, 'Direct 102', NULL, 'direct');
+INSERT INTO conversation_members (conversation_id, user_id) VALUES
+    (102, 100), (102, 101), (103, 100), (104, 101),
+    (105, 100), (105, 101), (105, 102), (106, 102);
+INSERT INTO messages (conversation_id, owner_id, content) VALUES
+    (102, 101, 'Hi Alice'),
+    (103, 101, 'Are you there?'),
+    (104, 102, 'See you tomorrow');
+
 -- E-learning.
 INSERT INTO courses (id, title, instructor_user_id) VALUES (100, 'GDPR basics', 103);
 INSERT INTO course_modules (id, course_id, title) VALUES (100, 100, 'Personal data');

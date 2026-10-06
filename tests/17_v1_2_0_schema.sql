@@ -164,8 +164,9 @@ SELECT throws_ok(
     $$ INSERT INTO conversations (title, kind) VALUES ('X', 'canal') $$,
     NULL, NULL, 'conversations.kind contraint à direct/group');
 SELECT lives_ok(
-    $$ INSERT INTO conversations (title, kind) VALUES ('X', 'direct') $$,
-    'conversations : une conversation directe est acceptée');
+    $$ INSERT INTO conversations (title, kind, direct_user_low, direct_user_high)
+       VALUES ('X', 'direct', 8801, 8802) $$,
+    'conversations: a direct conversation with its two participants is accepted');
 SELECT has_table('message_mentions', 'table message_mentions créée');
 SELECT lives_ok(
     $$ INSERT INTO message_mentions (message_id, user_id) VALUES (8851, 8802) $$,

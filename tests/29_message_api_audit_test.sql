@@ -30,8 +30,8 @@ VALUES
     (2701, 'Member', 'Two', 'audit.member@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 
 INSERT INTO conversations (id, title, kind, created_by) VALUES
-    (2700, 'Audit chat', 'direct', 2700),
-    (2701, 'Other chat', 'direct', 2700);
+    (2700, 'Audit chat', 'group', 2700),
+    (2701, 'Other chat', 'group', 2700);
 INSERT INTO conversation_members (conversation_id, user_id) VALUES
     (2700, 2700), (2700, 2701), (2701, 2700);
 

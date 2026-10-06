@@ -46,7 +46,7 @@ SELECT is(
 
 -- Test 2 : Création d'un chat privé entre PLUSIEURS utilisateurs (ID conversation = 802)
 INSERT INTO conversations (id, title, group_id, kind)
-VALUES (802, 'Organisation Pot de Départ', NULL, 'direct');
+VALUES (802, 'Organisation Pot de Départ', NULL, 'group');
 
 SELECT lives_ok(
     $$
@@ -99,7 +99,7 @@ SELECT lives_ok(
 );
 
 -- Test 7 : Nettoyage en cascade (ON DELETE CASCADE)
-INSERT INTO conversations (id, title, group_id, kind) VALUES (899, 'Temp Chat', NULL, 'direct');
+INSERT INTO conversations (id, title, group_id, kind) VALUES (899, 'Temp Chat', NULL, 'group');
 INSERT INTO conversation_members (conversation_id, user_id) VALUES (899, 500);
 DELETE FROM conversations WHERE id = 899;
 

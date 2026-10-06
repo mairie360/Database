@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(26);
+SELECT plan(32);
 
 ---
 --- Admin account
@@ -110,10 +110,53 @@ SELECT ok(
     'The database is tagged v1.8.0'
 );
 
+-- Test 23-28: v1.9.0 on existing data (MAIR-478), applied twice by run.sh
+-- (rollback, then update again).
+SELECT results_eq(
+    $$SELECT id, kind::TEXT, direct_user_low, direct_user_high
+      FROM conversations WHERE id BETWEEN 100 AND 199 ORDER BY id$$,
+    $$VALUES (100, 'group', NULL::INT, NULL::INT),
+             (101, 'direct', 100, 102),
+             (102, 'direct', 100, 101),
+             (104, 'direct', 101, 102),
+             (105, 'group', NULL, NULL),
+             (106, 'group', NULL, NULL)$$,
+    'Only the chats of exactly two agents stay direct, duplicates merged into the oldest one'
+);
+
+SELECT results_eq(
+    $$SELECT content FROM messages WHERE conversation_id = 102 ORDER BY id$$,
+    $$VALUES ('Hi Alice'::TEXT), ('Are you there?')$$,
+    'The messages of a duplicate move to the merged chat'
+);
+
+SELECT results_eq(
+    $$SELECT user_id, is_excluded FROM conversation_members WHERE conversation_id = 102 ORDER BY user_id$$,
+    $$VALUES (100, FALSE), (101, FALSE)$$,
+    'A participant sees the merged chat when they saw one of its copies'
+);
+
+SELECT results_eq(
+    $$SELECT user_id, is_excluded FROM conversation_members WHERE conversation_id = 104 ORDER BY user_id$$,
+    $$VALUES (101, FALSE), (102, TRUE)$$,
+    'A participant who left a direct chat gets a hidden membership back'
+);
+
+SELECT is(
+    (SELECT unread_count FROM unread_counters WHERE conversation_id = 102 AND user_id = 100),
+    2,
+    'Unread counters of the duplicates add up'
+);
+
+SELECT ok(
+    EXISTS (SELECT 1 FROM databasechangelog WHERE tag = 'v1.9.0'),
+    'The database is tagged v1.9.0'
+);
+
 ---
 --- Archived accounts and privileges
 ---
--- Test 23-24: archived before the upgrade, the admin keeps its role row but
+-- Test 29-30: archived before the upgrade, the admin keeps its role row but
 -- loses its rights.
 SELECT ok(
     EXISTS (SELECT 1 FROM user_roles WHERE user_id = 103 AND role_id = 1) AND NOT is_admin(103),
@@ -122,7 +165,7 @@ SELECT ok(
 
 SELECT is(check_access(103, 'groups', 'delete', 100), 0, 'An archived admin is denied by check_access');
 
--- Test 25-26: the runAlways grants are applied on the existing database.
+-- Test 31-32: the runAlways grants are applied on the existing database.
 SELECT ok(
     has_table_privilege('core_api', 'users', 'SELECT')
     AND has_function_privilege('core_api', 'check_access(integer, character varying, character varying, integer)', 'EXECUTE'),
