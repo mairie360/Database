@@ -347,6 +347,16 @@ the `_test` suffix is not load-bearing — `15_performance_indexes.sql` and
 add a function/trigger/view, add or extend the matching numbered test file and keep
 the `plan(N)` count in sync.
 
+**GDPR inventory (MAIR-285).** `gdpr/inventory.yaml` classifies every column of every
+`public` table (partitions excluded): `personal` columns carry `category`, `erasure`
+(`delete` / `anonymize` / `keep`, the target behaviour MAIR-289 implements), `visibility`,
+optionally `audit_log: false` (audited table `users` only) and a `note`; the others are
+listed under `not_personal`. Before `pg_prove`, `tests/gdpr/load_inventory.py` checks the
+format and loads it into `gdpr.inventory`; `tests/35_gdpr_inventory_test.sql` fails when a
+column is not classified, when an entry names a column that no longer exists, or when a
+column referencing `users` is not an `identifier`. **A migration that adds, renames or
+drops a column updates the inventory in the same PR.**
+
 ## Known inconsistencies (don't "fix" incidentally)
 
 - The repeatable folder is spelled `ressources/` (French) but the table and the
