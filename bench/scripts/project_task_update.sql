@@ -1,7 +1,7 @@
 -- Project_API tasks/patch_task/view.rs: status change (trigger writes task_history)
-\set uid random_exponential(2, 20000, 3)
+\set uid random_exponential(2, 20000 * :scale, 3)
 SELECT EXISTS(SELECT 1 FROM users WHERE id = :uid AND NOT COALESCE(is_archived, false)) AS is_user_active;
-\set tid random(1, 100000)
+\set tid random(1, 100000 * :scale)
 SELECT project_id AS pid FROM tasks WHERE id = :tid \gset
 WITH updated AS (
   UPDATE tasks SET

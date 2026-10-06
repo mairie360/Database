@@ -30,7 +30,7 @@ SET LOCAL session_replication_role = replica;
 
 -- users: id 1 is the seeded admin
 INSERT INTO users (first_name, last_name, email, password, status, is_archived, created_at)
-SELECT 'First' || g, 'Last' || (g % 5000), 'user' || g || '@bench.invalid',
+SELECT 'First' || g, 'Last' || (g % (5000 * :scale)), 'user' || g || '@bench.invalid',
        '$argon2id$v=19$m=19456,t=2,p=1$c2FsdHNhbHQ$aGFzaGhhc2hoYXNoaGFzaA',
        (ARRAY['active','inactive','offline'])[1 + g % 3],
        g % 50 = 0, now() - (g % 1000) * interval '1 day'

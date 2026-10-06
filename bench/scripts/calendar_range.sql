@@ -1,5 +1,5 @@
 -- Calendar_API calendar/get/view.rs: events visible to a user over one month
-\set uid random_exponential(2, 20000, 3)
+\set uid random_exponential(2, 20000 * :scale, 3)
 SELECT EXISTS(SELECT 1 FROM users WHERE id = :uid AND NOT COALESCE(is_archived, false)) AS is_user_active;
 \set day random(-700, 700)
 SELECT to_jsonb(t) FROM (

@@ -1,5 +1,5 @@
 -- Message_API add_message_to_chat + acknowledge_read: a member posts, another reads
-\set cid random_exponential(1, 20000, 5)
+\set cid random_exponential(1, 20000 * :scale, 5)
 SELECT COALESCE(min(user_id), 2) AS sender, COALESCE(max(user_id), 2) AS reader
 FROM conversation_members WHERE conversation_id = :cid \gset
 SELECT EXISTS(SELECT 1 FROM users WHERE id = :sender AND NOT COALESCE(is_archived, false)) AS is_user_active;

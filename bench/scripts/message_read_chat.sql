@@ -1,7 +1,7 @@
 -- Message_API access/view.rs + get_chat/view.rs: open a (busy) conversation, newest page
-\set uid random_exponential(2, 20000, 3)
+\set uid random_exponential(2, 20000 * :scale, 3)
 SELECT EXISTS(SELECT 1 FROM users WHERE id = :uid AND NOT COALESCE(is_archived, false)) AS is_user_active;
-\set cid random_exponential(1, 20000, 5)
+\set cid random_exponential(1, 20000 * :scale, 5)
 SELECT jsonb_build_object(
  'chat_exists', EXISTS(SELECT 1 FROM conversations WHERE id = :cid),
  'is_member', EXISTS(SELECT 1 FROM conversation_members WHERE conversation_id = :cid AND user_id = :uid AND is_excluded = FALSE),

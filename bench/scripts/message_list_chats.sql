@@ -1,5 +1,5 @@
 -- Message_API get_chats/view.rs: conversations of a user with unread counts
-\set uid random_exponential(2, 20000, 3)
+\set uid random_exponential(2, 20000 * :scale, 3)
 SELECT EXISTS(SELECT 1 FROM users WHERE id = :uid AND NOT COALESCE(is_archived, false)) AS is_user_active;
 SELECT to_jsonb(t) FROM (
   SELECT c.id, c.title, COALESCE(uc.unread_count, 0) AS unread_count
