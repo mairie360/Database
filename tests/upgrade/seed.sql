@@ -75,6 +75,18 @@ INSERT INTO task_assignees (task_id, user_id) VALUES (100, 101);
 INSERT INTO events (id, name, start_date, end_date, owner_id, visibility) VALUES
     (100, 'Council meeting', now() + interval '7 days', now() + interval '7 days 2 hours', 100, 'private');
 INSERT INTO event_members (event_id, user_id, validation_status) VALUES (100, 101, 'pending');
+-- Rows written by fuzzing before MAIR-481 bounded the dates to 1970-01-01 -
+-- 3000-01-01: 101 starts in 4000 BC, 102 ends in year 200000, 103 has valid dates but
+-- repeats along rule 100, which ends in year 200000. 104 repeats along a valid rule.
+INSERT INTO recurrence_rules (id, type_recurrence, intervalle, start_date, end_date, start_time, duration, owner_id, visibility) VALUES
+    (100, 'daily', 1, '2026-10-05 18:00:00+00', '200000-01-01 00:00:00+00', '18:00:00', '02:00:00', 100, 'private'),
+    (101, 'weekly', 1, '2026-10-05 18:00:00+00', '2027-06-30 00:00:00+00', '18:00:00', '02:00:00', 100, 'private');
+INSERT INTO events (id, name, start_date, end_date, owner_id, visibility, recurrence_id, is_exception) VALUES
+    (101, 'Fuzz BC', '4000-01-01 00:00:00+00 BC', '2026-01-01 00:00:00+00', 100, 'public', NULL, NULL),
+    (102, 'Fuzz far', '2026-10-05 18:00:00+00', '200000-01-01 00:00:00+00', 100, 'public', NULL, NULL),
+    (103, 'Fuzz rule', '2026-10-05 18:00:00+00', '2026-10-05 20:00:00+00', 100, 'public', 100, FALSE),
+    (104, 'Weekly meeting', '2026-10-05 18:00:00+00', '2026-10-05 20:00:00+00', 100, 'public', 101, FALSE);
+INSERT INTO event_members (event_id, user_id, validation_status) VALUES (101, 101, 'pending');
 
 -- Messaging: a group conversation and a direct one (unread counters are
 -- maintained by trigger).
