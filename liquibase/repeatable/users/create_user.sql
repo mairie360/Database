@@ -1,6 +1,11 @@
--- Point d'entrée unique pour la création d'un utilisateur : le rôle est
--- obligatoire (pas de valeur par défaut) afin d'éviter les créations
--- d'utilisateurs orphelins de tout rôle.
+-- Single entry point to create a user: the role is mandatory (no default value) so that
+-- no user is created without a role.
+--
+-- MAIR-480: the phone is a country (`p_phone_country`, ISO 3166-1 alpha-2) plus a national
+-- number (`p_phone_number`, digits only), both or neither (`chk_users_phone`). The country
+-- comes last so that the existing positional calls keep working.
+DROP FUNCTION IF EXISTS create_user(VARCHAR, VARCHAR, VARCHAR, VARCHAR, INT, VARCHAR, VARCHAR);
+
 CREATE OR REPLACE FUNCTION create_user(
     p_first_name VARCHAR,
     p_last_name VARCHAR,
@@ -8,7 +13,8 @@ CREATE OR REPLACE FUNCTION create_user(
     p_password VARCHAR,
     p_role_id INT,
     p_phone_number VARCHAR DEFAULT NULL,
-    p_status VARCHAR DEFAULT 'offline'
+    p_status VARCHAR DEFAULT 'offline',
+    p_phone_country VARCHAR DEFAULT NULL
 )
 RETURNS INT AS $$
 DECLARE
@@ -24,8 +30,8 @@ BEGIN
         USING ERRCODE = 'foreign_key_violation';
     END IF;
 
-    INSERT INTO users (first_name, last_name, email, password, phone_number, status)
-    VALUES (p_first_name, p_last_name, p_email, p_password, p_phone_number, p_status)
+    INSERT INTO users (first_name, last_name, email, password, phone_country, phone_number, status)
+    VALUES (p_first_name, p_last_name, p_email, p_password, p_phone_country, p_phone_number, p_status)
     RETURNING id INTO v_user_id;
 
     INSERT INTO user_roles (user_id, role_id)

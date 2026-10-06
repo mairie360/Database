@@ -208,7 +208,6 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
      one row per message of someone else or conversation deleted by an administrator,
      INSERT-only for `message_api`.
 
-
 10. **`releases/v1.9.0/changelog-v1.9.0.xml`** — one direct conversation per pair of agents
    (MAIR-478), with its `<rollback>`, closed by the `v1.9.0` tag. `conversations.direct_user_low` /
    `direct_user_high` (→ `users` `ON DELETE CASCADE`) hold the two participants of a `direct`
@@ -227,7 +226,16 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    conversation. **Deploy it with the Message_API release of MAIR-478**: older Message_API
    versions insert `direct` conversations without a pair, which the constraint now refuses.
 
-11. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+11. **`releases/v1.10.0/changelog-v1.10.0.xml`** — phone number as country + national number
+   (MAIR-480): `users.phone_country` (ISO 3166-1 alpha-2) and `users.phone_number` (national
+   significant number, digits only, no trunk prefix: `0612345678` is stored `FR` / `612345678`),
+   both set or both NULL (`chk_users_phone`, written with `COALESCE` because a CHECK passes on
+   NULL). Legacy French numbers (`0…`, overseas departments by prefix, `33…`) are backfilled; any
+   other legacy value keeps the constraint `NOT VALID` with a NOTICE listing the users.
+   `create_user()` takes `p_phone_country` as its last parameter. A writer that sets
+   `phone_number` alone is refused (`23514`): deploy with the Core_API release that writes both.
+
+12. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,

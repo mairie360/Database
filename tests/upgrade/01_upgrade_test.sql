@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(32);
+SELECT plan(35);
 
 ---
 --- Admin account
@@ -110,8 +110,7 @@ SELECT ok(
     'The database is tagged v1.8.0'
 );
 
--- Test 23-28: v1.9.0 on existing data (MAIR-478), applied twice by run.sh
--- (rollback, then update again).
+-- Test 23-28: v1.9.0 on existing data (MAIR-478).
 SELECT results_eq(
     $$SELECT id, kind::TEXT, direct_user_low, direct_user_high
       FROM conversations WHERE id BETWEEN 100 AND 199 ORDER BY id$$,
@@ -151,12 +150,31 @@ SELECT is(
 SELECT ok(
     EXISTS (SELECT 1 FROM databasechangelog WHERE tag = 'v1.9.0'),
     'The database is tagged v1.9.0'
+
+);
+
+-- Test 29-31: v1.10.0 on existing data (MAIR-480). run.sh rolled v1.10.0 back
+-- (trunk prefix restored, country dropped) and applied it again.
+SELECT results_eq(
+    $$SELECT id, phone_country::TEXT, phone_number::TEXT FROM users WHERE id BETWEEN 100 AND 103 ORDER BY id$$,
+    $$VALUES (100, 'FR', '612345678'), (101, 'RE', '692123456'), (102, 'FR', '145678901'), (103, NULL, NULL)$$,
+    'Legacy phone numbers are split into country and national number'
+);
+
+SELECT ok(
+    EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_users_phone' AND convalidated),
+    'chk_users_phone is validated'
+);
+
+SELECT ok(
+    EXISTS (SELECT 1 FROM databasechangelog WHERE tag = 'v1.10.0'),
+    'The database is tagged v1.10.0'
 );
 
 ---
 --- Archived accounts and privileges
 ---
--- Test 29-30: archived before the upgrade, the admin keeps its role row but
+-- Test 32-33: archived before the upgrade, the admin keeps its role row but
 -- loses its rights.
 SELECT ok(
     EXISTS (SELECT 1 FROM user_roles WHERE user_id = 103 AND role_id = 1) AND NOT is_admin(103),
@@ -165,7 +183,7 @@ SELECT ok(
 
 SELECT is(check_access(103, 'groups', 'delete', 100), 0, 'An archived admin is denied by check_access');
 
--- Test 31-32: the runAlways grants are applied on the existing database.
+-- Test 34-35: the runAlways grants are applied on the existing database.
 SELECT ok(
     has_table_privilege('core_api', 'users', 'SELECT')
     AND has_function_privilege('core_api', 'check_access(integer, character varying, character varying, integer)', 'EXECUTE'),
