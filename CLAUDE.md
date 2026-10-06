@@ -209,7 +209,25 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
      INSERT-only for `message_api`.
 
 
-10. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+10. **`releases/v1.9.0/changelog-v1.9.0.xml`** — one direct conversation per pair of agents
+   (MAIR-478), with its `<rollback>`, closed by the `v1.9.0` tag. `conversations.direct_user_low` /
+   `direct_user_high` (→ `users` `ON DELETE CASCADE`) hold the two participants of a `direct`
+   conversation, lowest id first; `chk_conversations_direct_pair` requires them (and no group) for
+   `direct` and forbids them otherwise, `uq_conversations_direct_pair` allows one direct
+   conversation per pair. Message_API had written `kind = 'direct'` for every conversation without
+   a group: the backfill keeps `direct` only for the conversations without a group titled
+   `Direct <id>` (the BFF's) or untitled whose members, title id, creator and message authors make
+   exactly two agents, merges the duplicates of a pair into the oldest one (messages, membership,
+   unread counters added up, earliest read cursor), gives a participant who had left a hidden row
+   back (`is_excluded = TRUE`, how Message_API now hides a direct conversation) and turns everything
+   else into `group`. The rollback drops the columns and restores the v1.2.0 `kind` rule; merges and
+   hidden rows stay. `02__conversations_resource` declares the `conversations` resource and its
+   permissions, and gives the role rights `12__init_messaging.sql` meant to give (they matched nothing,
+   so `check_access()` answered `-1` for any conversation); Message_API asks it who may delete a
+   conversation. **Deploy it with the Message_API release of MAIR-478**: older Message_API
+   versions insert `direct` conversations without a pair, which the constraint now refuses.
+
+11. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,
