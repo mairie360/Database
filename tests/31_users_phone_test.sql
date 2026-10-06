@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(9);
+SELECT plan(13);
 
 -- MAIR-480 (releases/v1.10.0): the phone is a country (ISO 3166-1 alpha-2) plus a
 -- national number (digits only), both or neither.
@@ -29,6 +29,43 @@ SELECT throws_ok(
     '23514',
     NULL,
     'A number without a country is refused'
+);
+
+-- Legacy writers (French national number, no country) are converted by
+-- trg_users_normalize_legacy_phone.
+INSERT INTO users (first_name, last_name, email, password, phone_number) VALUES
+    ('Old', 'Mobile', 'old.mobile@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', '0612345678'),
+    ('Old', 'Reunion', 'old.reunion@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', '0692123456'),
+    ('Old', 'Code', 'old.code@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', '33145678901'),
+    ('Old', 'Empty', 'old.empty@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', '');
+
+SELECT results_eq(
+    $$SELECT email::TEXT, phone_country::TEXT, phone_number::TEXT FROM users
+      WHERE email LIKE 'old.%@test.com' ORDER BY email$$,
+    $$VALUES ('old.code@test.com', 'FR', '145678901'),
+             ('old.empty@test.com', NULL, NULL),
+             ('old.mobile@test.com', 'FR', '612345678'),
+             ('old.reunion@test.com', 'RE', '692123456')$$,
+    'A legacy French number written without its country is converted'
+);
+
+SELECT lives_ok(
+    $$UPDATE users SET phone_number = '0798765432' WHERE email = 'old.empty@test.com'$$,
+    'A legacy update of the number alone is converted too'
+);
+
+SELECT is(
+    (SELECT phone_country || ' ' || phone_number FROM users WHERE email = 'old.empty@test.com'),
+    'FR 798765432',
+    'The legacy update stores the country and the national number'
+);
+
+SELECT throws_ok(
+    $$INSERT INTO users (first_name, last_name, email, password, phone_number)
+      VALUES ('Old', 'Foreign', 'old.foreign@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', '4412345678')$$,
+    '23514',
+    NULL,
+    'A legacy number that is not French is still refused'
 );
 
 SELECT throws_ok(

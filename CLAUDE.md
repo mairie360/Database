@@ -232,8 +232,11 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    both set or both NULL (`chk_users_phone`, written with `COALESCE` because a CHECK passes on
    NULL). Legacy French numbers (`0…`, overseas departments by prefix, `33…`) are backfilled; any
    other legacy value keeps the constraint `NOT VALID` with a NOTICE listing the users.
-   `create_user()` takes `p_phone_country` as its last parameter. A writer that sets
-   `phone_number` alone is refused (`23514`): deploy with the Core_API release that writes both.
+   `create_user()` takes `p_phone_country` as its last parameter. Legacy writers that still send a
+   French national number without its country (the mairie360_api_lib test fixtures, an older API
+   during a deploy) are converted by `repeatable/users/trigger_normalize_legacy_phone.sql` with the
+   backfill rules; any other number without a country is refused (`23514`). The release rollback
+   drops that trigger, the next update recreates it.
 
 12. **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

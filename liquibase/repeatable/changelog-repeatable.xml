@@ -393,6 +393,14 @@
         />
         <rollback/>
     </changeSet>
+    <changeSet id="rep-triggers-users-normalize-legacy-phone" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/trigger_normalize_legacy_phone.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
     <changeSet id="rep-triggers-user-identities-updated-at" author="dev" runOnChange="true">
         <sqlFile
             path="auth/trg_user_identities_updated_at.sql"
