@@ -8,16 +8,9 @@ SELECT plan(7);
 -- Known findings, tolerated until they are dropped by a release (see the
 -- ticket referenced below); remove them from these lists in that release.
 -- Any new finding fails the suite.
+-- Empty since releases/v1.11.0 (MAIR-477) dropped the findings of MAIR-476.
 CREATE TEMP TABLE lint_known_redundant_indexes (name TEXT) ON COMMIT DROP;
-INSERT INTO lint_known_redundant_indexes VALUES
-    ('idx_sessions_token_lookup'),        -- = sessions_token_hash_key
-    ('idx_messages_conversation_id_id'),  -- = uq_messages_conversation_id_id
-    ('idx_task_history_task_id'),         -- prefix of idx_task_history_task_changed
-    ('idx_user_roles_user'),              -- prefix of user_roles_pkey
-    ('idx_permissions_resource_id');      -- prefix of uq_resource_action
 CREATE TEMP TABLE lint_known_duplicate_triggers (name TEXT) ON COMMIT DROP;
-INSERT INTO lint_known_duplicate_triggers VALUES
-    ('trg_users_updated_at');             -- same body as tr_10_users_updated_at
 
 SELECT is_empty(
     $$ SELECT a.indexrelid::regclass::text || ' = ' || b.indexrelid::regclass::text
