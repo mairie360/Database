@@ -1,4 +1,4 @@
--- Compatibility of the legacy phone writers (MAIR-480, releases/v1.10.0).
+-- Compatibility of the legacy phone writers (MAIR-480, releases/v3.0.0).
 --
 -- Before v1.10.0 the phone was a bare `phone_number` (French national format, `0612345678`)
 -- with no country. Writers that still send it that way (the test fixtures of

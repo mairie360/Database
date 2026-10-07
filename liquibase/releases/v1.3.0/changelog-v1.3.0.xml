@@ -6,10 +6,187 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
 >
 
-    <changeSet id="rel-1.3.0-01" author="dev"><sqlFile
-            path="01__hash_user_passwords.sql"
+    <!-- Changesets shipped by the git tag v1.3.0. They were written in
+         releases/<schema version>/ folders that did not match the git tags; each
+         keeps its id and its former changelog path as logicalFilePath, the
+         identity Liquibase stored in databasechangelog: never change either. -->
+
+    <!-- Former releases/v1.0.0: initial schema, module by module. -->
+    <changeSet id="rel-1.0.0-01" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="01__init_tables.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></changeSet>
+    <changeSet id="rel-1.0.0-02" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="02__init_sessions.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-03" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="03__init_roles.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-04" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="04__init_resources.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-05" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="05__init_permissions.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-06" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="06__init_rights.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-07" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="07__init_groups_and_permissions.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-08" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="08__init_access_control.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-09" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="09__init_retention_policies.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-10" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="10__alter_users_first_connect.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-11" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="11__init_calendar_module.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-12" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="12__init_messaging.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-13" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="13__init_elearning.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.0.0-14" author="dev"
+        logicalFilePath="releases/v1.0.0/changelog-v1.0.0.xml"
+    ><sqlFile
+            path="14__init_projects.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+
+    <!-- Former releases/v1.1.0: FK indexes and missing primary keys. -->
+    <changeSet id="rel-1.1.0-01" author="dev"
+        logicalFilePath="releases/v1.1.0/changelog-v1.1.0.xml"
+    ><sqlFile
+            path="15__add_fk_indexes.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.1.0-02" author="dev"
+        logicalFilePath="releases/v1.1.0/changelog-v1.1.0.xml"
+    ><sqlFile
+            path="16__add_missing_primary_keys.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+
+    <!-- Former releases/v1.2.0: front-coverage additions. -->
+    <changeSet id="rel-1.2.0-01" author="dev"
+        logicalFilePath="releases/v1.2.0/changelog-v1.2.0.xml"
+    ><sqlFile
+            path="17__extend_enums.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-02" author="dev"
+        logicalFilePath="releases/v1.2.0/changelog-v1.2.0.xml"
+    ><sqlFile
+            path="18__users_profile.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-03" author="dev"
+        logicalFilePath="releases/v1.2.0/changelog-v1.2.0.xml"
+    ><sqlFile
+            path="19__user_settings.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-04" author="dev"
+        logicalFilePath="releases/v1.2.0/changelog-v1.2.0.xml"
+    ><sqlFile
+            path="20__calendar_metadata.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-05" author="dev"
+        logicalFilePath="releases/v1.2.0/changelog-v1.2.0.xml"
+    ><sqlFile
+            path="21__projects_tasks.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-06" author="dev"
+        logicalFilePath="releases/v1.2.0/changelog-v1.2.0.xml"
+    ><sqlFile
+            path="22__elearning.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.2.0-07" author="dev"
+        logicalFilePath="releases/v1.2.0/changelog-v1.2.0.xml"
+    ><sqlFile
+            path="23__messaging.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+
+    <!-- Added after v1.3.0 shipped. A database that already applied the next
+         tag would get this tag after it, so it is only set while rel-1.3.0-01 has
+         not run. CONTINUE, not MARK_RAN: MARK_RAN still writes the tag. Such a
+         database re-checks and skips it on every update. -->
+    <changeSet id="tag-v1.3.0" author="dev">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT count(*) FROM databasechangelog WHERE id = 'rel-1.3.0-01'</sqlCheck>
+        </preConditions>
+        <tagDatabase tag="v1.3.0"/>
+    </changeSet>
 
 </databaseChangeLog>

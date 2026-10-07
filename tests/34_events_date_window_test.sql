@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(12);
 
--- MAIR-481 (releases/v1.12.0): events and recurrence rules stay inside
+-- MAIR-481 (releases/v3.0.0): events and recurrence rules stay inside
 -- [1970-01-01, 3000-01-01) UTC. Postgres prints years outside 0001-9999 in a form
 -- Calendar_API cannot parse back, so such a row made the API answer 500.
 

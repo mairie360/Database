@@ -2,7 +2,7 @@ BEGIN;
 SELECT plan(16);
 
 -- MAIR-393: task description, task_comments and the trigger-only task_history
--- (releases/v1.8.0, repeatable/project/fn_log_task_change.sql).
+-- (releases/v2.0.0, repeatable/project/fn_log_task_change.sql).
 
 CREATE FUNCTION pg_temp.run_as(p_role TEXT, p_sql TEXT) RETURNS TEXT AS $$
 DECLARE

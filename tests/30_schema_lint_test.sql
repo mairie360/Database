@@ -8,7 +8,7 @@ SELECT plan(7);
 -- Known findings, tolerated until they are dropped by a release (see the
 -- ticket referenced below); remove them from these lists in that release.
 -- Any new finding fails the suite.
--- Empty since releases/v1.11.0 (MAIR-477) dropped the findings of MAIR-476.
+-- Empty since releases/v3.0.0 (MAIR-477) dropped the findings of MAIR-476.
 CREATE TEMP TABLE lint_known_redundant_indexes (name TEXT) ON COMMIT DROP;
 CREATE TEMP TABLE lint_known_duplicate_triggers (name TEXT) ON COMMIT DROP;
 

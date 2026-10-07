@@ -2,7 +2,7 @@ BEGIN;
 SELECT plan(16);
 
 -- MAIR-394: conversation creator, message replies and moderation log
--- (releases/v1.8.0).
+-- (releases/v2.0.0).
 
 -- Runs `p_sql` as `p_role` and returns 'ok' or the SQLSTATE it raised.
 CREATE FUNCTION pg_temp.run_as(p_role TEXT, p_sql TEXT) RETURNS TEXT AS $$

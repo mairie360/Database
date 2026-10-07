@@ -54,15 +54,14 @@ credentials, applies HEAD twice with credentials (runAlways replay), rolls back
 to the previous release tag (so the newest release's `<rollback>`s run) and updates
 again, then `pg_prove`s
 `tests/upgrade/*_test.sql`. Bump `UPGRADE_BASELINE` together with the prod
-`liquibase.image.tag` in Deploiment. Git tags (semantic-release versions) and
-`releases/vX.Y.Z/` folder names are unrelated: tag `v1.3.0` only contains
-`releases/v1.0.0`–`v1.2.0`.
+`liquibase.image.tag` in Deploiment. The rollback goes back to the git tag
+before the newest one, so the whole newest `releases/vX.Y.Z/` folder is undone.
 
 `tests/30_schema_lint_test.sql` (MAIR-476) is a static lint of the migrated
 schema: duplicate indexes, non-unique indexes made redundant by a wider one,
 unindexed or mistyped foreign keys, tables without primary key, `SECURITY
 DEFINER` functions without `search_path`, duplicate triggers. Its `lint_known_*`
-temp tables (tolerated findings) are empty since `releases/v1.11.0` (MAIR-477):
+temp tables (tolerated findings) are empty since MAIR-477 (`releases/v3.0.0`):
 any finding fails the suite. `bench/lint.sql` prints the
 same rules plus informational ones (`timestamp` without time zone, `int4`
 surrogate keys).
@@ -103,9 +102,27 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 
 ## Migration architecture
 
-`liquibase/changelog.xml` is the root. It `<include>`s, in order:
+`liquibase/changelog.xml` is the root. It `<include>`s one folder per git tag
+(semantic-release version) that shipped changesets, then the repeatable changelog:
 
-1. **`releases/v1.0.0/changelog-v1.0.0.xml`** — versioned, run-once changesets.
+- `releases/v1.3.0/` — the release deployed in prod; former schema versions
+  v1.0.0–v1.2.0 (`01`–`23`);
+- `releases/v2.0.0/` — former v1.3.0–v1.8.0 (`01`–`11`);
+- `releases/v3.0.0/` — former v1.9.0–v1.12.0 (`01`–`06`).
+
+Until MAIR-490 the folders were named after a schema version unrelated to the git
+tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
+changelog path as `logicalFilePath`, the identity Liquibase stored in
+`databasechangelog` on every instance: never change either, or Liquibase runs them
+again. Each folder ends with a `tag-vX.Y.Z` changeset that tags the database with
+the git tag; `v1.3.0` and `v2.0.0` were added afterwards, so they carry a
+precondition (`onFail="CONTINUE"`, since `MARK_RAN` still writes the tag) that skips
+them on a database already past the next tag. Such databases (dev, staging) also
+keep the former tags `v1.7.0`–`v1.12.0`.
+
+What each former schema version did, in order:
+
+1. **`rel-1.0.0-*`** (`releases/v1.3.0/01`–`14`) — versioned, run-once changesets.
    Ordered `NN__init_*.sql` files (`01__init_tables` → `14__init_projects`) that
    build the schema module by module: core tables/audit, sessions, roles,
    resources, permissions, rights, groups, access_control, retention policies,
@@ -113,12 +130,10 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    All use `splitStatements="false"` because the files contain `DO $$ … $$` blocks
    and function bodies.
 
-2. **`releases/v1.1.0/changelog-v1.1.0.xml`** — the second shipped release
-   (FK indexes + missing primary keys). Changeset ids follow `rel-1.1.0-NN`,
-   `author="dev"`. New releases go in their own `releases/vX.Y.Z/` folder the
-   same way.
+2. **`rel-1.1.0-*`** (`releases/v1.3.0/15`–`16`) — the second shipped release
+   (FK indexes + missing primary keys).
 
-3. **`releases/v1.2.0/changelog-v1.2.0.xml`** — front-coverage additions
+3. **`rel-1.2.0-*`** (`releases/v1.3.0/17`–`23`) — front-coverage additions
    (profile bio, user prefs/notif settings, calendar & e-learning metadata,
    `task_assignees` multi-assign, `conversations.kind` + message mentions/business
    links, extended enums). Additive only; `tasks.assigned_to` /
@@ -127,7 +142,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    pre-existing tables are added `NOT VALID` (enforced going forward, no deploy
    failure on legacy data — `VALIDATE CONSTRAINT` is a later ops step).
 
-4. **`releases/v1.3.0/changelog-v1.3.0.xml`** — `chk_users_password_hashed`
+4. **`rel-1.3.0-*`** (`releases/v2.0.0/01`) — `chk_users_password_hashed`
    (`NOT VALID`, MAIR-169): `users.password` must hold an argon2id PHC hash
    from now on. Existing plaintext rows are grandfathered by the constraint
    and migrated in place by `repeatable/users/migrate_legacy_password.sql`
@@ -135,7 +150,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    that never reconnect); hashing itself happens outside Postgres (pgcrypto
    has no argon2id), so this repo only stores and validates the hash shape.
 
-5. **`releases/v1.4.0/changelog-v1.4.0.xml`** — SSO identities (MAIR-141):
+5. **`rel-1.4.0-*`** (`releases/v2.0.0/02`–`03`) — SSO identities (MAIR-141):
    `user_identities` (`user_id`, `provider`, `subject`; unique per
    `(provider, subject)` and per `(user_id, provider)`) and `users.password`
    made nullable for SSO-only accounts (`chk_users_password_hashed` still
@@ -145,7 +160,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    `v_users_sso_export` (users + role names + provider links the job reads).
    The migration job itself (Keycloak side) is not in this repo.
 
-6. **`releases/v1.5.0/changelog-v1.5.0.xml`** — explicit read acknowledgement (MAIR-269):
+6. **`rel-1.5.0-*`** (`releases/v2.0.0/04`–`05`) — explicit read acknowledgement (MAIR-269):
    `conversation_read_cursors` (`user_id`, `conversation_id`, `last_read_message_id`; kept apart
    from `unread_counters` because those rows are deleted when they reach zero, which would forget
    the cursor), `idx_messages_conversation_id_id` for the recount, and `messages.id` loses its
@@ -160,7 +175,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    No backfill: existing counters are left as is and corrected by the first acknowledgement.
    Deploy it before (or with) the Message_API release that calls `fn_acknowledge_read`.
 
-7. **`releases/v1.6.0/changelog-v1.6.0.xml`** — validates the constraints left `NOT VALID` by
+7. **`rel-1.6.0-*`** (`releases/v2.0.0/06`) — validates the constraints left `NOT VALID` by
    v1.2.0/v1.3.0 (MAIR-236). Legacy rows are repaired first with the least destructive fix (dangling
    reference or out-of-range value reset to NULL/default, a file-based attachment without URL is
    re-typed `other`; nothing is deleted), then `VALIDATE CONSTRAINT` runs. `chk_users_password_hashed`
@@ -172,22 +187,21 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    executable by PUBLIC/API roles; the platform must schedule the latter (CronJob in Deploiment,
    not part of this repo).
 
-8. **`releases/v1.7.0/changelog-v1.7.0.xml`** — `uq_users_email_lower`, unique index on
+8. **`rel-1.7.0-*`** (`releases/v2.0.0/07`) — `uq_users_email_lower`, unique index on
    `lower(email)` (MAIR-413); the migration stops and lists the accounts when two e-mails
-   differ only by case. First release with a `<rollback>` on each changeset and a closing
-   `tagDatabase` (`v1.7.0`): keep doing both in every new release. Older releases have no
-   rollback, going back past v1.7.0 means restoring a dump.
+   differ only by case. First changeset with a `<rollback>`: every changeset since has one.
+   Older ones have no rollback, going back past it means restoring a dump.
 
-9. **`releases/v1.8.0/changelog-v1.8.0.xml`** — schema side of the 2 October 2026 audit of the
-   APIs, one changeset per file, each with a `<rollback>` (`NN__x.rollback.sql`), closed by the
-   `v1.8.0` tag. Deploy it before (or with) the API releases that use these columns.
-   - `01__event_approval` (MAIR-392): the approval of an event lives on `events` (`approval_status`
+9. **`rel-1.8.0-*`** (`releases/v2.0.0/08`–`11`) — schema side of the 2 October 2026 audit of the
+   APIs, one changeset per file, each with a `<rollback>` (`NN__x.rollback.sql`). Deploy it
+   before (or with) the API releases that use these columns.
+   - `08__event_approval` (MAIR-392): the approval of an event lives on `events` (`approval_status`
      `event_validation_status`, `approval_decided_by` → `users` `ON DELETE SET NULL`,
      `approval_decided_at`; `chk_events_approval_decision`: a pending event carries no decision),
      backfilled from the member statuses (`refused` > `pending` > `validated`).
      `event_members.validation_status` is kept but no longer read by Calendar_API.
      `v_securable_events` (`events.*`) is recreated so it carries the new columns.
-   - `02__task_description_comments_history` (MAIR-393): `tasks.description` (`TEXT NOT NULL
+   - `09__task_description_comments_history` (MAIR-393): `tasks.description` (`TEXT NOT NULL
      DEFAULT ''`, ≤ 5000 chars) and `tasks.updated_by` (author of the last write, set by Project_API
      on every INSERT/UPDATE; NULL = system write, e.g. `fn_archive_user()`). `task_comments`
      (`task_id`, `author_id`, `message` 1–2000 chars, `created_at`) replaces
@@ -198,18 +212,18 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
      tasks`, signs with `NEW.updated_by`); project_api only has `SELECT` on it. The legacy
      `custom_fields` `comments` / `history` arrays are moved into the tables and stripped from the
      JSONB (the rollback puts them back).
-   - `03__conversation_creator_and_replies` (MAIR-394): `conversations.created_by` (creator,
+   - `10__conversation_creator_and_replies` (MAIR-394): `conversations.created_by` (creator,
      `ON DELETE SET NULL`, backfilled with the earliest member): only the creator or an
      administrator may add members or remove someone else. `messages.reply_to_id` (the API's
      `citation`) with a composite foreign key `(conversation_id, reply_to_id) → messages
      (conversation_id, id)` `ON DELETE SET NULL (reply_to_id)`, so a reply always quotes a message
      of the same conversation (`uq_messages_conversation_id_id` backs it).
-   - `04__messaging_moderation_log` (MAIR-394): no foreign key, snapshot of the deleted content;
+   - `11__messaging_moderation_log` (MAIR-394): no foreign key, snapshot of the deleted content;
      one row per message of someone else or conversation deleted by an administrator,
      INSERT-only for `message_api`.
 
-10. **`releases/v1.9.0/changelog-v1.9.0.xml`** — one direct conversation per pair of agents
-   (MAIR-478), with its `<rollback>`, closed by the `v1.9.0` tag. `conversations.direct_user_low` /
+10. **`rel-1.9.0-*`** (`releases/v3.0.0/01`–`02`) — one direct conversation per pair of agents
+   (MAIR-478), with its `<rollback>`. `conversations.direct_user_low` /
    `direct_user_high` (→ `users` `ON DELETE CASCADE`) hold the two participants of a `direct`
    conversation, lowest id first; `chk_conversations_direct_pair` requires them (and no group) for
    `direct` and forbids them otherwise, `uq_conversations_direct_pair` allows one direct
@@ -226,7 +240,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    conversation. **Deploy it with the Message_API release of MAIR-478**: older Message_API
    versions insert `direct` conversations without a pair, which the constraint now refuses.
 
-11. **`releases/v1.10.0/changelog-v1.10.0.xml`** — phone number as country + national number
+11. **`rel-1.10.0-*`** (`releases/v3.0.0/03`) — phone number as country + national number
    (MAIR-480): `users.phone_country` (ISO 3166-1 alpha-2) and `users.phone_number` (national
    significant number, digits only, no trunk prefix: `0612345678` is stored `FR` / `612345678`),
    both set or both NULL (`chk_users_phone`, written with `COALESCE` because a CHECK passes on
@@ -238,12 +252,12 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    backfill rules; any other number without a country is refused (`23514`). The release rollback
    drops that trigger, the next update recreates it.
 
-12. **`releases/v1.11.0/changelog-v1.11.0.xml`** — findings of the schema lint and bench of MAIR-476,
-   fixed by MAIR-477, same layout as v1.8.0 (rollback per changeset, `v1.11.0` tag).
-   - `01__drop_redundant_indexes`: drops the five indexes the lint reported as duplicates or
+12. **`rel-1.11.0-*`** (`releases/v3.0.0/04`–`05`) — findings of the schema lint and bench of MAIR-476,
+   fixed by MAIR-477, rollback per changeset.
+   - `04__drop_redundant_indexes`: drops the five indexes the lint reported as duplicates or
      prefixes of a wider index (`idx_sessions_token_lookup`, `idx_messages_conversation_id_id`,
      `idx_task_history_task_id`, `idx_user_roles_user`, `idx_permissions_resource_id`).
-   - `02__users_search_trigram`: `pg_trgm` and GIN trigram indexes on `users.first_name`,
+   - `05__users_search_trigram`: `pg_trgm` and GIN trigram indexes on `users.first_name`,
      `last_name`, `email`, `first_name || ' ' || last_name` and `last_name || ' ' || first_name`,
      for the `ILIKE '%term%'` searches of Core_API. The APIs must build full names with `||`:
      `concat_ws` is not IMMUTABLE, cannot be indexed, and one unindexed branch of the `OR` brings
@@ -255,9 +269,9 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    them; the bench holds `core_directory_search` to the strict thresholds (126 blocks per
    transaction, growth 1.20).
 
-13. **`releases/v1.12.0/changelog-v1.12.0.xml`** — event dates bounded to
-   `[1970-01-01, 3000-01-01)` UTC (MAIR-481), rollback per changeset, `v1.12.0` tag.
-   `01__events_date_window` deletes the events outside that window, or repeating along a rule
+13. **`rel-1.12.0-*`** (`releases/v3.0.0/06`) — event dates bounded to
+   `[1970-01-01, 3000-01-01)` UTC (MAIR-481), rollback per changeset.
+   `06__events_date_window` deletes the events outside that window, or repeating along a rule
    outside it, with their members, message links and group ACL entries, then the rules outside
    it (fuzzing pollution: Postgres prints years outside 0001–9999 in a form Calendar_API cannot
    parse back, so these rows made `GET /events/{id}` and `GET /calendar` answer 500), and adds
@@ -266,7 +280,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
    constraints. Calendar_API applies the same window and answers 400 first.
    `tests/34_events_date_window_test.sql` covers the constraints, the upgrade test the cleanup.
 
-14. **`repeatable/changelog-repeatable.xml`** — every changeset here is
+Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
    grouped by domain folder: `access/`, `auth/`, `calendar/`, `common/`,
@@ -280,11 +294,16 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 ### Rules for changing the schema
 
 - **Never edit a file under `releases/`** once it has shipped — Liquibase tracks
-  checksums and will fail. Add a new `releases/vX.Y.Z/` folder with its own
-  `changelog-vX.Y.Z.xml` and `<include>` it from `changelog.xml` (before the
-  repeatable include).
+  checksums and will fail. New changesets go in the folder of the git tag that
+  will ship them, `releases/vX.Y.Z/` with its `changelog-vX.Y.Z.xml`, created by
+  the first change after a tag and `<include>`d from `changelog.xml` (before the
+  repeatable include). Name it after the version semantic-release will cut from
+  the commits merged since the last tag (`fix` → patch, `feat` → minor, breaking →
+  major) and close it with a `tag-vX.Y.Z` changeset. Every changeset carries a
+  `<rollback>`.
 - **A new `releases/vX.Y.Z/` folder must also be added to `LIQUIBASE_SEARCH_PATH`**
-  in both `docker-compose.yml` and `docker-compose-test.yml` — the changesets use
+  in `docker-compose.yml`, `docker-compose-test.yml` and
+  `bench/docker-compose-bench.yml` — the changesets use
   `sqlFile path="NN__x.sql"` and Liquibase resolves those against the search path,
   not the changelog dir. Miss this and `update` fails with a file-not-found.
 - **Repeatable objects** (views/functions/triggers) *are* meant to be edited in
