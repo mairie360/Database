@@ -1,13 +1,15 @@
 -- Core_API users/list_directory/view.rs: directory search by name, matches collected
--- first (MATERIALIZED) so the name order index of releases/v3.0.1 is not walked (MAIR-477)
+-- first (MATERIALIZED) through the search expression of releases/v3.0.1, so the name order
+-- index is not walked (MAIR-477)
 \set uid random_exponential(2, 20000 * :scale, 3)
 SELECT EXISTS(SELECT 1 FROM users WHERE id = :uid AND NOT COALESCE(is_archived, false)) AS is_user_active;
 \set n random(1, 5000 * :scale)
 WITH matched AS MATERIALIZED (
   SELECT u.id, u.first_name, u.last_name, u.email FROM users u
   WHERE COALESCE(u.is_archived, false) = false
-    AND (NULLIF('Last' || :n, '') IS NULL OR u.first_name ILIKE '%' || ('Last' || :n) || '%' OR u.last_name ILIKE '%' || ('Last' || :n) || '%'
-         OR (u.first_name || ' ' || u.last_name) ILIKE '%' || ('Last' || :n) || '%' OR u.email ILIKE '%' || ('Last' || :n) || '%')
+    AND (NULLIF('Last' || :n, '') IS NULL
+         OR lower(u.first_name || ' ' || u.last_name || chr(31) || u.last_name || ' ' || u.first_name
+                  || chr(31) || u.email) LIKE '%' || lower('Last' || :n) || '%')
 ), page AS (
   SELECT * FROM matched ORDER BY last_name, first_name, id LIMIT 20
 )

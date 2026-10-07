@@ -294,6 +294,16 @@ What each former schema version did, in order:
    `tests/33` drops it in its transaction to read the trigram plans; the bench holds
    `core_admin_users` (OFFSET pages: growth 1.48 by design) and `core_directory_search`.
 
+15. **`mair-477-02`** (`releases/v3.0.1/02`) — one trigram GIN `idx_users_search_text_trgm` on the
+   expression `lower(first_name || ' ' || last_name || chr(31) || last_name || ' ' || first_name
+   || chr(31) || email)`, replacing the five trigram indexes of `rel-1.11.0-02`. The searches of
+   Core_API matched five `ILIKE` joined by OR: a broad term read the whole table, five `ILIKE` per
+   row (14 to 74 ms on 10 000 users, the main load of Core_API's Postgres under the MAIR-474 load
+   test); one `LIKE` on this expression takes 0.7 to 3.9 ms, generic plans included. `chr(31)`
+   keeps a term from matching across fields. An expression index, not a generated column:
+   `v_users_active` / `v_users_archived` select `users.*` and would carry a column the rollback
+   could not drop. Core_API must write the exact expression; `tests/33` checks the plan.
+
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,

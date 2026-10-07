@@ -21,6 +21,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- One normalized search expression per user, replacing the five trigram indexes (MAIR-477). -->
+    <changeSet id="mair-477-02" author="dev"><sqlFile
+            path="02__users_search_text.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="02__users_search_text.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v3.0.1" author="dev"><tagDatabase tag="v3.0.1"/></changeSet>
 
 </databaseChangeLog>
