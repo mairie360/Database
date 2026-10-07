@@ -300,7 +300,25 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   repeatable include). Name it after the version semantic-release will cut from
   the commits merged since the last tag (`fix` → patch, `feat` → minor, breaking →
   major) and close it with a `tag-vX.Y.Z` changeset. Every changeset carries a
-  `<rollback>`.
+  `<rollback>`. A schema change needs a commit type that releases (`fix:`,
+  `feat:`…), not `chore:` / `refactor:`.
+- **Identity of new changesets (MAIR-491).** The changelog of a new folder sets
+  `logicalFilePath="releases"` on its `<databaseChangeLog>`, and its changesets are
+  named after their ticket, `id="mair-<n>-NN"` (`author="dev"`), plus
+  `id="tag-vX.Y.Z"` for the closing tag. Their identity then does not depend on the
+  folder: when the folder has to be renamed (another `feat` merged before the prod
+  release turned `v3.0.1` into `v3.1.0`), dev and staging do not run them again,
+  and only the renamed `tag-vX.Y.Z` runs. The `rel-1.X.0-NN` ids are frozen.
+- **Release folder gate (CICD `release_folder`, MAIR-491).** Between staging and the
+  Prod approval, CICD computes the version `release-prod` will cut (semantic-release
+  dry run) and compares the release changesets with the last tag, by identity and
+  content. It fails, and the prod release is skipped, when a shipped changeset was
+  modified or removed (one holding only a `tagDatabase` may go), when a new changeset
+  is outside `releases/v<next>/` or no release is cut, when that folder does not end
+  with `tag-v<next>`, or when a new changeset breaks the identity rule above. The job
+  summary says what to fix; fix it with a PR (usually a folder rename). To check a
+  branch before merging: `python3 <CICD checkout>/actions/release-folder/check_release_folder.py
+  . <last tag> <expected version>`.
 - **A new `releases/vX.Y.Z/` folder must also be added to `LIQUIBASE_SEARCH_PATH`**
   in `docker-compose.yml`, `docker-compose-test.yml` and
   `bench/docker-compose-bench.yml` — the changesets use
