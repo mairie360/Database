@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(3);
 
--- MAIR-413 (releases/v1.7.0): e-mail addresses are unique regardless of case.
+-- MAIR-413 (releases/v2.0.0): e-mail addresses are unique regardless of case.
 
 SELECT ok(
     EXISTS (

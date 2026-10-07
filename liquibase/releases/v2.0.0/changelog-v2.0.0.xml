@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+>
+
+    <!-- Changesets shipped by the git tag v2.0.0. They were written in
+         releases/<schema version>/ folders that did not match the git tags; each
+         keeps its id and its former changelog path as logicalFilePath, the
+         identity Liquibase stored in databasechangelog: never change either. -->
+
+    <!-- Former releases/v1.3.0: argon2id password hashes required, NOT VALID (MAIR-169). -->
+    <changeSet id="rel-1.3.0-01" author="dev"
+        logicalFilePath="releases/v1.3.0/changelog-v1.3.0.xml"
+    ><sqlFile
+            path="01__hash_user_passwords.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+
+    <!-- Former releases/v1.4.0: SSO identities (MAIR-141). -->
+    <changeSet id="rel-1.4.0-01" author="dev"
+        logicalFilePath="releases/v1.4.0/changelog-v1.4.0.xml"
+    ><sqlFile
+            path="02__user_identities.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.4.0-02" author="dev"
+        logicalFilePath="releases/v1.4.0/changelog-v1.4.0.xml"
+    ><sqlFile
+            path="03__users_password_nullable.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+
+    <!-- Former releases/v1.5.0: explicit read acknowledgement (MAIR-269). -->
+    <changeSet id="rel-1.5.0-01" author="dev"
+        logicalFilePath="releases/v1.5.0/changelog-v1.5.0.xml"
+    ><sqlFile
+            path="04__conversation_read_cursors.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+    <changeSet id="rel-1.5.0-02" author="dev"
+        logicalFilePath="releases/v1.5.0/changelog-v1.5.0.xml"
+    ><sqlFile
+            path="05__messages_id_assigned_under_lock.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+
+    <!-- Former releases/v1.6.0: validation of the NOT VALID constraints (MAIR-236). -->
+    <changeSet id="rel-1.6.0-01" author="dev"
+        logicalFilePath="releases/v1.6.0/changelog-v1.6.0.xml"
+    ><sqlFile
+            path="06__validate_not_valid_constraints.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></changeSet>
+
+    <!-- Former releases/v1.7.0: case-insensitive unique e-mail (MAIR-413), first changesets with a <rollback>. -->
+    <changeSet id="rel-1.7.0-01" author="dev"
+        logicalFilePath="releases/v1.7.0/changelog-v1.7.0.xml"
+    ><sqlFile
+            path="07__users_email_case_insensitive.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback>DROP INDEX IF EXISTS uq_users_email_lower;</rollback></changeSet>
+
+    <!-- Former releases/v1.8.0: API audit of 2 October 2026 (MAIR-392, MAIR-393, MAIR-394). -->
+    <changeSet id="rel-1.8.0-01" author="dev"
+        logicalFilePath="releases/v1.8.0/changelog-v1.8.0.xml"
+    ><sqlFile
+            path="08__event_approval.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="08__event_approval.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+    <changeSet id="rel-1.8.0-02" author="dev"
+        logicalFilePath="releases/v1.8.0/changelog-v1.8.0.xml"
+    ><sqlFile
+            path="09__task_description_comments_history.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="09__task_description_comments_history.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+    <changeSet id="rel-1.8.0-03" author="dev"
+        logicalFilePath="releases/v1.8.0/changelog-v1.8.0.xml"
+    ><sqlFile
+            path="10__conversation_creator_and_replies.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="10__conversation_creator_and_replies.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+    <changeSet id="rel-1.8.0-04" author="dev"
+        logicalFilePath="releases/v1.8.0/changelog-v1.8.0.xml"
+    ><sqlFile
+            path="11__messaging_moderation_log.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback>DROP TABLE IF EXISTS messaging_moderation_log;</rollback></changeSet>
+
+    <!-- Added after v2.0.0 shipped. A database that already applied the next
+         tag would get this tag after it, so it is only set while rel-1.9.0-01 has
+         not run. CONTINUE, not MARK_RAN: MARK_RAN still writes the tag. Such a
+         database re-checks and skips it on every update. -->
+    <changeSet id="tag-v2.0.0" author="dev">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">SELECT count(*) FROM databasechangelog WHERE id = 'rel-1.9.0-01'</sqlCheck>
+        </preConditions>
+        <tagDatabase tag="v2.0.0"/>
+    </changeSet>
+
+</databaseChangeLog>

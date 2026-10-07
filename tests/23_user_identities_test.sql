@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(24);
 
--- MAIR-141: SSO identities. releases/v1.4.0 adds user_identities and makes
+-- MAIR-141: SSO identities. releases/v2.0.0 adds user_identities and makes
 -- users.password nullable; repeatable/auth/ adds link_user_identity()
 -- (the replayable write path of the Keycloak migration job),
 -- resolve_user_identity() (the SSO login path) and v_users_sso_export

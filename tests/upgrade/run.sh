@@ -6,8 +6,8 @@
 #   3. HEAD without admin credentials: must fail while the template admin
 #      account is still there,
 #   4. HEAD with admin credentials, then a second time (runAlways replay),
-#   5. rollback to the previous release tag (undoes the newest release) and
-#      update again,
+#   5. rollback to the previous release tag (undoes the newest git tag's
+#      releases/vX.Y.Z folder) and update again,
 #   6. pg_prove tests/upgrade/*_test.sql on the result.
 #
 # Runs in the tester container of docker-compose-upgrade.yml.
@@ -16,7 +16,8 @@ set -eu
 # Liquibase resolves `sqlFile path="NN__x.sql"` against the search path, so
 # every release folder of the changelog tree is listed (same as the compose
 # files). The changelog file names recorded in DATABASECHANGELOG are relative
-# to it, so the baseline and HEAD trees match.
+# to it; the changesets HEAD moved into another folder keep their former path
+# as logicalFilePath, so the baseline and HEAD trees match.
 search_path() {
     path="$1"
     for dir in "$1"/releases/*/; do

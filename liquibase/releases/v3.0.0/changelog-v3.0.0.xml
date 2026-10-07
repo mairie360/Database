@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+>
+
+    <!-- Changesets shipped by the git tag v3.0.0. They were written in
+         releases/<schema version>/ folders that did not match the git tags; each
+         keeps its id and its former changelog path as logicalFilePath, the
+         identity Liquibase stored in databasechangelog: never change either. -->
+
+    <!-- Former releases/v1.9.0: one direct conversation per pair of agents (MAIR-478). -->
+    <changeSet id="rel-1.9.0-01" author="dev"
+        logicalFilePath="releases/v1.9.0/changelog-v1.9.0.xml"
+    ><sqlFile
+            path="01__direct_conversations.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="01__direct_conversations.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+    <changeSet id="rel-1.9.0-02" author="dev"
+        logicalFilePath="releases/v1.9.0/changelog-v1.9.0.xml"
+    ><sqlFile
+            path="02__conversations_resource.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback>DELETE FROM resources WHERE name = 'conversations';</rollback></changeSet>
+
+    <!-- Former releases/v1.10.0: phone number as country + national number (MAIR-480). -->
+    <changeSet id="rel-1.10.0-01" author="dev"
+        logicalFilePath="releases/v1.10.0/changelog-v1.10.0.xml"
+    ><sqlFile
+            path="03__users_phone_country.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="03__users_phone_country.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Former releases/v1.11.0: schema lint and bench findings (MAIR-476, MAIR-477). -->
+    <changeSet id="rel-1.11.0-01" author="dev"
+        logicalFilePath="releases/v1.11.0/changelog-v1.11.0.xml"
+    ><sqlFile
+            path="04__drop_redundant_indexes.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="04__drop_redundant_indexes.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+    <changeSet id="rel-1.11.0-02" author="dev"
+        logicalFilePath="releases/v1.11.0/changelog-v1.11.0.xml"
+    ><sqlFile
+            path="05__users_search_trigram.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="05__users_search_trigram.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Former releases/v1.12.0: event dates bounded to [1970-01-01, 3000-01-01) UTC (MAIR-481). -->
+    <changeSet id="rel-1.12.0-01" author="dev"
+        logicalFilePath="releases/v1.12.0/changelog-v1.12.0.xml"
+    ><sqlFile
+            path="06__events_date_window.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="06__events_date_window.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="tag-v3.0.0" author="dev"><tagDatabase tag="v3.0.0"/></changeSet>
+
+</databaseChangeLog>

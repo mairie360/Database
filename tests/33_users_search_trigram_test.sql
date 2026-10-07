@@ -2,7 +2,7 @@ BEGIN;
 SELECT plan(11);
 
 -- MAIR-477: lint findings dropped and trigram indexes for the user searches
--- (releases/v1.11.0, repeatable/users/trigger_user_update.sql).
+-- (releases/v3.0.0, repeatable/users/trigger_user_update.sql).
 
 -- Plan of `p_sql`, one line per row of EXPLAIN, joined.
 CREATE FUNCTION pg_temp.plan_of(p_sql TEXT) RETURNS TEXT AS $$

@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(13);
 
--- MAIR-480 (releases/v1.10.0): the phone is a country (ISO 3166-1 alpha-2) plus a
+-- MAIR-480 (releases/v3.0.0): the phone is a country (ISO 3166-1 alpha-2) plus a
 -- national number (digits only), both or neither.
 
 SELECT has_column('users', 'phone_country', 'users has a phone_country column');
