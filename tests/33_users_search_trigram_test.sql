@@ -34,6 +34,11 @@ SELECT hasnt_index('user_roles', 'idx_user_roles_user', 'Redundant idx_user_role
 -- to use an index on every branch of its OR, the full names included: the
 -- expressions of the indexes have to be the ones the APIs write. Sequential
 -- scans are disabled so the plan does not depend on the size of the test data.
+-- With them disabled, the planner walks the whole B-tree of releases/v3.0.1
+-- (idx_users_name_order) rather than any other index on the handful of test rows:
+-- it is dropped in this transaction, rolled back at the end, so these plans only
+-- tell whether the trigram indexes serve the searches.
+DROP INDEX idx_users_name_order;
 SET LOCAL enable_seqscan = off;
 
 SELECT unalike(
