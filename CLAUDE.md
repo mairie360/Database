@@ -62,7 +62,9 @@ schema: duplicate indexes, non-unique indexes made redundant by a wider one,
 unindexed or mistyped foreign keys, tables without primary key, `SECURITY
 DEFINER` functions without `search_path`, duplicate triggers. Its `lint_known_*`
 temp tables (tolerated findings) are empty since MAIR-477 (`releases/v3.0.0`):
-any finding fails the suite. `bench/lint.sql` prints the
+any finding fails the suite. An index only makes another redundant when both use the
+same access method (a trigram GIN on `last_name` is not covered by a B-tree starting
+with it). `bench/lint.sql` prints the
 same rules plus informational ones (`timestamp` without time zone, `int4`
 surrogate keys).
 
@@ -108,7 +110,9 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 - `releases/v1.3.0/` — the release deployed in prod; former schema versions
   v1.0.0–v1.2.0 (`01`–`23`);
 - `releases/v2.0.0/` — former v1.3.0–v1.8.0 (`01`–`11`);
-- `releases/v3.0.0/` — former v1.9.0–v1.12.0 (`01`–`06`).
+- `releases/v3.0.0/` — former v1.9.0–v1.12.0 (`01`–`06`);
+- `releases/v3.0.1/` — first folder with the MAIR-491 identity (`mair-<n>-NN`,
+  `logicalFilePath="releases"`).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -279,6 +283,26 @@ What each former schema version did, in order:
    its last occurrence, may equal `3000-01-01`; `NULL` = never ends). The rollback only drops the
    constraints. Calendar_API applies the same window and answers 400 first.
    `tests/34_events_date_window_test.sql` covers the constraints, the upgrade test the cleanup.
+
+14. **`mair-477-01`** (`releases/v3.0.1/01`) — B-tree `idx_users_name_order` on
+   `users (last_name, first_name, id)`, the order of Core_API's admin user list (MAIR-477, found
+   by the MAIR-474 load test): without it each page sorted every user (10 143 blocks per
+   transaction at a random page in the bench, 249 now). Core_API only orders by it without a
+   search; with one it collects the matches first through the trigram indexes, otherwise the
+   generic plan of the prepared query walks this index for a selective search (directory search
+   126 → 986 blocks). `tests/35_users_name_order_test.sql` checks the index and the page plan;
+   `tests/33` drops it in its transaction to read the trigram plans; the bench holds
+   `core_admin_users` (OFFSET pages: growth 1.48 by design) and `core_directory_search`.
+
+15. **`mair-477-02`** (`releases/v3.0.1/02`) — one trigram GIN `idx_users_search_text_trgm` on the
+   expression `lower(first_name || ' ' || last_name || chr(31) || last_name || ' ' || first_name
+   || chr(31) || email)`, replacing the five trigram indexes of `rel-1.11.0-02`. The searches of
+   Core_API matched five `ILIKE` joined by OR: a broad term read the whole table, five `ILIKE` per
+   row (14 to 74 ms on 10 000 users, the main load of Core_API's Postgres under the MAIR-474 load
+   test); one `LIKE` on this expression takes 0.7 to 3.9 ms, generic plans included. `chr(31)`
+   keeps a term from matching across fields. An expression index, not a generated column:
+   `v_users_active` / `v_users_archived` select `users.*` and would carry a column the rollback
+   could not drop. Core_API must write the exact expression; `tests/33` checks the plan.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
