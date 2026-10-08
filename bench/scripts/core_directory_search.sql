@@ -1,5 +1,5 @@
 -- Core_API users/list_directory/view.rs: directory search by name, matches collected
--- first (MATERIALIZED) through the search expression of releases/v3.0.1, so the name order
+-- first (MATERIALIZED) through the search expression of releases/v3.1.0, so the name order
 -- index is not walked (MAIR-477)
 \set uid random_exponential(2, 20000 * :scale, 3)
 SELECT EXISTS(SELECT 1 FROM users WHERE id = :uid AND NOT COALESCE(is_archived, false)) AS is_user_active;

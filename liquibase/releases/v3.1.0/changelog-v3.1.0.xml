@@ -7,7 +7,7 @@
     logicalFilePath="releases"
 >
 
-    <!-- Changesets shipped by the git tag v3.0.1. Their identity does not depend on the
+    <!-- Changesets shipped by the git tag v3.1.0. Their identity does not depend on the
          folder (MAIR-491): renaming it after the release keeps them applied. -->
 
     <!-- Index on the order of the admin user list (MAIR-477). -->
@@ -32,6 +32,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
-    <changeSet id="tag-v3.0.1" author="dev"><tagDatabase tag="v3.0.1"/></changeSet>
+    <!-- A completed task is archived: tasks.archived_at, kept by fn_set_task_archived_at (MAIR-502). -->
+    <changeSet id="mair-502-01" author="dev"><sqlFile
+            path="03__tasks_archived_at.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="03__tasks_archived_at.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="tag-v3.1.0" author="dev"><tagDatabase tag="v3.1.0"/></changeSet>
 
 </databaseChangeLog>

@@ -37,7 +37,7 @@ services:
       - LIQUIBASE_COMMAND_URL=jdbc:postgresql://mairie360-db:5432/core
       - LIQUIBASE_COMMAND_USERNAME=postgres
       - LIQUIBASE_COMMAND_PASSWORD=password
-      - LIQUIBASE_SEARCH_PATH=/migrations,/migrations/releases/v1.3.0,/migrations/releases/v2.0.0,/migrations/releases/v3.0.0,/migrations/releases/v3.0.1,/migrations/repeatable
+      - LIQUIBASE_SEARCH_PATH=/migrations,/migrations/releases/v1.3.0,/migrations/releases/v2.0.0,/migrations/releases/v3.0.0,/migrations/releases/v3.1.0,/migrations/repeatable
     # -D<role>_password: per-API role passwords (repeatable/security/api_roles.sql),
     # dev-only values. -Dallow_template_admin=true seeds the public template admin
     # account (repeatable/common/create_admin.sql); never pass it on a real

@@ -383,6 +383,14 @@
         />
         <rollback/>
     </changeSet>
+    <changeSet id="rep-functions-project-archive" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/fn_set_task_archived_at.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
 
 
     <changeSet id="rep-triggers-users" author="dev" runOnChange="true">
