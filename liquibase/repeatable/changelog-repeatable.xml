@@ -112,6 +112,15 @@
         />
         <rollback/>
     </changeSet>
+    <!-- MAIR-289: erasure and export of a user's data. -->
+    <changeSet id="rep-functions-users-anonymize" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/anonymize_user.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
     <changeSet id="rep-functions-users-restore" author="dev" runOnChange="true">
         <sqlFile
             path="users/restore_user.sql"

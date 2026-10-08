@@ -29,7 +29,9 @@
 #               preferences  settings of the agent
 #   erasure     what happens to the value when the agent it relates to is erased
 #               delete       the row is removed
-#               anonymize    the value is cleared or replaced, the row stays
+#               anonymize    the value is cleared or replaced, the row stays; for an identifier, the
+#                            reference stays and points to the anonymized users row, which no
+#                            longer names anyone
 #               keep         the value stays (legal obligation, security log, shared content): say why in `note`
 #   visibility  who can read it through the APIs today
 #               self         the agent and the administrators
@@ -40,8 +42,17 @@
 #   audit_log   false: never copied into users_audit_log (only on the audited table, `users`)
 #   note        decision to take or current gap, with the ticket that handles it
 #
-# `erasure` is the target behaviour, which MAIR-289 implements: today a deletion only archives the
-# account (`users` is never hard-deleted) and nothing is anonymized.
+# `erasure` is applied by anonymize_user() (MAIR-289, liquibase/repeatable/users/anonymize_user.sql):
+# an administrator's deletion archives the account, and the archived accounts are anonymized after
+# the period of the `users` retention policy (1 year by default, set per instance). `users` is never
+# hard-deleted. export_user_data() exports, for the right of access, every row that references the
+# user. Decisions recorded in the notes (MAIR-289): direct conversations stay for the other
+# participant, private events of the user are deleted, the other events, the groups and the
+# projects are handed over to an administrator, the training records are kept.
+#
+# IP addresses (access_logs, connection_logs, sessions): kept for security (decision of MAIR-290);
+# the future per-instance compliance scanner removes them past their period, and the backups that
+# hold them are encrypted.
 
 version: 1
 
@@ -59,7 +70,7 @@ tables:
       action: {category: activity, erasure: keep, visibility: internal}
       result: {category: activity, erasure: keep, visibility: internal}
       reason: {category: activity, erasure: keep, visibility: internal}
-      ip_address: {category: connection, erasure: keep, visibility: internal}
+      ip_address: {category: connection, erasure: keep, visibility: internal, note: "kept for security (MAIR-290 decision); removed by the future per-instance compliance scanner, encrypted in backups"}
       timestamp: {category: activity, erasure: keep, visibility: internal}
     not_personal: [id]
 
@@ -67,7 +78,7 @@ tables:
     personal:
       session_id: {category: connection, erasure: keep, visibility: internal, note: "security log (retention_policies: 1 year, COLD_STORAGE, not applied yet: MAIR-236)"}
       user_id: {category: identifier, erasure: keep, visibility: internal}
-      ip_address: {category: connection, erasure: keep, visibility: internal}
+      ip_address: {category: connection, erasure: keep, visibility: internal, note: "kept for security (MAIR-290 decision); removed by the future per-instance compliance scanner, encrypted in backups"}
       device_info: {category: connection, erasure: keep, visibility: internal}
       timestamp: {category: connection, erasure: keep, visibility: internal}
       action_type: {category: connection, erasure: keep, visibility: internal}
@@ -90,8 +101,8 @@ tables:
     personal:
       title: {category: content, erasure: keep, visibility: members, note: "direct conversations are titled after the participants' ids (Direct <id>)"}
       created_by: {category: identifier, erasure: anonymize, visibility: members}
-      direct_user_low: {category: identifier, erasure: delete, visibility: members, note: "ON DELETE CASCADE removes the whole direct conversation, the other participant's messages included: to decide in MAIR-289"}
-      direct_user_high: {category: identifier, erasure: delete, visibility: members, note: "same as direct_user_low"}
+      direct_user_low: {category: identifier, erasure: anonymize, visibility: members, note: "the direct conversation stays for the other participant, who no longer knows who wrote the erased user's messages (MAIR-289; ON DELETE NO ACTION)"}
+      direct_user_high: {category: identifier, erasure: anonymize, visibility: members, note: "same as direct_user_low"}
     not_personal: [id, group_id, created_at, kind]
 
   course_attachments:
@@ -129,13 +140,13 @@ tables:
 
   events:
     personal:
-      name: {category: content, erasure: keep, visibility: members, note: "events whose visibility is public are readable by every agent; the private events of an erased owner should be deleted: to decide in MAIR-289"}
+      name: {category: content, erasure: keep, visibility: members, note: "events whose visibility is public are readable by every agent; the private events of an erased owner are deleted (MAIR-289)"}
       description: {category: content, erasure: keep, visibility: members}
       location: {category: content, erasure: keep, visibility: members}
       start_date: {category: activity, erasure: keep, visibility: members}
       end_date: {category: activity, erasure: keep, visibility: members}
       created_by: {category: identifier, erasure: anonymize, visibility: members}
-      owner_id: {category: identifier, erasure: anonymize, visibility: members}
+      owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "private events of an erased owner are deleted, the others handed over to an administrator (MAIR-289)"}
       approval_decided_by: {category: identifier, erasure: anonymize, visibility: members}
       approval_decided_at: {category: activity, erasure: keep, visibility: members}
     not_personal: [id, recurrence_id, is_exception, visibility, owner_group_id, category, service_group_id, service_label, approval_status]
@@ -148,7 +159,7 @@ tables:
 
   groups:
     personal:
-      owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "NOT NULL and ON DELETE RESTRICT: the erasure must hand the group over to another agent (MAIR-289)"}
+      owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "handed over to an administrator at erasure (MAIR-289)"}
     not_personal: [id, name, description, created_at]
 
   message_business_links:
@@ -186,7 +197,7 @@ tables:
   projects:
     personal:
       description: {category: content, erasure: keep, visibility: members}
-      owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "ON DELETE RESTRICT: the erasure must hand the project over to another agent (MAIR-289)"}
+      owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "handed over to an administrator at erasure (MAIR-289)"}
       responsible_id: {category: identifier, erasure: anonymize, visibility: members}
     not_personal: [id, title, status, custom_field_schema, created_at, priority, due_date, labels]
 
@@ -222,7 +233,7 @@ tables:
       user_id: {category: identifier, erasure: delete, visibility: self}
       token_hash: {category: credentials, erasure: delete, visibility: internal}
       device_info: {category: connection, erasure: delete, visibility: self}
-      ip_address: {category: connection, erasure: delete, visibility: self}
+      ip_address: {category: connection, erasure: delete, visibility: self, note: "kept for security while the session lives (MAIR-290 decision); deleted with the session"}
       created_at: {category: connection, erasure: delete, visibility: self}
       expires_at: {category: connection, erasure: delete, visibility: self}
       revoked_at: {category: connection, erasure: delete, visibility: self}
@@ -275,11 +286,11 @@ tables:
 
   user_courses:
     personal:
-      user_id: {category: identifier, erasure: delete, visibility: self}
-      course_id: {category: activity, erasure: delete, visibility: self}
-      status: {category: activity, erasure: delete, visibility: self, note: "a mairie may have to keep the record of mandatory training: to confirm with the mairie (MAIR-294)"}
-      started_at: {category: activity, erasure: delete, visibility: self}
-      completed_at: {category: activity, erasure: delete, visibility: self}
+      user_id: {category: identifier, erasure: keep, visibility: self, note: "training record kept at erasure: ids and dates only, the users row is anonymized (MAIR-289; ON DELETE NO ACTION)"}
+      course_id: {category: activity, erasure: keep, visibility: self}
+      status: {category: activity, erasure: keep, visibility: self, note: "a mairie may have to prove mandatory training (MAIR-289)"}
+      started_at: {category: activity, erasure: keep, visibility: self}
+      completed_at: {category: activity, erasure: keep, visibility: self}
 
   user_identities:
     personal:
@@ -322,13 +333,13 @@ tables:
 
   user_roles:
     personal:
-      user_id: {category: identifier, erasure: delete, visibility: directory, note: "kept while the account is only archived, so that restore_user() gives the roles back"}
+      user_id: {category: identifier, erasure: delete, visibility: directory, note: "kept while the account is only archived, so that restore_user() gives the roles back; deleted at anonymization"}
       role_id: {category: account, erasure: delete, visibility: directory}
 
   users:
     audited: true
     personal:
-      id: {category: identifier, erasure: keep, visibility: directory, note: "the row stays so that the references of the shared objects keep working"}
+      id: {category: identifier, erasure: keep, visibility: directory, note: "the row stays so that the references of the shared objects keep working; anonymized one year (configurable) after its archiving (MAIR-289)"}
       first_name: {category: identity, erasure: anonymize, visibility: directory}
       last_name: {category: identity, erasure: anonymize, visibility: directory}
       email: {category: contact, erasure: anonymize, visibility: directory}
@@ -349,7 +360,7 @@ tables:
       action_type: {category: activity, erasure: keep, visibility: internal}
       action_date: {category: activity, erasure: keep, visibility: internal}
       action_by: {category: identifier, erasure: keep, visibility: internal}
-      previous_data: {category: identity, erasure: keep, visibility: internal, note: "copy of the users row without password and photo (MAIR-286): still holds the identity after erasure; pseudonymization to decide in MAIR-289"}
-      new_data: {category: identity, erasure: keep, visibility: internal, note: "same as previous_data"}
+      previous_data: {category: identity, erasure: anonymize, visibility: internal, note: "copy of the users row without password and photo (MAIR-286); its identity keys are replaced by a hash at erasure (MAIR-289)"}
+      new_data: {category: identity, erasure: anonymize, visibility: internal, note: "same as previous_data"}
       reason: {category: content, erasure: keep, visibility: internal}
     not_personal: [audit_id]

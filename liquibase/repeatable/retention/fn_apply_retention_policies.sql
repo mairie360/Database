@@ -51,6 +51,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 --   DELETE          sessions only (the one table with a cleanup rule)
 --   PARTITION_DROP  access_logs only: drops monthly partitions that lie entirely
 --                   before now() - retention_period; the DEFAULT partition is kept
+--   ANONYMIZE       users only: anonymize_user() on the accounts archived for longer than the
+--                   period (MAIR-289, 1 year by default, set per instance)
 --   COLD_STORAGE    skipped with a NOTICE: no cold-storage target exists yet
 -- last_run is only updated for policies that were actually applied.
 CREATE OR REPLACE FUNCTION fn_apply_retention_policies()
@@ -87,6 +89,10 @@ BEGIN
                     v_affected := v_affected + 1;
                 END IF;
             END LOOP;
+
+        ELSIF v_policy.strategy::text = 'ANONYMIZE' AND v_policy.table_name = 'users' THEN
+            -- MAIR-289: accounts archived for longer than the period lose their identity.
+            v_affected := fn_anonymize_archived_users(v_policy.retention_period);
 
         ELSE
             RAISE NOTICE 'retention: strategy % is not applied for %', v_policy.strategy, v_policy.table_name;
