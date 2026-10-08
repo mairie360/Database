@@ -7,7 +7,7 @@
     logicalFilePath="releases"
 >
 
-    <!-- Changesets shipped by the git tag v3.0.1. Their identity does not depend on the
+    <!-- Changesets shipped by the git tag v3.1.0. Their identity does not depend on the
          folder (MAIR-491): renaming it after the release keeps them applied. -->
 
     <!-- Index on the order of the admin user list (MAIR-477). -->
@@ -32,6 +32,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
-    <changeSet id="tag-v3.0.1" author="dev"><tagDatabase tag="v3.0.1"/></changeSet>
+    <!-- Passkeys (WebAuthn credentials) of the accounts, Core_API being the relying party (MAIR-505). -->
+    <changeSet id="mair-505-01" author="dev"><sqlFile
+            path="03__user_passkeys.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="03__user_passkeys.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="tag-v3.1.0" author="dev"><tagDatabase tag="v3.1.0"/></changeSet>
 
 </databaseChangeLog>

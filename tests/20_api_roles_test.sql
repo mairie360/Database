@@ -114,8 +114,8 @@ SELECT is(
 SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('core_api')$$,
     $$VALUES ('access_control'), ('group_members'), ('groups'), ('roles'), ('sessions'),
-             ('user_identities'), ('user_notification_settings'), ('user_preferences'),
-             ('user_roles'), ('users'), ('v_users_active')$$,
+             ('user_identities'), ('user_notification_settings'), ('user_passkeys'),
+             ('user_preferences'), ('user_roles'), ('users'), ('v_users_active')$$,
     'core_api writes only to the core domain'
 );
 SELECT results_eq(
