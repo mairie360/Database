@@ -69,6 +69,16 @@
         />
         <rollback/>
     </changeSet>
+    <!-- Before the admin seed (MAIR-286): the account it writes must be audited without its
+         password, also on the update that replaces the trigger function. -->
+    <changeSet id="rep-functions-users-audit" author="dev" runOnChange="true">
+        <sqlFile
+            path="users/fn_audit_and_mutate_user.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
     <changeSet id="rep-common-admin" author="dev" runOnChange="true">
         <sqlFile
             path="common/create_admin.sql"
@@ -78,14 +88,6 @@
         <rollback/>
     </changeSet>
 
-    <changeSet id="rep-functions-users-audit" author="dev" runOnChange="true">
-        <sqlFile
-            path="users/fn_audit_and_mutate_user.sql"
-            relativeToChangelogFile="true"
-            splitStatements="false"
-        />
-        <rollback/>
-    </changeSet>
     <changeSet id="rep-functions-users-refresh" author="dev" runOnChange="true">
         <sqlFile
             path="users/fn_refresh_updated_at.sql"

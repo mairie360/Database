@@ -53,6 +53,10 @@ services:
       psql -h database -U postgres -d core -c 'CREATE EXTENSION IF NOT EXISTS pgtap;' &&
       psql -h database -U postgres -d core -c 'CREATE EXTENSION IF NOT EXISTS plpgsql_check;' &&
 
+      echo '--- LOADING THE GDPR INVENTORY ---' &&
+      python3 /workspace/tests/gdpr/inventory_to_sql.py /workspace/gdpr/inventory.yaml
+      | psql -q -v ON_ERROR_STOP=1 -h database -U postgres -d core &&
+
       echo '--- RUNNING TESTS ---' &&
       pg_prove -h database -U postgres -d core /workspace/tests/*.sql &&
 

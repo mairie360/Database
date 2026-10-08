@@ -304,6 +304,14 @@ What each former schema version did, in order:
    `v_users_active` / `v_users_archived` select `users.*` and would carry a column the rollback
    could not drop. Core_API must write the exact expression; `tests/33` checks the plan.
 
+16. **`mair-286-01`** (`releases/v3.0.1/03`) — one-off purge of `password` and `photo` from
+   `previous_data` / `new_data` of every `users_audit_log` row (MAIR-286): the audit trigger used to
+   copy the whole `users` row, plaintext passwords of the pre-MAIR-169 accounts included. The
+   append-only guard is disabled for that `UPDATE` only. Irreversible (the rollback is a no-op);
+   the record for the mairies is `gdpr/purges.md`. `fn_audit_and_mutate_user()` now leaves those
+   columns out, and its changeset runs before the admin seed in `changelog-repeatable.xml`, so the
+   update that replaces it does not audit the new admin password with the old function.
+
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
@@ -419,6 +427,16 @@ stale entry, column referencing `users` that is not an `identifier`); its summar
 inventory changes since the last tag for the Prod approver and Claude's proposals for the
 missing columns. Update the inventory in the PR that adds, renames or drops a column, or the
 next prod release stops.
+
+**GDPR schema tests (MAIR-286).** `docker-compose-test.yml` loads the inventory into
+`gdpr_test.inventory` (`tests/gdpr/inventory_to_sql.py`, `python3-yaml` in the tester image)
+before `pg_prove`; `tests/36_gdpr_schema_test.sql` reads it: no `audit_log: false` column in
+`users_audit_log`, the `ON DELETE` of each foreign key to `users` against its `erasure` (`delete`
+→ `CASCADE`, `anonymize` / `keep` → anything but `CASCADE`), no API role but `core_api` reading a
+`credentials` column, the `users` columns each API role reads (pinned, change them with
+`api_grants.sql`), argon2id hashes only. The exclusion list of `fn_audit_and_mutate_user()` is
+written in the function and checked against the inventory: change both. The upgrade test checks
+the purge of `mair-286-01`.
 
 ## Known inconsistencies (don't "fix" incidentally)
 

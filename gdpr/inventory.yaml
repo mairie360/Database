@@ -349,7 +349,7 @@ tables:
       action_type: {category: activity, erasure: keep, visibility: internal}
       action_date: {category: activity, erasure: keep, visibility: internal}
       action_by: {category: identifier, erasure: keep, visibility: internal}
-      previous_data: {category: identity, erasure: keep, visibility: internal, note: "copy of the users row: still holds the identity after erasure, and the password and photo until MAIR-286; pseudonymization to decide in MAIR-289"}
+      previous_data: {category: identity, erasure: keep, visibility: internal, note: "copy of the users row without password and photo (MAIR-286): still holds the identity after erasure; pseudonymization to decide in MAIR-289"}
       new_data: {category: identity, erasure: keep, visibility: internal, note: "same as previous_data"}
       reason: {category: content, erasure: keep, visibility: internal}
     not_personal: [audit_id]

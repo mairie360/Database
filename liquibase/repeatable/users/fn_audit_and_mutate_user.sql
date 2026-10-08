@@ -1,9 +1,16 @@
 -- SECURITY DEFINER: API roles have no access to users_audit_log (MAIR-114).
+--
+-- The audit log keeps the row before and after each change, without the columns that
+-- gdpr/inventory.yaml marks `audit_log: false` (MAIR-286): the password hash (a plaintext
+-- password before MAIR-169) and the photo. users_audit_log is append-only and kept 10 years, so a
+-- value copied there could never be erased. tests/36_gdpr_schema_test.sql checks this list
+-- against the inventory: add a column to both.
 CREATE OR REPLACE FUNCTION fn_audit_and_mutate_user()
 RETURNS TRIGGER AS $$
 DECLARE
     v_action user_audit_action;
     v_user_id INT;
+    v_excluded CONSTANT TEXT[] := ARRAY['password', 'photo'];
 BEGIN
     v_user_id := COALESCE(NULLIF(current_setting('myapp.current_user_id', true), ''), '0')::INT;
 
@@ -21,8 +28,8 @@ BEGIN
         COALESCE(NEW.id, OLD.id),
         v_action,
         v_user_id,
-        CASE WHEN TG_OP = 'UPDATE' THEN to_jsonb(OLD) ELSE NULL END,
-        to_jsonb(NEW)
+        CASE WHEN TG_OP = 'UPDATE' THEN to_jsonb(OLD) - v_excluded ELSE NULL END,
+        to_jsonb(NEW) - v_excluded
     );
     RETURN NEW;
 END;
