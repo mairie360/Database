@@ -364,3 +364,16 @@ tables:
       new_data: {category: identity, erasure: anonymize, visibility: internal, note: "same as previous_data"}
       reason: {category: content, erasure: keep, visibility: internal}
     not_personal: [audit_id]
+
+# Redis keys written by the APIs and BFFs (MAIR-499). Every write carries a time to live
+# (mairie360_api_lib >= 4.0.0, @mairie360/bffs-lib createTtlRedis, Semgrep rules of mairie360/CICD):
+# nothing stays forever, and the compliance service of the instance (MAIR-498) only watches the
+# personal prefixes with a long TTL. Keys are `<role>:<key>` (the ACL role of the API), except the
+# shared revocation list. `{...}` stands for the variable part. max_ttl_seconds is the longest TTL
+# the code sets (defaults of the configuration).
+redis:
+  "revoked:{session_id}": {personal: true, category: connection, max_ttl_seconds: 3600, note: "revocation list of the sessions, TTL = JWT_TIMEOUT (session_revocation, mairie360_api_lib)"}
+  "core-api:{email}/forgot_password_token": {personal: true, category: credentials, max_ttl_seconds: 1800, note: "the key itself holds the e-mail: to hash in a follow-up (MAIR-498 watches it meanwhile)"}
+  "core-api:{token}/forgot_password_email": {personal: true, category: contact, max_ttl_seconds: 1800}
+  "core-api:{user_id}/first_connection_token": {personal: true, category: credentials, max_ttl_seconds: 86400}
+  "core-api:{token}/first_connection_id": {personal: true, category: identifier, max_ttl_seconds: 86400}
