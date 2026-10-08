@@ -24,3 +24,8 @@ USER liquibase
 
 WORKDIR /migrations
 COPY --chown=liquibase:liquibase liquibase/ .
+
+# MAIR-500: the personal data inventory of this schema version, read by the sealed backups
+# (Devops/Deploiment backup.sealing copies it from this image, so the inventory always matches the
+# deployed schema). Read-only data, no code.
+COPY --chown=liquibase:liquibase gdpr/inventory.yaml /gdpr/inventory.yaml
