@@ -1,0 +1,11 @@
+-- Order of the admin user list (MAIR-477, measured by the MAIR-474 load test).
+--
+-- Core_API's `GET /api/v1/admin/users/` pages every user sorted by
+-- (last_name, first_name, id). Without an index on that order, each page sorts the
+-- whole table: 18 to 29 ms for the last page of 10 000 users, under load the query
+-- kept Core_API's Postgres saturated. Walking this index instead: 3 ms.
+--
+-- Core_API only orders by it when there is no search: with one, it filters through
+-- the trigram indexes of releases/v3.0.0 first (a selective search walking this
+-- index in order went from 2 ms to 20 ms).
+CREATE INDEX IF NOT EXISTS idx_users_name_order ON users (last_name, first_name, id);

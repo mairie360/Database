@@ -5,7 +5,7 @@
 -- sealed secret (see Devops/Deploiment's liquibase job and Devops/ansible
 -- playbooks/secrets.yml). admin_password is expected to already be an
 -- argon2id PHC hash -- Postgres cannot compute one (see
--- releases/v1.3.0/01__hash_user_passwords.sql), so hashing happens outside
+-- releases/v2.0.0/01__hash_user_passwords.sql), so hashing happens outside
 -- this repo.
 --
 -- MAIR-413: the public template account (credentials readable in this public

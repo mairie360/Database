@@ -7,7 +7,7 @@ BEGIN;
 
 -- Users. 105 has a plaintext password, as written before MAIR-169. When the
 -- baseline already has chk_users_password_hashed, the constraint is dropped
--- and re-added NOT VALID exactly as releases/v1.3.0 left it, the way such
+-- and re-added NOT VALID exactly as releases/v2.0.0 left it, the way such
 -- rows exist on an instance. It goes first: the deferred default-role trigger
 -- forbids ALTER TABLE once other users are pending.
 DO $$

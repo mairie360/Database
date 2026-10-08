@@ -4,34 +4,34 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+    logicalFilePath="releases"
 >
 
-    <!-- Findings of the schema lint and bench (MAIR-476), fixed by MAIR-477.
-         Every changeset carries its <rollback> and the release ends with a
-         tagDatabase changeset (see v1.7.0). The duplicate trigger
-         trg_users_updated_at is dropped by its repeatable file
-         (repeatable/users/trigger_user_update.sql). -->
+    <!-- Changesets shipped by the git tag v3.0.1. Their identity does not depend on the
+         folder (MAIR-491): renaming it after the release keeps them applied. -->
 
-    <changeSet id="rel-1.11.0-01" author="dev"><sqlFile
-            path="01__drop_redundant_indexes.sql"
+    <!-- Index on the order of the admin user list (MAIR-477). -->
+    <changeSet id="mair-477-01" author="dev"><sqlFile
+            path="01__users_name_order.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="01__drop_redundant_indexes.rollback.sql"
+            path="01__users_name_order.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
-    <changeSet id="rel-1.11.0-02" author="dev"><sqlFile
-            path="02__users_search_trigram.sql"
+    <!-- One normalized search expression per user, replacing the five trigram indexes (MAIR-477). -->
+    <changeSet id="mair-477-02" author="dev"><sqlFile
+            path="02__users_search_text.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="02__users_search_trigram.rollback.sql"
+            path="02__users_search_text.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
-    <changeSet id="rel-1.11.0-tag" author="dev"><tagDatabase tag="v1.11.0"/></changeSet>
+    <changeSet id="tag-v3.0.1" author="dev"><tagDatabase tag="v3.0.1"/></changeSet>
 
 </databaseChangeLog>

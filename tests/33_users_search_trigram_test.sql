@@ -1,8 +1,9 @@
 BEGIN;
 SELECT plan(11);
 
--- MAIR-477: lint findings dropped and trigram indexes for the user searches
--- (releases/v1.11.0, repeatable/users/trigger_user_update.sql).
+-- MAIR-477: lint findings dropped (releases/v3.0.0, repeatable/users/trigger_user_update.sql)
+-- and the trigram index of the user searches (releases/v3.0.1, which replaced the five of
+-- releases/v3.0.0).
 
 -- Plan of `p_sql`, one line per row of EXPLAIN, joined.
 CREATE FUNCTION pg_temp.plan_of(p_sql TEXT) RETURNS TEXT AS $$
@@ -19,43 +20,47 @@ $$ LANGUAGE plpgsql;
 
 SELECT has_extension('pg_trgm', 'pg_trgm is installed');
 
-SELECT has_index('users', 'idx_users_first_name_trgm', 'Trigram index on users.first_name');
-SELECT has_index('users', 'idx_users_last_name_trgm', 'Trigram index on users.last_name');
-SELECT has_index('users', 'idx_users_email_trgm', 'Trigram index on users.email');
-SELECT has_index('users', 'idx_users_first_last_name_trgm', 'Trigram index on first_name || '' '' || last_name');
-SELECT has_index('users', 'idx_users_last_first_name_trgm', 'Trigram index on last_name || '' '' || first_name');
+SELECT ok(
+    EXISTS (SELECT 1 FROM pg_indexes WHERE tablename = 'users'
+            AND indexname = 'idx_users_search_text_trgm' AND indexdef LIKE '%gin_trgm_ops%'),
+    'Trigram index on the search expression (releases/v3.0.1)'
+);
+SELECT hasnt_index('users', 'idx_users_first_name_trgm', 'Replaced by idx_users_search_text_trgm');
+SELECT hasnt_index('users', 'idx_users_last_name_trgm', 'Replaced by idx_users_search_text_trgm');
+SELECT hasnt_index('users', 'idx_users_email_trgm', 'Replaced by idx_users_search_text_trgm');
+SELECT hasnt_index('users', 'idx_users_first_last_name_trgm', 'Replaced by idx_users_search_text_trgm');
 
 SELECT hasnt_trigger('users', 'trg_users_updated_at', 'The duplicate trg_users_updated_at is dropped');
 SELECT has_trigger('users', 'tr_10_users_updated_at', 'tr_10_users_updated_at still refreshes updated_at');
 
 SELECT hasnt_index('user_roles', 'idx_user_roles_user', 'Redundant idx_user_roles_user is dropped');
 
--- The search of Core_API (users/list_directory, admin/list_users) must be able
--- to use an index on every branch of its OR, the full names included: the
--- expressions of the indexes have to be the ones the APIs write. Sequential
--- scans are disabled so the plan does not depend on the size of the test data.
+-- The search of Core_API (users/list_directory, admin/list_users) matches one lowered
+-- expression (releases/v3.0.1): it must be the expression of idx_users_search_text_trgm, or
+-- every search reads the whole table. Sequential scans are disabled so the plan does not depend
+-- on the size of the test data; with them disabled, the planner walks the whole B-tree
+-- idx_users_name_order rather than any other index on the handful of test rows, so it is dropped
+-- in this transaction (rolled back at the end).
+DROP INDEX idx_users_name_order;
 SET LOCAL enable_seqscan = off;
-
-SELECT unalike(
-    pg_temp.plan_of($$
-        SELECT id FROM users u
-        WHERE u.first_name ILIKE '%martin%' OR u.last_name ILIKE '%martin%'
-           OR (u.first_name || ' ' || u.last_name) ILIKE '%martin%'
-           OR (u.last_name || ' ' || u.first_name) ILIKE '%martin%'
-           OR u.email ILIKE '%martin%'
-    $$),
-    '%Seq Scan on users%',
-    'The admin search (both name orders) uses the trigram indexes'
-);
 
 SELECT alike(
     pg_temp.plan_of($$
         SELECT id FROM users u
-        WHERE (u.first_name || ' ' || u.last_name) ILIKE '%jean mart%'
+        WHERE lower(u.first_name || ' ' || u.last_name || chr(31)
+                    || u.last_name || ' ' || u.first_name || chr(31)
+                    || u.email) LIKE '%' || lower('Jean Mart') || '%'
     $$),
-    '%idx_users_first_last_name_trgm%',
-    'A full-name search uses idx_users_first_last_name_trgm'
+    '%idx_users_search_text_trgm%',
+    'The search of Core_API uses idx_users_search_text_trgm'
+);
+
+SELECT is(
+    (SELECT count(*)::int FROM (VALUES ('Jean', 'Martin', 'jm@x.fr')) v(f, l, e)
+     WHERE lower(f || ' ' || l || chr(31) || l || ' ' || f || chr(31) || e)
+           LIKE '%' || lower('martin jean') || '%'),
+    1,
+    'Both name orders are searchable'
 );
 
 SELECT * FROM finish();
-ROLLBACK;

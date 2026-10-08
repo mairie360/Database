@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(14);
 
--- MAIR-478: one direct conversation per pair of agents (releases/v1.9.0).
+-- MAIR-478: one direct conversation per pair of agents (releases/v3.0.0).
 -- The backfill of existing conversations is checked by tests/upgrade.
 
 INSERT INTO users (id, first_name, last_name, email, password)

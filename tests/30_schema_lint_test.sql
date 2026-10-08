@@ -8,7 +8,7 @@ SELECT plan(7);
 -- Known findings, tolerated until they are dropped by a release (see the
 -- ticket referenced below); remove them from these lists in that release.
 -- Any new finding fails the suite.
--- Empty since releases/v1.11.0 (MAIR-477) dropped the findings of MAIR-476.
+-- Empty since releases/v3.0.0 (MAIR-477) dropped the findings of MAIR-476.
 CREATE TEMP TABLE lint_known_redundant_indexes (name TEXT) ON COMMIT DROP;
 CREATE TEMP TABLE lint_known_duplicate_triggers (name TEXT) ON COMMIT DROP;
 
@@ -35,6 +35,10 @@ SELECT is_empty(
         AND a.indexprs IS NULL AND b.indexprs IS NULL
         AND array_length(a.indkey::int2[], 1) < array_length(b.indkey::int2[], 1)
         AND (b.indkey::int2[])[0:array_length(a.indkey::int2[], 1) - 1] = (a.indkey::int2[])[:]
+       -- Only an index of the same access method covers another: a trigram GIN on
+       -- last_name is not made redundant by a B-tree starting with last_name.
+       JOIN pg_class ia ON ia.oid = a.indexrelid
+       JOIN pg_class ib ON ib.oid = b.indexrelid AND ib.relam = ia.relam
        JOIN pg_class t ON t.oid = a.indrelid
        JOIN pg_namespace n ON n.oid = t.relnamespace
        WHERE n.nspname = 'public'

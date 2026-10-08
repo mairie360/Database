@@ -28,6 +28,9 @@ prefix_idx AS (
    AND a.indexprs IS NULL AND b.indexprs IS NULL
    AND array_length(a.indkey::int2[],1) < array_length(b.indkey::int2[],1)
    AND (b.indkey::int2[])[0:array_length(a.indkey::int2[],1)-1] = (a.indkey::int2[])[:]
+  -- same access method only: a trigram GIN is not covered by a B-tree
+  JOIN pg_class ia ON ia.oid = a.indexrelid
+  JOIN pg_class ib ON ib.oid = b.indexrelid AND ib.relam = ia.relam
   JOIN pg_class t ON t.oid = a.indrelid JOIN pg_namespace n ON n.oid = t.relnamespace
   WHERE n.nspname = 'public'
 ),
