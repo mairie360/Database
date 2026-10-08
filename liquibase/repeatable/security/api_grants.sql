@@ -76,6 +76,9 @@ GRANT SELECT ON v_securable_users, v_securable_roles, v_securable_sessions,
 -- is granted on it; `events` is the only one outside core's domain.
 GRANT SELECT (id, owner_id) ON events TO core_api;
 
+-- Erasure and export of a user's data (MAIR-289): SECURITY DEFINER, they touch every domain.
+GRANT EXECUTE ON FUNCTION anonymize_user(INT), export_user_data(INT) TO core_api;
+
 -- ---------------------------------------------------------------------------
 -- project_api: projects and tasks
 -- ---------------------------------------------------------------------------

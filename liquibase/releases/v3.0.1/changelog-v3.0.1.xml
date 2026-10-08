@@ -44,6 +44,39 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Direct conversations and training records stay when a user goes away (MAIR-289). -->
+    <changeSet id="mair-289-01" author="dev"><sqlFile
+            path="04__erasure_keeps_shared_rows.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="04__erasure_keeps_shared_rows.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- ANONYMIZE retention strategy (MAIR-289); the enum value stays on rollback. -->
+    <changeSet id="mair-289-02" author="dev"><sqlFile
+            path="05__anonymize_strategy.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="05__anonymize_strategy.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Archived accounts anonymized after one year by default (MAIR-289). -->
+    <changeSet id="mair-289-03" author="dev"><sqlFile
+            path="06__archived_accounts_policy.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="06__archived_accounts_policy.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v3.0.1" author="dev"><tagDatabase tag="v3.0.1"/></changeSet>
 
 </databaseChangeLog>
