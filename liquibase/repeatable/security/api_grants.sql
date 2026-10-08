@@ -23,7 +23,7 @@ DO $$
 DECLARE
     v_role TEXT;
 BEGIN
-    FOREACH v_role IN ARRAY ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api']
+    FOREACH v_role IN ARRAY ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']
     LOOP
         -- ALL TABLES covers views too, and revoking a table privilege also
         -- revokes the matching column privileges.
@@ -126,6 +126,20 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON courses, course_modules, course_attachme
 GRANT SELECT (id, first_name, last_name, is_archived) ON users TO elearning_api;
 
 -- ---------------------------------------------------------------------------
+-- compliance_api: the per-instance compliance service (MAIR-498)
+-- ---------------------------------------------------------------------------
+-- No read on the personal tables: the scan and the erasure targets come from SECURITY DEFINER
+-- functions that return counts and locations (security/compliance.sql); the erasure itself is
+-- anonymize_user() (MAIR-289). The journal is append-only for it too.
+GRANT SELECT (id) ON users TO compliance_api;
+GRANT SELECT, INSERT ON compliance_journal TO compliance_api;
+GRANT SELECT, INSERT, UPDATE ON erasure_steps TO compliance_api;
+GRANT EXECUTE ON FUNCTION fn_compliance_scan() TO compliance_api;
+GRANT EXECUTE ON FUNCTION fn_erasure_targets(INT) TO compliance_api;
+GRANT EXECUTE ON FUNCTION anonymize_user(INT) TO compliance_api;
+GRANT EXECUTE ON FUNCTION is_user_anonymized(INT) TO compliance_api;
+
+-- ---------------------------------------------------------------------------
 -- Sequences: USAGE on the SERIAL / identity sequences of every table a role
 -- can INSERT into.
 -- ---------------------------------------------------------------------------
@@ -145,7 +159,7 @@ BEGIN
         CROSS JOIN pg_roles r
         WHERE tbl.relnamespace = 'public'::regnamespace
           AND tbl.relkind IN ('r', 'p')
-          AND r.rolname IN ('core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api')
+          AND r.rolname IN ('core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api')
           AND has_table_privilege(r.rolname, tbl.oid, 'INSERT')
     LOOP
         EXECUTE format('GRANT USAGE ON SEQUENCE %s TO %I', v_seq.seq_name, v_seq.rolname);
