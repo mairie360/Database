@@ -453,6 +453,13 @@ and moderation logs, the rows of the user without credentials. `tests/37_gdpr_er
 no value of an anonymized marker left in any text / JSON / bytea column, export covering every
 identifier column of the inventory, retention run anonymizing a back-dated archive only.
 
+**Redis keys (MAIR-499).** The inventory's `redis` section lists every Redis key the APIs and BFFs
+write (`<role>:<key>` with `{...}` for the variable part, and the shared `revoked:{session_id}`),
+whether it is personal, its category and its longest TTL: every Redis write carries a TTL
+(`mairie360_api_lib` 4.0.0, `@mairie360/bffs-lib` `createTtlRedis`, Semgrep rules of the CICD). A
+new key shape goes into the section in the PR that adds it; the CICD parser checks the format
+(`parseRedisSection`).
+
 **GDPR schema tests (MAIR-286).** `docker-compose-test.yml` loads the inventory into
 `gdpr_test.inventory` (`tests/gdpr/inventory_to_sql.py`, `python3-yaml` in the tester image)
 before `pg_prove`; `tests/36_gdpr_schema_test.sql` reads it: no `audit_log: false` column in
