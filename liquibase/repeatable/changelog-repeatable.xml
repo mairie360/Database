@@ -450,6 +450,16 @@
          grants reference every table and view created above. runAlways so a
          rotated -D<role>_password is applied and tables recreated by a
          release get their grants back. -->
+    <!-- Compliance service (MAIR-498): append-only journal, scan, erasure targets. -->
+    <changeSet id="rep-security-compliance" author="dev" runOnChange="true">
+        <sqlFile
+            path="security/compliance.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+
     <changeSet id="rep-security-api-roles" author="dev" runAlways="true" runOnChange="true">
         <sqlFile
             path="security/api_roles.sql"

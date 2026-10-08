@@ -47,6 +47,7 @@ services:
       -Dcalendar_api_password=password
       -Dmessage_api_password=password
       -Delearning_api_password=password
+      -Dcompliance_api_password=password
       -Dallow_template_admin=true &&
 
       echo '--- INSTALLING PGTAP + PLPGSQL_CHECK ---' &&

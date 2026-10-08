@@ -1,4 +1,4 @@
--- One Postgres login role per API (MAIR-114). The postgres superuser stays
+-- One Postgres login role per API (MAIR-114), plus the compliance service (MAIR-498). The postgres superuser stays
 -- reserved to Liquibase; each API connects with its own role, whose
 -- privileges are defined in security/api_grants.sql.
 --
@@ -37,6 +37,10 @@ BEGIN
             $pwd$),
             ('elearning_api', $pwd$
                 ${elearning_api_password}
+            $pwd$),
+            -- Per-instance compliance service (MAIR-498, Compliance_API).
+            ('compliance_api', $pwd$
+                ${compliance_api_password}
             $pwd$)
         ) AS r(name, password)
     LOOP

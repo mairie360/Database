@@ -74,6 +74,11 @@ tables:
       timestamp: {category: activity, erasure: keep, visibility: internal}
     not_personal: [id]
 
+  compliance_journal:
+    personal:
+      user_id: {category: identifier, erasure: keep, visibility: internal, note: "proof of the erasure of the account for the mairie (GDPR art. 28, 30), kept with the security logs; no foreign key on purpose"}
+    not_personal: [id, kind, storage, location, action, rows, masked_excerpt, cause_hint, detected_at]
+
   connection_logs:
     personal:
       session_id: {category: connection, erasure: keep, visibility: internal, note: "security log (retention_policies: 1 year, COLD_STORAGE, not applied yet: MAIR-236)"}
@@ -137,6 +142,13 @@ tables:
       user_id: {category: identifier, erasure: delete, visibility: members}
       validation_status: {category: activity, erasure: delete, visibility: members}
     not_personal: [id]
+
+  erasure_steps:
+    personal:
+      user_id: {category: identifier, erasure: keep, visibility: internal, note: "erasure steps propagated by the compliance service (MAIR-498), kept as proof; last_error never holds a value of the user"}
+      requested_at: {category: activity, erasure: keep, visibility: internal}
+      updated_at: {category: activity, erasure: keep, visibility: internal}
+    not_personal: [step, status, attempts, last_error]
 
   events:
     personal:

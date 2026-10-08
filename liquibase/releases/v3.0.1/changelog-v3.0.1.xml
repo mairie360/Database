@@ -77,6 +77,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Journal and erasure steps of the compliance service (MAIR-498). -->
+    <changeSet id="mair-498-01" author="dev"><sqlFile
+            path="07__compliance_tables.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="07__compliance_tables.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v3.0.1" author="dev"><tagDatabase tag="v3.0.1"/></changeSet>
 
 </databaseChangeLog>
