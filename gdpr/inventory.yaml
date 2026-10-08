@@ -1,0 +1,355 @@
+# Personal data inventory of the schema (MAIR-285, epic MAIR-284).
+#
+# Every column of every table of the `public` schema is listed here, either under `personal` or
+# under `not_personal`. The `gdpr_inventory` job of the CICD (database_cicd.yml, after
+# release-staging and before the Prod approval) migrates an empty database with the images
+# promoted to staging and blocks the prod release when a column is missing, when an entry names a
+# column that no longer exists, or when a column that references `users` is not an `identifier`.
+# Its job summary lists the changes of this file since the last release, for the Prod approver,
+# and a classification proposed by Claude for each missing column: review it, then add it here.
+#
+# This file states decisions: it is the basis of the processor's record and of the mairie's DPIA,
+# and the reference that the GDPR checks of the epic read (audit log exclusions MAIR-286, access
+# matrix MAIR-288, erasure and export MAIR-289, OpenAPI contracts MAIR-291, PR checklist MAIR-295).
+#
+# A column is personal when its value identifies an agent or describes them, what they did or
+# their schedule. The link between a business object and an agent (`created_by`, `owner_id`) is
+# personal; the business object itself (a project title, a course, a role) is not. Free text that
+# agents write (messages, comments, descriptions) is personal `content`: it routinely names people.
+#
+# Keys of a personal column:
+#   category    identifier   id of an agent or of one of their accounts (users.id, foreign keys, SSO subject)
+#               identity     names, photo
+#               contact      e-mail, phone
+#               credentials  password hash, session token hash
+#               connection   sessions and connections: IP address, device, times
+#               account      account state (status, archived, first connection, dates)
+#               activity     what the agent did or belongs to, and when (membership, progress, history)
+#               content      free text written by agents
+#               preferences  settings of the agent
+#   erasure     what happens to the value when the agent it relates to is erased
+#               delete       the row is removed
+#               anonymize    the value is cleared or replaced, the row stays
+#               keep         the value stays (legal obligation, security log, shared content): say why in `note`
+#   visibility  who can read it through the APIs today
+#               self         the agent and the administrators
+#               members      the members of the shared object (conversation, event, group, project, course)
+#               directory    every agent
+#               admin        administrators only
+#               internal     no API returns it
+#   audit_log   false: never copied into users_audit_log (only on the audited table, `users`)
+#   note        decision to take or current gap, with the ticket that handles it
+#
+# `erasure` is the target behaviour, which MAIR-289 implements: today a deletion only archives the
+# account (`users` is never hard-deleted) and nothing is anonymized.
+
+version: 1
+
+tables:
+  access_control:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: admin}
+    not_personal: [id, group_id, resource_id, resource_instance_id, permission_id]
+
+  access_logs:
+    personal:
+      user_id: {category: identifier, erasure: keep, visibility: internal, note: "security log, dropped by partition after the retention period (retention_policies: 3 years)"}
+      resource_name: {category: activity, erasure: keep, visibility: internal}
+      instance_id: {category: activity, erasure: keep, visibility: internal}
+      action: {category: activity, erasure: keep, visibility: internal}
+      result: {category: activity, erasure: keep, visibility: internal}
+      reason: {category: activity, erasure: keep, visibility: internal}
+      ip_address: {category: connection, erasure: keep, visibility: internal}
+      timestamp: {category: activity, erasure: keep, visibility: internal}
+    not_personal: [id]
+
+  connection_logs:
+    personal:
+      session_id: {category: connection, erasure: keep, visibility: internal, note: "security log (retention_policies: 1 year, COLD_STORAGE, not applied yet: MAIR-236)"}
+      user_id: {category: identifier, erasure: keep, visibility: internal}
+      ip_address: {category: connection, erasure: keep, visibility: internal}
+      device_info: {category: connection, erasure: keep, visibility: internal}
+      timestamp: {category: connection, erasure: keep, visibility: internal}
+      action_type: {category: connection, erasure: keep, visibility: internal}
+    not_personal: [id]
+
+  conversation_members:
+    personal:
+      conversation_id: {category: activity, erasure: delete, visibility: members}
+      user_id: {category: identifier, erasure: delete, visibility: members}
+      is_excluded: {category: activity, erasure: delete, visibility: members}
+      joined_at: {category: activity, erasure: delete, visibility: members}
+
+  conversation_read_cursors:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: self}
+      conversation_id: {category: activity, erasure: delete, visibility: self}
+      last_read_message_id: {category: activity, erasure: delete, visibility: self}
+
+  conversations:
+    personal:
+      title: {category: content, erasure: keep, visibility: members, note: "direct conversations are titled after the participants' ids (Direct <id>)"}
+      created_by: {category: identifier, erasure: anonymize, visibility: members}
+      direct_user_low: {category: identifier, erasure: delete, visibility: members, note: "ON DELETE CASCADE removes the whole direct conversation, the other participant's messages included: to decide in MAIR-289"}
+      direct_user_high: {category: identifier, erasure: delete, visibility: members, note: "same as direct_user_low"}
+    not_personal: [id, group_id, created_at, kind]
+
+  course_attachments:
+    not_personal: [id, module_id, file_name, file_type, file_url, file_size_bytes, created_at, title, description, duration_seconds, sort_order, is_required]
+
+  course_modules:
+    not_personal: [id, course_id, title, content, sort_order, created_at]
+
+  course_ratings:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: self}
+      course_id: {category: activity, erasure: delete, visibility: self}
+      rating: {category: activity, erasure: delete, visibility: self, note: "only the average is shown to other agents"}
+      created_at: {category: activity, erasure: delete, visibility: self}
+      updated_at: {category: activity, erasure: delete, visibility: self}
+
+  courses:
+    personal:
+      instructor_user_id: {category: identifier, erasure: anonymize, visibility: directory}
+      instructor_label: {category: identity, erasure: keep, visibility: directory, note: "free label, may name a trainer who is not an agent: cleared by hand on request"}
+    not_personal: [id, title, description, created_at, instructor_group_id, category, level, is_mandatory, deadline]
+
+  databasechangelog:
+    not_personal: [id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id]
+
+  databasechangeloglock:
+    not_personal: [id, locked, lockgranted, lockedby]
+
+  event_members:
+    personal:
+      event_id: {category: activity, erasure: delete, visibility: members}
+      user_id: {category: identifier, erasure: delete, visibility: members}
+      validation_status: {category: activity, erasure: delete, visibility: members}
+    not_personal: [id]
+
+  events:
+    personal:
+      name: {category: content, erasure: keep, visibility: members, note: "events whose visibility is public are readable by every agent; the private events of an erased owner should be deleted: to decide in MAIR-289"}
+      description: {category: content, erasure: keep, visibility: members}
+      location: {category: content, erasure: keep, visibility: members}
+      start_date: {category: activity, erasure: keep, visibility: members}
+      end_date: {category: activity, erasure: keep, visibility: members}
+      created_by: {category: identifier, erasure: anonymize, visibility: members}
+      owner_id: {category: identifier, erasure: anonymize, visibility: members}
+      approval_decided_by: {category: identifier, erasure: anonymize, visibility: members}
+      approval_decided_at: {category: activity, erasure: keep, visibility: members}
+    not_personal: [id, recurrence_id, is_exception, visibility, owner_group_id, category, service_group_id, service_label, approval_status]
+
+  group_members:
+    personal:
+      group_id: {category: activity, erasure: delete, visibility: members}
+      user_id: {category: identifier, erasure: delete, visibility: members}
+      joined_at: {category: activity, erasure: delete, visibility: members}
+
+  groups:
+    personal:
+      owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "NOT NULL and ON DELETE RESTRICT: the erasure must hand the group over to another agent (MAIR-289)"}
+    not_personal: [id, name, description, created_at]
+
+  message_business_links:
+    not_personal: [id, message_id, project_id, task_id, event_id]
+
+  message_mentions:
+    personal:
+      message_id: {category: activity, erasure: delete, visibility: members}
+      user_id: {category: identifier, erasure: delete, visibility: members}
+
+  messages:
+    personal:
+      owner_id: {category: identifier, erasure: anonymize, visibility: members}
+      content: {category: content, erasure: keep, visibility: members, note: "kept for the other participants, the author is anonymized"}
+      created_at: {category: activity, erasure: keep, visibility: members}
+    not_personal: [id, conversation_id, reply_to_id]
+
+  messaging_moderation_log:
+    personal:
+      action: {category: activity, erasure: keep, visibility: internal, note: "moderation evidence; no retention policy covers this table: MAIR-294"}
+      target_user_id: {category: identifier, erasure: keep, visibility: internal}
+      content: {category: content, erasure: keep, visibility: internal, note: "snapshot of the deleted message"}
+      performed_by: {category: identifier, erasure: keep, visibility: internal}
+      performed_at: {category: activity, erasure: keep, visibility: internal}
+    not_personal: [id, conversation_id, message_id]
+
+  permissions:
+    not_personal: [id, resource_id, action, description]
+
+  project_members:
+    personal:
+      project_id: {category: activity, erasure: delete, visibility: members}
+      user_id: {category: identifier, erasure: delete, visibility: members}
+
+  projects:
+    personal:
+      description: {category: content, erasure: keep, visibility: members}
+      owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "ON DELETE RESTRICT: the erasure must hand the project over to another agent (MAIR-289)"}
+      responsible_id: {category: identifier, erasure: anonymize, visibility: members}
+    not_personal: [id, title, status, custom_field_schema, created_at, priority, due_date, labels]
+
+  recurrence_members:
+    personal:
+      recurrence_id: {category: activity, erasure: delete, visibility: members}
+      user_id: {category: identifier, erasure: delete, visibility: members}
+    not_personal: [group_id, id]
+
+  recurrence_rules:
+    personal:
+      owner_id: {category: identifier, erasure: anonymize, visibility: members}
+    not_personal: [id, type_recurrence, intervalle, start_date, end_date, start_time, duration, owner_group_id, visibility, days_of_week]
+
+  resources:
+    not_personal: [id, name, description, updated_at]
+
+  retention_policies:
+    not_personal: [table_name, retention_period, strategy, last_run]
+
+  rights:
+    not_personal: [role_id, permission_id]
+
+  roles:
+    not_personal: [id, name, description, created_at, updated_at, can_be_deleted]
+
+  session_settings:
+    not_personal: [id, session_duration]
+
+  sessions:
+    personal:
+      id: {category: connection, erasure: delete, visibility: self}
+      user_id: {category: identifier, erasure: delete, visibility: self}
+      token_hash: {category: credentials, erasure: delete, visibility: internal}
+      device_info: {category: connection, erasure: delete, visibility: self}
+      ip_address: {category: connection, erasure: delete, visibility: self}
+      created_at: {category: connection, erasure: delete, visibility: self}
+      expires_at: {category: connection, erasure: delete, visibility: self}
+      revoked_at: {category: connection, erasure: delete, visibility: self}
+
+  task_assignees:
+    personal:
+      task_id: {category: activity, erasure: delete, visibility: members}
+      user_id: {category: identifier, erasure: delete, visibility: members}
+
+  task_comments:
+    personal:
+      author_id: {category: identifier, erasure: anonymize, visibility: members}
+      message: {category: content, erasure: keep, visibility: members, note: "kept for the project, the author is anonymized"}
+      created_at: {category: activity, erasure: keep, visibility: members}
+    not_personal: [id, task_id]
+
+  task_history:
+    personal:
+      changed_by: {category: identifier, erasure: anonymize, visibility: members}
+      changed_at: {category: activity, erasure: keep, visibility: members}
+      changes: {category: content, erasure: keep, visibility: members, note: "old and new values, assignee ids and descriptions included"}
+      label: {category: content, erasure: keep, visibility: members}
+    not_personal: [id, task_id, old_status, new_status, action]
+
+  tasks:
+    personal:
+      description: {category: content, erasure: keep, visibility: members}
+      custom_fields: {category: content, erasure: keep, visibility: members}
+      assigned_to: {category: identifier, erasure: anonymize, visibility: members, note: "legacy single assignee, replaced by task_assignees"}
+      updated_by: {category: identifier, erasure: anonymize, visibility: members}
+    not_personal: [id, project_id, title, status, priority, due_date, updated_at, created_at]
+
+  unread_counters:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: self}
+      conversation_id: {category: activity, erasure: delete, visibility: self}
+      unread_count: {category: activity, erasure: delete, visibility: self}
+
+  user_calendar_params:
+    personal:
+      default_event_visibility: {category: preferences, erasure: delete, visibility: self}
+      user_id: {category: identifier, erasure: delete, visibility: self}
+
+  user_content_progress:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: self}
+      content_id: {category: activity, erasure: delete, visibility: self}
+      is_completed: {category: activity, erasure: delete, visibility: self}
+      completed_at: {category: activity, erasure: delete, visibility: self}
+
+  user_courses:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: self}
+      course_id: {category: activity, erasure: delete, visibility: self}
+      status: {category: activity, erasure: delete, visibility: self, note: "a mairie may have to keep the record of mandatory training: to confirm with the mairie (MAIR-294)"}
+      started_at: {category: activity, erasure: delete, visibility: self}
+      completed_at: {category: activity, erasure: delete, visibility: self}
+
+  user_identities:
+    personal:
+      id: {category: identifier, erasure: delete, visibility: internal}
+      user_id: {category: identifier, erasure: delete, visibility: internal}
+      provider: {category: connection, erasure: delete, visibility: internal}
+      subject: {category: identifier, erasure: delete, visibility: internal}
+      created_at: {category: connection, erasure: delete, visibility: internal}
+      updated_at: {category: connection, erasure: delete, visibility: internal}
+
+  user_modules:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: self}
+      module_id: {category: activity, erasure: delete, visibility: self}
+      is_completed: {category: activity, erasure: delete, visibility: self}
+      completed_at: {category: activity, erasure: delete, visibility: self}
+
+  user_notification_settings:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: self}
+      email: {category: preferences, erasure: delete, visibility: self}
+      push: {category: preferences, erasure: delete, visibility: self}
+      desktop: {category: preferences, erasure: delete, visibility: self}
+      messages: {category: preferences, erasure: delete, visibility: self}
+      projects: {category: preferences, erasure: delete, visibility: self}
+      calendar: {category: preferences, erasure: delete, visibility: self}
+
+  user_preferences:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: self}
+      theme: {category: preferences, erasure: delete, visibility: self}
+      font_family: {category: preferences, erasure: delete, visibility: self}
+      font_size: {category: preferences, erasure: delete, visibility: self}
+      density: {category: preferences, erasure: delete, visibility: self}
+      language: {category: preferences, erasure: delete, visibility: self}
+      timezone: {category: preferences, erasure: delete, visibility: self}
+      date_format: {category: preferences, erasure: delete, visibility: self}
+      home_page: {category: preferences, erasure: delete, visibility: self}
+      auto_open_notifications: {category: preferences, erasure: delete, visibility: self}
+
+  user_roles:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: directory, note: "kept while the account is only archived, so that restore_user() gives the roles back"}
+      role_id: {category: account, erasure: delete, visibility: directory}
+
+  users:
+    audited: true
+    personal:
+      id: {category: identifier, erasure: keep, visibility: directory, note: "the row stays so that the references of the shared objects keep working"}
+      first_name: {category: identity, erasure: anonymize, visibility: directory}
+      last_name: {category: identity, erasure: anonymize, visibility: directory}
+      email: {category: contact, erasure: anonymize, visibility: directory}
+      password: {category: credentials, erasure: anonymize, visibility: internal, audit_log: false}
+      phone_number: {category: contact, erasure: anonymize, visibility: directory, note: "GET /user/{id} returns it to every agent: to decide with the mairie (MAIR-288, MAIR-292)"}
+      phone_country: {category: contact, erasure: anonymize, visibility: directory}
+      photo: {category: identity, erasure: anonymize, visibility: internal, audit_log: false}
+      status: {category: account, erasure: keep, visibility: directory}
+      is_archived: {category: account, erasure: keep, visibility: directory}
+      created_at: {category: account, erasure: keep, visibility: admin}
+      updated_at: {category: account, erasure: keep, visibility: admin}
+      first_connect: {category: account, erasure: keep, visibility: internal}
+      biography: {category: content, erasure: anonymize, visibility: internal}
+
+  users_audit_log:
+    personal:
+      user_id: {category: identifier, erasure: keep, visibility: internal, note: "audit evidence, append-only (retention_policies: 10 years, COLD_STORAGE, not applied yet: MAIR-236)"}
+      action_type: {category: activity, erasure: keep, visibility: internal}
+      action_date: {category: activity, erasure: keep, visibility: internal}
+      action_by: {category: identifier, erasure: keep, visibility: internal}
+      previous_data: {category: identity, erasure: keep, visibility: internal, note: "copy of the users row: still holds the identity after erasure, and the password and photo until MAIR-286; pseudonymization to decide in MAIR-289"}
+      new_data: {category: identity, erasure: keep, visibility: internal, note: "same as previous_data"}
+      reason: {category: content, erasure: keep, visibility: internal}
+    not_personal: [audit_id]

@@ -408,6 +408,18 @@ the `_test` suffix is not load-bearing — `15_performance_indexes.sql` and
 add a function/trigger/view, add or extend the matching numbered test file and keep
 the `plan(N)` count in sync.
 
+**GDPR inventory (MAIR-285).** `gdpr/inventory.yaml` classifies every column of every
+`public` table (partitions excluded): `personal` columns carry `category`, `erasure`
+(`delete` / `anonymize` / `keep`, the target behaviour MAIR-289 implements), `visibility`,
+optionally `audit_log: false` (audited table `users` only) and a `note`; the others are
+listed under `not_personal`. It is not checked by `./test.sh`: the `gdpr_inventory` job of
+`database_cicd.yml` (CICD `tests/gdpr`) runs after `release-staging`, migrates an empty
+database with the staging images and blocks `release-prod` on a gap (unclassified column,
+stale entry, column referencing `users` that is not an `identifier`); its summary lists the
+inventory changes since the last tag for the Prod approver and Claude's proposals for the
+missing columns. Update the inventory in the PR that adds, renames or drops a column, or the
+next prod release stops.
+
 ## Known inconsistencies (don't "fix" incidentally)
 
 - The repeatable folder is spelled `ressources/` (French) but the table and the
