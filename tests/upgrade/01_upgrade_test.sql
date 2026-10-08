@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(38);
+SELECT plan(40);
 
 ---
 --- Admin account
@@ -217,6 +217,24 @@ SELECT ok(
 SELECT ok(
     NOT has_function_privilege('public', 'check_access(integer, character varying, character varying, integer)', 'EXECUTE'),
     'PUBLIC cannot call check_access on the upgraded database'
+);
+
+---
+--- Audit log purge (MAIR-286)
+---
+-- Test 39-40: the baseline trigger copied whole rows, Eve's plaintext password included; the
+-- purge of releases/v3.0.1 removed the passwords and photos, and the admin written by HEAD is
+-- audited without its password.
+SELECT is_empty(
+    $$SELECT audit_id FROM users_audit_log
+       WHERE previous_data ?| ARRAY['password', 'photo'] OR new_data ?| ARRAY['password', 'photo']$$,
+    'users_audit_log holds no password nor photo after the upgrade'
+);
+
+SELECT ok(
+    (SELECT count(*) FROM users_audit_log WHERE user_id = 105) > 0
+    AND NOT EXISTS (SELECT 1 FROM users_audit_log WHERE coalesce(previous_data::TEXT, '') || coalesce(new_data::TEXT, '') LIKE '%plaintext-legacy%'),
+    'the purge kept the audit rows of the legacy account, without its plaintext password'
 );
 
 SELECT * FROM finish();

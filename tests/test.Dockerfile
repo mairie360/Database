@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     openjdk-17-jre-headless \
     curl \
     python3 \
+    python3-yaml \
     && rm -rf /var/lib/apt/lists/*
 
 # Installation de Liquibase
@@ -19,3 +20,5 @@ RUN curl -L https://jdbc.postgresql.org/download/postgresql-42.7.13.jar -o /usr/
 WORKDIR /workspace
 COPY liquibase/ ./liquibase/
 COPY tests/ ./tests/
+# Personal data inventory (MAIR-285), loaded into gdpr_test.inventory for the GDPR tests (MAIR-286).
+COPY gdpr/ ./gdpr/
