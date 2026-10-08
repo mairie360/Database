@@ -61,6 +61,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON user_preferences, user_notification_sett
 -- core_api. v_users_sso_export is what the job reads to provision Keycloak.
 GRANT SELECT, INSERT, UPDATE, DELETE ON user_identities TO core_api;
 GRANT SELECT ON v_users_sso_export TO core_api;
+-- Passkeys (MAIR-505): Core_API registers, lists, deletes and, after each
+-- authentication, rewrites the credentials (signature counter, backup flags).
+GRANT SELECT, INSERT, UPDATE, DELETE ON user_passkeys TO core_api;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON sessions TO core_api;
 GRANT SELECT ON v_sessions, session_settings TO core_api;
