@@ -111,7 +111,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
   v1.0.0–v1.2.0 (`01`–`23`);
 - `releases/v2.0.0/` — former v1.3.0–v1.8.0 (`01`–`11`);
 - `releases/v3.0.0/` — former v1.9.0–v1.12.0 (`01`–`06`);
-- `releases/v3.0.1/` — first folder with the MAIR-491 identity (`mair-<n>-NN`,
+- `releases/v3.1.0/` — first folder with the MAIR-491 identity (`mair-<n>-NN`,
   `logicalFilePath="releases"`).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
@@ -284,7 +284,7 @@ What each former schema version did, in order:
    constraints. Calendar_API applies the same window and answers 400 first.
    `tests/34_events_date_window_test.sql` covers the constraints, the upgrade test the cleanup.
 
-14. **`mair-477-01`** (`releases/v3.0.1/01`) — B-tree `idx_users_name_order` on
+14. **`mair-477-01`** (`releases/v3.1.0/01`) — B-tree `idx_users_name_order` on
    `users (last_name, first_name, id)`, the order of Core_API's admin user list (MAIR-477, found
    by the MAIR-474 load test): without it each page sorted every user (10 143 blocks per
    transaction at a random page in the bench, 249 now). Core_API only orders by it without a
@@ -294,7 +294,7 @@ What each former schema version did, in order:
    `tests/33` drops it in its transaction to read the trigram plans; the bench holds
    `core_admin_users` (OFFSET pages: growth 1.48 by design) and `core_directory_search`.
 
-15. **`mair-477-02`** (`releases/v3.0.1/02`) — one trigram GIN `idx_users_search_text_trgm` on the
+15. **`mair-477-02`** (`releases/v3.1.0/02`) — one trigram GIN `idx_users_search_text_trgm` on the
    expression `lower(first_name || ' ' || last_name || chr(31) || last_name || ' ' || first_name
    || chr(31) || email)`, replacing the five trigram indexes of `rel-1.11.0-02`. The searches of
    Core_API matched five `ILIKE` joined by OR: a broad term read the whole table, five `ILIKE` per
@@ -303,6 +303,14 @@ What each former schema version did, in order:
    keeps a term from matching across fields. An expression index, not a generated column:
    `v_users_active` / `v_users_archived` select `users.*` and would carry a column the rollback
    could not drop. Core_API must write the exact expression; `tests/33` checks the plan.
+16. **`mair-502-01`** (`releases/v3.1.0/03`) — `tasks.archived_at`: a completed task is archived.
+   The repeatable trigger `tr_before_task_archive` (`project/fn_set_task_archived_at.sql`) sets it
+   when a task becomes `completed` (keeping the first date while it stays completed) and clears it
+   when it is reopened; the changeset backfills the completed tasks (`updated_at`). Partial indexes
+   `idx_tasks_project_active` (`project_id, created_at, id`, the order of Project_API's lists) and
+   `idx_tasks_project_archived` (`project_id, archived_at DESC, id DESC`). Project_API shows the
+   active tasks in the project detail and the archived ones in their own list; its counters count
+   both. This `feat` renamed the unreleased `releases/v3.0.1` into `releases/v3.1.0` (MAIR-491).
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
@@ -331,7 +339,7 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   named after their ticket, `id="mair-<n>-NN"` (`author="dev"`), plus
   `id="tag-vX.Y.Z"` for the closing tag. Their identity then does not depend on the
   folder: when the folder has to be renamed (another `feat` merged before the prod
-  release turned `v3.0.1` into `v3.1.0`), dev and staging do not run them again,
+  release turned `v3.0.1` into `v3.1.0`, as MAIR-502 did), dev and staging do not run them again,
   and only the renamed `tag-vX.Y.Z` runs. The `rel-1.X.0-NN` ids are frozen.
 - **Release folder gate (CICD `release_folder`, MAIR-491).** Between staging and the
   Prod approval, CICD computes the version `release-prod` will cut (semantic-release

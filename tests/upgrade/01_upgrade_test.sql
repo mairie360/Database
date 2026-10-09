@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(38);
+SELECT plan(39);
 
 ---
 --- Admin account
@@ -32,7 +32,13 @@ SELECT ok(is_admin(1), 'The admin account keeps the Admin role');
 SELECT is((SELECT count(*)::INT FROM users WHERE id BETWEEN 100 AND 199), 5, 'Users are preserved');
 SELECT is((SELECT count(*)::INT FROM user_roles WHERE user_id BETWEEN 100 AND 199 AND role_id <> 5), 4, 'Role assignments are preserved');
 SELECT is((SELECT count(*)::INT FROM group_members WHERE group_id = 100), 2, 'Group members are preserved');
-SELECT is((SELECT count(*)::INT FROM tasks WHERE project_id = 100), 2, 'Tasks are preserved');
+SELECT is((SELECT count(*)::INT FROM tasks WHERE project_id = 100), 3, 'Tasks are preserved');
+-- MAIR-502 (mair-502-01, releases/v3.1.0): the tasks completed before the upgrade are archived.
+SELECT is(
+    (SELECT array_agg(id ORDER BY id) FROM tasks WHERE project_id = 100 AND archived_at IS NOT NULL),
+    ARRAY[102],
+    'The completed tasks are archived by the upgrade, the open ones stay active'
+);
 SELECT is((SELECT count(*)::INT FROM events WHERE id = 100), 1, 'Events are preserved');
 -- MAIR-481 (rel-1.12.0-01, releases/v3.0.0): rows outside 1970-01-01 - 3000-01-01 are deleted,
 -- with their members; valid events and rules stay.
@@ -183,7 +189,7 @@ SELECT ok(
 -- changelog had no tag.
 SELECT results_eq(
     $$SELECT tag FROM databasechangelog WHERE tag IS NOT NULL ORDER BY orderexecuted$$,
-    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.0.1')$$,
+    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0')$$,
     'The database is tagged with the git tags, in order'
 );
 

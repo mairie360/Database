@@ -68,7 +68,9 @@ INSERT INTO tasks (id, project_id, title, status, assigned_to, custom_fields) VA
     (101, 100, 'Reopen the street', 'in_progress', NULL,
      '{"fields": [{"label": "Budget"}],
        "comments": [{"author": {"id": "user-100"}, "message": "Barriers ordered", "createdAt": "2026-09-01T08:00:00Z"}],
-       "history": [{"author": {"id": "user-101"}, "action": "task_updated", "label": "Title changed", "createdAt": "2026-09-02T08:00:00Z"}]}');
+       "history": [{"author": {"id": "user-101"}, "action": "task_updated", "label": "Title changed", "createdAt": "2026-09-02T08:00:00Z"}]}'),
+    -- Completed before MAIR-502: archived by the upgrade.
+    (102, 100, 'Order the barriers', 'completed', NULL, '{}');
 INSERT INTO task_assignees (task_id, user_id) VALUES (100, 101);
 
 -- Calendar.
