@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(31);
+SELECT plan(32);
 
 -- Per-API Postgres roles (MAIR-114): security/api_roles.sql and
 -- security/api_grants.sql. The migration is run with -D<role>_password in
@@ -284,6 +284,24 @@ SELECT is(
     pg_temp.run_as('message_api', $$SELECT email FROM users$$),
     '42501',
     'message_api cannot read user details'
+);
+
+---
+--- 7b. EVERY API (MAIR-531)
+---
+
+-- Test 25b: api_lib (>= 3.0.0) runs this query (is_user_active_by_id) on every
+-- authenticated request, so every API role must read users.is_archived.
+-- project_api and message_api answered 42501.
+SELECT is_empty(
+    $q$SELECT r.name || ': ' || pg_temp.run_as(r.name,
+           $$SELECT EXISTS(SELECT 1 FROM users WHERE id = 2000 AND NOT COALESCE(is_archived, false))
+             AS is_user_active$$)
+       FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api']) AS r(name)
+       WHERE pg_temp.run_as(r.name,
+           $$SELECT EXISTS(SELECT 1 FROM users WHERE id = 2000 AND NOT COALESCE(is_archived, false))
+             AS is_user_active$$) <> 'ok'$q$,
+    'Every API role can run the is_user_active check of api_lib'
 );
 
 ---
