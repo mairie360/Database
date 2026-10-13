@@ -43,6 +43,28 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Messages and conversations changed since a cursor: updated_at, edited_at, tombstones, last_activity_at (MAIR-524). -->
+    <changeSet id="mair-524-01" author="dev"><sqlFile
+            path="04__messages_change_tracking.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="04__messages_change_tracking.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Cross-project task list of Project_API by assignee and due date (MAIR-524). -->
+    <changeSet id="mair-524-02" author="dev"><sqlFile
+            path="05__tasks_assignee_due.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="05__tasks_assignee_due.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v3.1.0" author="dev"><tagDatabase tag="v3.1.0"/></changeSet>
 
 </databaseChangeLog>

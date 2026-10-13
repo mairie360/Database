@@ -364,6 +364,18 @@
         <rollback/>
     </changeSet>
     <changeSet
+        id="rep-functions-messages-track-change"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="messages/fn_track_message_change.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+    <changeSet
         id="rep-functions-elearning-progress"
         author="dev"
         runOnChange="true"
