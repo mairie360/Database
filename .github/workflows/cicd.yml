@@ -13,10 +13,12 @@ permissions:
 
 jobs:
   Database-cicd:
-    uses: mairie360/CICD/.github/workflows/database_cicd.yml@v4.2.0
+    # [NOUVEAU] MAIR-493 : TEMPORAIRE, test de mairie360/CICD#142. Repasser `uses` et `cicd_version` sur le tag publie avant merge.
+    # cicd_version etait v4.0.1 alors que `uses` etait v4.2.0 : les deux sont alignes sur la branche.
+    uses: mairie360/CICD/.github/workflows/database_cicd.yml@mair-493-actions-by-check-and-stack
     with:
       package_name: database
-      cicd_version: v4.0.1
+      cicd_version: mair-493-actions-by-check-and-stack
     secrets:
       N8N_WEBHOOK_SECRET: ${{ secrets.N8N_WEBHOOK_SECRET }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
