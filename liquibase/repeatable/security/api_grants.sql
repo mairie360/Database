@@ -84,8 +84,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON projects, project_members, tasks, task_c
 -- Written only by the SECURITY DEFINER fn_log_task_change() trigger (MAIR-393).
 GRANT SELECT ON task_history TO project_api;
 
--- Author names, manager roles and team (group) visibility.
-GRANT SELECT (id, first_name, last_name) ON users TO project_api;
+-- Author names, manager roles and team (group) visibility. is_archived: api_lib
+-- (>= 3.0.0) checks on every request that the JWT user is still active (MAIR-531).
+GRANT SELECT (id, first_name, last_name, is_archived) ON users TO project_api;
 GRANT SELECT ON roles, user_roles, group_members TO project_api;
 
 -- ---------------------------------------------------------------------------
@@ -109,6 +110,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON conversations, conversation_members,
 -- Group conversations notify every member of the group
 -- (fn_auto_increment_unread_counter).
 GRANT SELECT ON group_members TO message_api;
+
+-- api_lib (>= 3.0.0) checks on every request that the JWT user is still active (MAIR-531).
+GRANT SELECT (id, is_archived) ON users TO message_api;
 
 -- Moderation by administrators (MAIR-394): the log is append-only for the API.
 GRANT INSERT ON messaging_moderation_log TO message_api;
