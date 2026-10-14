@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(39);
+SELECT plan(40);
 
 ---
 --- Admin account
@@ -38,6 +38,13 @@ SELECT is(
     (SELECT array_agg(id ORDER BY id) FROM tasks WHERE project_id = 100 AND archived_at IS NOT NULL),
     ARRAY[102],
     'The completed tasks are archived by the upgrade, the open ones stay active'
+);
+-- MAIR-558 (mair-558-01, releases/v3.1.0): a project keeps the priority Project_API showed,
+-- the highest of its tasks; a project without task keeps the default.
+SELECT is(
+    (SELECT array_agg(priority::TEXT ORDER BY id) FROM projects WHERE id IN (100, 101)),
+    ARRAY['high', 'medium'],
+    'The projects take the highest priority of their tasks'
 );
 SELECT is((SELECT count(*)::INT FROM events WHERE id = 100), 1, 'Events are preserved');
 -- MAIR-481 (rel-1.12.0-01, releases/v3.0.0): rows outside 1970-01-01 - 3000-01-01 are deleted,

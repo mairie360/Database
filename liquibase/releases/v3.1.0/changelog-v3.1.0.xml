@@ -65,6 +65,14 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- The existing projects keep the priority Project_API showed, the highest of their tasks (MAIR-558).
+         No rollback: the column predates this changeset and nothing wrote it before. -->
+    <changeSet id="mair-558-01" author="dev"><sqlFile
+            path="06__projects_priority_backfill.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback/></changeSet>
+
     <changeSet id="tag-v3.1.0" author="dev"><tagDatabase tag="v3.1.0"/></changeSet>
 
 </databaseChangeLog>
