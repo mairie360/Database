@@ -112,7 +112,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON conversations, conversation_members,
 GRANT SELECT ON group_members TO message_api;
 
 -- api_lib (>= 3.0.0) checks on every request that the JWT user is still active (MAIR-531).
-GRANT SELECT (id, is_archived) ON users TO message_api;
+-- The chat list, the chat header and the member list show the members' names (MAIR-507).
+GRANT SELECT (id, first_name, last_name, is_archived) ON users TO message_api;
 
 -- Moderation by administrators (MAIR-394): the log is append-only for the API.
 GRANT INSERT ON messaging_moderation_log TO message_api;
