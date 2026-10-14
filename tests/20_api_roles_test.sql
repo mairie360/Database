@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(32);
+SELECT plan(33);
 
 -- Per-API Postgres roles (MAIR-114): security/api_roles.sql and
 -- security/api_grants.sql. The migration is run with -D<role>_password in
@@ -284,6 +284,14 @@ SELECT is(
     pg_temp.run_as('message_api', $$SELECT email FROM users$$),
     '42501',
     'message_api cannot read user details'
+);
+
+-- Test 25a: GET /api/v1/ of Message_API shows the direct contact's name and
+-- searches the members' names (MAIR-507); it answered 42501 in dev.
+SELECT is(
+    pg_temp.run_as('message_api', $$SELECT id, first_name, last_name FROM users WHERE id = 2000$$),
+    'ok',
+    'message_api can read user names'
 );
 
 ---
