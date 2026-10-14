@@ -316,6 +316,17 @@ What each former schema version did, in order:
    value Project_API showed before it started storing the priority chosen in the creation form
    (MAIR-558). `project_status` already had `todo` and `review` (rel-1.2.0), so no schema change.
    Data only, empty `<rollback/>`; the upgrade test checks it (projects 100 and 101 of its seed).
+18. **`mair-564-01`** (`releases/v3.1.0/07`) — one role per user (MAIR-564): `user_roles_pkey`
+   becomes `(user_id)`, so a second role is a unique violation (`23505`). Accounts holding several
+   roles keep their lowest role id, the one their JWT `role` claim already carried (MAIR-529); the
+   dropped rows are listed in a NOTICE and the rollback (former key `(user_id, role_id)`) does not
+   bring them back. The repeatable trigger `tr_user_roles_replace_default`
+   (`roles/trigger_replace_default_role.sql`, `BEFORE INSERT`) lets a role written after the
+   default Guest replace it (registration then grant, the `mairie360_api_lib` fixtures' `ON
+   CONFLICT DO NOTHING`); any other second role is refused. Core_API grants with
+   `INSERT … ON CONFLICT (user_id) DO UPDATE`, which needs this key: deploy it before (or with)
+   the Core_API release of MAIR-564. `tests/38_one_role_per_user_test.sql` and the upgrade test
+   cover it.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
@@ -378,7 +389,8 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   it returns an int status and dynamically queries `public.<resource_name>` by id,
   only for names listed in `resources` (-1 otherwise). It is executable by the API
   roles only, not PUBLIC. Archived users keep their `user_roles` (so `restore_user`
-  gives them back) but `is_admin()` and `check_access()` deny them.
+  gives them back) but `is_admin()` and `check_access()` deny them. A user holds at most one
+  role (`user_roles` is keyed by `user_id`, MAIR-564).
 - **Soft delete.** `users` is never hard-deleted. `DELETE` goes through the
   `v_users_active` / `v_users_archived` views, which have `INSTEAD OF` triggers
   that set `is_archived = TRUE` and `status = 'archived'`. `restore_user(id)`
