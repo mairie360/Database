@@ -411,6 +411,30 @@
         />
         <rollback/>
     </changeSet>
+    <changeSet id="rep-functions-project-task-status" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/fn_apply_task_status.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+    <changeSet id="rep-functions-project-templates" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/fn_project_templates.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+    <changeSet id="rep-functions-project-status-categories" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/fn_check_status_categories.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
 
 
     <changeSet id="rep-triggers-users" author="dev" runOnChange="true">
