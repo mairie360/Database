@@ -84,6 +84,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Task statuses per project, copied from project templates (MAIR-566). -->
+    <changeSet id="mair-566-01" author="dev"><sqlFile
+            path="08__project_task_statuses.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="08__project_task_statuses.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v3.1.0" author="dev"><tagDatabase tag="v3.1.0"/></changeSet>
 
 </databaseChangeLog>

@@ -3,7 +3,8 @@
 --   psql -v scale=1 -f bench/seed.sql     (scale=1 ≈ 20k users, 2M messages)
 -- Bulk tables are loaded with session_replication_role = replica, which skips
 -- user triggers and FK checks; what those triggers would have written
--- (group owner membership, unread counters, task history) is generated here.
+-- (group owner membership, unread counters, task history, project statuses copied
+-- from the default template, task status_id) is generated here.
 
 \if :{?scale}
 \else
@@ -123,22 +124,33 @@ FROM events e, generate_series(1, 3) k
 ON CONFLICT DO NOTHING;
 
 -- projects, members, tasks, assignees, history
-INSERT INTO projects (title, description, owner_id, responsible_id, created_at)
+INSERT INTO projects (title, description, owner_id, responsible_id, created_at, template_id)
 SELECT 'Project ' || g, 'Bench project', 2 + (g * 23) % (:n_users - 1),
-       2 + (g * 29) % (:n_users - 1), now() - (g % 500) * interval '1 day'
+       2 + (g * 29) % (:n_users - 1), now() - (g % 500) * interval '1 day',
+       (SELECT id FROM project_templates WHERE is_default)
 FROM generate_series(1, :n_projects) g;
+
+INSERT INTO project_task_statuses (project_id, name, color, category, position)
+SELECT p.id, ts.name, ts.color, ts.category, ts.position
+FROM projects p JOIN project_template_statuses ts ON ts.template_id = p.template_id;
 
 INSERT INTO project_members (project_id, user_id)
 SELECT p.id, 2 + (p.id * k * 53) % (:n_users - 1) FROM projects p, generate_series(1, 10) k
 ON CONFLICT DO NOTHING;
 
-INSERT INTO tasks (project_id, title, status, priority, description, due_date, updated_by)
-SELECT 1 + (floor(power(random(), 2) * :n_projects))::int, 'Task ' || g,
-       (ARRAY['todo','in_progress','completed','review'])[1 + g % 4]::task_status,
-       (ARRAY['low','medium','high'])[1 + g % 3]::task_priority,
-       repeat('description ', g % 30), now() + (g % 90 - 30) * interval '1 day',
-       2 + (g * 41) % (:n_users - 1)
-FROM generate_series(1, :n_tasks) g;
+INSERT INTO tasks (project_id, title, status, status_id, priority, description, due_date, updated_by)
+SELECT t.project_id, t.title, t.status, st.id, t.priority, t.description, t.due_date, t.updated_by
+FROM (SELECT 1 + (floor(power(random(), 2) * :n_projects))::int AS project_id, 'Task ' || g AS title,
+             (ARRAY['todo','in_progress','completed','in_progress'])[1 + g % 4]::task_status AS status,
+             (ARRAY['low','medium','high'])[1 + g % 3]::task_priority AS priority,
+             repeat('description ', g % 30) AS description,
+             now() + (g % 90 - 30) * interval '1 day' AS due_date,
+             2 + (g * 41) % (:n_users - 1) AS updated_by, g
+      FROM generate_series(1, :n_tasks) g) t
+JOIN LATERAL (SELECT id FROM project_task_statuses s
+              WHERE s.project_id = t.project_id AND s.category = t.status
+              ORDER BY s.position, s.id LIMIT 1) st ON true
+ORDER BY t.g;
 
 INSERT INTO task_assignees (task_id, user_id)
 SELECT t.id, pm.user_id FROM tasks t

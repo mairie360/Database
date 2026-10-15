@@ -77,7 +77,9 @@ INSERT INTO tasks (id, project_id, title, status, assigned_to, custom_fields, pr
        "comments": [{"author": {"id": "user-100"}, "message": "Barriers ordered", "createdAt": "2026-09-01T08:00:00Z"}],
        "history": [{"author": {"id": "user-101"}, "action": "task_updated", "label": "Title changed", "createdAt": "2026-09-02T08:00:00Z"}]}', 'low'),
     -- Completed before MAIR-502: archived by the upgrade.
-    (102, 100, 'Order the barriers', 'completed', NULL, '{}', 'medium');
+    (102, 100, 'Order the barriers', 'completed', NULL, '{}', 'medium'),
+    -- `review`, never written by Project_API: in progress after MAIR-566.
+    (103, 100, 'Check the signs', 'review', NULL, '{}', 'low');
 INSERT INTO task_assignees (task_id, user_id) VALUES (100, 101);
 
 -- Calendar.

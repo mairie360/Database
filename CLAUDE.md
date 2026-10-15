@@ -327,6 +327,24 @@ What each former schema version did, in order:
    `INSERT … ON CONFLICT (user_id) DO UPDATE`, which needs this key: deploy it before (or with)
    the Core_API release of MAIR-564. `tests/38_one_role_per_user_test.sql` and the upgrade test
    cover it.
+19. **`mair-566-01`** (`releases/v3.1.0/08`) — task statuses per project, copied from project
+   templates. `project_templates` (`is_default`: the template of a project created without one,
+   undeletable) and `project_template_statuses`; `project_task_statuses` (name, `#RRGGBB` colour,
+   position unique per project and deferred so a reorder can swap, one of the three `task_status`
+   categories `todo` / `in_progress` / `completed`); `projects.template_id`; `tasks.status_id`
+   (`NOT NULL`, `ON DELETE RESTRICT`: a status holding tasks is deleted after they are moved).
+   Seeds the templates Simple (default), Avec validation, Marché public and Événement; existing
+   projects get Simple's statuses and every task the first status of its category (`review`
+   becomes `in_progress`). The behaviour lives in `repeatable/project/`:
+   `fn_apply_task_status` (`tr_before_task_apply_status`, named to fire before
+   `tr_before_task_archive`) keeps `tasks.status` equal to the category of `status_id`, refuses a
+   status of another project (`23503`), and gives a writer setting the category alone the first
+   status of it; `fn_project_templates.sql` sets the default template and copies the template's
+   statuses (and custom fields) into a new project; `fn_check_status_categories.sql` keeps one
+   status per category in every project and template (deferred constraint triggers, `23514`) and
+   moves the tasks of a status whose category changes. `fn_log_task_change` logs a move between
+   two statuses of one category too, reading `status_id` through `to_jsonb` so the migrations
+   replayed after a rollback still update tasks. `tests/39` and the upgrade test cover it.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

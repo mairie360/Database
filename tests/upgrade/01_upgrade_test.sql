@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(43);
+SELECT plan(45);
 
 ---
 --- Admin account
@@ -32,7 +32,7 @@ SELECT ok(is_admin(1), 'The admin account keeps the Admin role');
 SELECT is((SELECT count(*)::INT FROM users WHERE id BETWEEN 100 AND 199), 5, 'Users are preserved');
 SELECT is((SELECT count(*)::INT FROM user_roles WHERE user_id BETWEEN 100 AND 199 AND role_id <> 5), 4, 'Role assignments are preserved');
 SELECT is((SELECT count(*)::INT FROM group_members WHERE group_id = 100), 2, 'Group members are preserved');
-SELECT is((SELECT count(*)::INT FROM tasks WHERE project_id = 100), 3, 'Tasks are preserved');
+SELECT is((SELECT count(*)::INT FROM tasks WHERE project_id = 100), 4, 'Tasks are preserved');
 -- MAIR-502 (mair-502-01, releases/v3.1.0): the tasks completed before the upgrade are archived.
 SELECT is(
     (SELECT array_agg(id ORDER BY id) FROM tasks WHERE project_id = 100 AND archived_at IS NOT NULL),
@@ -45,6 +45,23 @@ SELECT is(
     (SELECT array_agg(priority::TEXT ORDER BY id) FROM projects WHERE id IN (100, 101)),
     ARRAY['high', 'medium'],
     'The projects take the highest priority of their tasks'
+);
+-- MAIR-566 (mair-566-01, releases/v3.1.0): existing projects get the statuses of the default
+-- template, each task the first status of its category (`review` becomes in progress).
+SELECT is(
+    (SELECT t.name::TEXT || ': ' || string_agg(s.name, ', ' ORDER BY s.position)
+     FROM projects p JOIN project_templates t ON t.id = p.template_id
+     JOIN project_task_statuses s ON s.project_id = p.id
+     WHERE p.id = 100 GROUP BY t.name),
+    'Simple: À faire, En cours, Terminé',
+    'Existing projects get the statuses of the default template'
+);
+SELECT results_eq(
+    $$SELECT t.id, t.status::TEXT, s.name::TEXT FROM tasks t JOIN project_task_statuses s ON s.id = t.status_id
+      WHERE t.project_id = 100 ORDER BY t.id$$,
+    $$VALUES (100, 'todo', 'À faire'), (101, 'in_progress', 'En cours'), (102, 'completed', 'Terminé'),
+             (103, 'in_progress', 'En cours')$$,
+    'Existing tasks get the status of their category, review becomes in progress'
 );
 SELECT is((SELECT count(*)::INT FROM events WHERE id = 100), 1, 'Events are preserved');
 -- MAIR-481 (rel-1.12.0-01, releases/v3.0.0): rows outside 1970-01-01 - 3000-01-01 are deleted,

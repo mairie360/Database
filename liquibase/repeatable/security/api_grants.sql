@@ -81,6 +81,9 @@ GRANT SELECT (id, owner_id) ON events TO core_api;
 -- ---------------------------------------------------------------------------
 GRANT SELECT, INSERT, UPDATE, DELETE ON projects, project_members, tasks, task_comments,
     task_assignees TO project_api;
+-- Statuses of each project and the project templates they are copied from (MAIR-566).
+GRANT SELECT, INSERT, UPDATE, DELETE ON project_task_statuses, project_templates,
+    project_template_statuses TO project_api;
 -- Written only by the SECURITY DEFINER fn_log_task_change() trigger (MAIR-393).
 GRANT SELECT ON task_history TO project_api;
 
