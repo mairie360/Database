@@ -311,6 +311,11 @@ What each former schema version did, in order:
    `idx_tasks_project_archived` (`project_id, archived_at DESC, id DESC`). Project_API shows the
    active tasks in the project detail and the archived ones in their own list; its counters count
    both. This `feat` renamed the unreleased `releases/v3.0.1` into `releases/v3.1.0` (MAIR-491).
+17. **`mair-558-01`** (`releases/v3.1.0/06`) — backfills `projects.priority` (rel-1.2.0, default
+   `medium`, written by nobody until then) with the highest priority of each project's tasks, the
+   value Project_API showed before it started storing the priority chosen in the creation form
+   (MAIR-558). `project_status` already had `todo` and `review` (rel-1.2.0), so no schema change.
+   Data only, empty `<rollback/>`; the upgrade test checks it (projects 100 and 101 of its seed).
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
