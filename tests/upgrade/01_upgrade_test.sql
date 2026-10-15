@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(40);
+SELECT plan(43);
 
 ---
 --- Admin account
@@ -230,6 +230,28 @@ SELECT ok(
 SELECT ok(
     NOT has_function_privilege('public', 'check_access(integer, character varying, character varying, integer)', 'EXECUTE'),
     'PUBLIC cannot call check_access on the upgraded database'
+);
+
+---
+--- One role per user (MAIR-564)
+---
+-- Test 40-42: each account keeps its lowest role id, and the key refuses a second role.
+SELECT is_empty(
+    $$SELECT user_id FROM user_roles GROUP BY user_id HAVING count(*) > 1$$,
+    'The migration leaves one role per account'
+);
+
+SELECT results_eq(
+    $$SELECT user_id, role_id FROM user_roles WHERE user_id IN (100, 101, 102, 103) ORDER BY user_id$$,
+    $$VALUES (100, 4), (101, 3), (102, 4), (103, 1)$$,
+    'Each account keeps its lowest role id (the role its JWT carries)'
+);
+
+SELECT throws_ok(
+    $$INSERT INTO user_roles (user_id, role_id) VALUES (100, 3)$$,
+    '23505',
+    NULL,
+    'A second role is refused on the upgraded database'
 );
 
 SELECT * FROM finish();

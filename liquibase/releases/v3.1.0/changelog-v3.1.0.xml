@@ -73,6 +73,17 @@
             relativeToChangelogFile="true"
         /><rollback/></changeSet>
 
+    <!-- One role per user: user_roles is keyed by the user, extra roles dropped (MAIR-564). -->
+    <changeSet id="mair-564-01" author="dev"><sqlFile
+            path="07__one_role_per_user.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="07__one_role_per_user.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v3.1.0" author="dev"><tagDatabase tag="v3.1.0"/></changeSet>
 
 </databaseChangeLog>

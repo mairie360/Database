@@ -216,6 +216,14 @@
         />
         <rollback/>
     </changeSet>
+    <changeSet id="rep-triggers-roles-replace-default" author="dev" runOnChange="true">
+        <sqlFile
+            path="roles/trigger_replace_default_role.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
 
     <changeSet
         id="rep-functions-sessions-valid"
