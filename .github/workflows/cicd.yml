@@ -16,7 +16,7 @@ jobs:
     uses: mairie360/CICD/.github/workflows/database_cicd.yml@v4.2.1
     with:
       package_name: database
-      cicd_version: v4.0.1
+      cicd_version: v4.2.1  # must match the database_cicd.yml ref above (actions are checked out at this tag)
     secrets:
       N8N_WEBHOOK_SECRET: ${{ secrets.N8N_WEBHOOK_SECRET }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
