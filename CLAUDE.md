@@ -428,7 +428,8 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
 - **Sessions** have server-computed expiration and archive/logout triggers
   (`repeatable/sessions/*`, `auth/fn_logout_on_archive.sql`).
 - **Per-API Postgres roles (MAIR-114).** `core_api`, `project_api`,
-  `calendar_api`, `message_api` and `elearning_api` are created by
+  `calendar_api`, `message_api`, `elearning_api` and `compliance_api`
+  (MAIR-556, shared grants only: JWT middleware + `check_access`) are created by
   `repeatable/security/api_roles.sql`, and their privileges are set by
   `repeatable/security/api_grants.sql`. Both files are `runAlways` and are the
   last changesets. Passwords come from `-D<role>_password` changelog parameters
@@ -436,7 +437,12 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   new role is created `NOLOGIN` and an existing role keeps its password.
   `api_grants.sql` revokes everything, then grants again: a **new table or view
   is unreachable by every API until you add it there**. `20_api_roles_test.sql`
-  pins each role's writable tables. Functions and triggers run with the calling
+  pins each role's writable tables. Since MAIR-556 the API tests
+  (`mairie360_api_lib` `test_setup`) pass `-D<role>_password` and run the
+  application code as the API's role, so a missing grant fails the API's CI:
+  the fix belongs here. Every API reads `users (id, email, is_archived)`: the
+  lib's JWT middleware checks the account and matches a Keycloak token by
+  e-mail. Functions and triggers run with the calling
   API's rights, so a trigger that writes logs/audit or touches another domain's
   tables must be `SECURITY DEFINER SET search_path = public, pg_temp` (see
   `fn_archive_user`, `check_access`, and the session log triggers).
