@@ -26,7 +26,7 @@ search_path() {
     echo "$path,$1/repeatable"
 }
 
-ROLE_PARAMS="-Dcore_api_password=password -Dproject_api_password=password -Dcalendar_api_password=password -Dmessage_api_password=password -Delearning_api_password=password"
+ROLE_PARAMS="-Dcore_api_password=password -Dproject_api_password=password -Dcalendar_api_password=password -Dmessage_api_password=password -Delearning_api_password=password -Dcompliance_api_password=password"
 ADMIN_EMAIL='mayor@upgrade.example'
 ADMIN_PASSWORD='$argon2id$v=19$m=19456,t=2,p=1$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 

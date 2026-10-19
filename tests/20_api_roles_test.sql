@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(33);
+SELECT plan(36);
 
 -- Per-API Postgres roles (MAIR-114): security/api_roles.sql and
 -- security/api_grants.sql. The migration is run with -D<role>_password in
@@ -36,23 +36,23 @@ $$ LANGUAGE sql;
 --- 1. ROLES
 ---
 
--- Test 1: the five roles exist, can log in and have no elevated attribute
+-- Test 1: the six roles exist, can log in and have no elevated attribute
 SELECT is(
     (SELECT count(*)::INT FROM pg_roles
-     WHERE rolname IN ('core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api')
+     WHERE rolname IN ('core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api')
        AND rolcanlogin
        AND NOT rolsuper AND NOT rolcreaterole AND NOT rolcreatedb
        AND NOT rolreplication AND NOT rolbypassrls),
-    5,
+    6,
     'Each API has a login role without elevated attributes'
 );
 
 -- Test 2: the -D<role>_password parameters were applied
 SELECT is(
     (SELECT count(*)::INT FROM pg_authid
-     WHERE rolname IN ('core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api')
+     WHERE rolname IN ('core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api')
        AND rolpassword LIKE 'SCRAM-SHA-256$%'),
-    5,
+    6,
     'Each API role has a hashed password'
 );
 
@@ -63,7 +63,7 @@ SELECT is(
 -- Test 3: logs, audit and Liquibase tables are out of reach of every API
 SELECT is(
     (SELECT count(*)::INT
-     FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api']) AS r(name)
+     FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
      CROSS JOIN unnest(ARRAY['users_audit_log', 'connection_logs', 'access_logs', 'retention_policies',
                              'databasechangelog', 'databasechangeloglock']) AS t(name)
      WHERE has_table_privilege(r.name, t.name, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')),
@@ -74,7 +74,7 @@ SELECT is(
 -- Test 4: only core_api can read password hashes
 SELECT results_eq(
     $$
-    SELECT r.name FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api']) AS r(name)
+    SELECT r.name FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
     WHERE has_column_privilege(r.name, 'users', 'password', 'SELECT')
     $$,
     $$VALUES ('core_api')$$,
@@ -84,7 +84,7 @@ SELECT results_eq(
 -- Test 4b: SSO identities (MAIR-141) are core's business only
 SELECT results_eq(
     $$
-    SELECT r.name FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api']) AS r(name)
+    SELECT r.name FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
     WHERE has_table_privilege(r.name, 'user_identities', 'SELECT')
        OR has_table_privilege(r.name, 'v_users_sso_export', 'SELECT')
     $$,
@@ -95,7 +95,7 @@ SELECT results_eq(
 -- Test 5: users are never hard-deleted, not even by core_api
 SELECT is(
     (SELECT count(*)::INT
-     FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api']) AS r(name)
+     FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
      WHERE has_table_privilege(r.name, 'users', 'DELETE, TRUNCATE')),
     0,
     'No API role can hard-delete users'
@@ -104,7 +104,7 @@ SELECT is(
 -- Test 6: no API role can create objects
 SELECT is(
     (SELECT count(*)::INT
-     FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api']) AS r(name)
+     FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
      WHERE has_schema_privilege(r.name, 'public', 'CREATE')),
     0,
     'No API role has CREATE on schema public'
@@ -282,7 +282,7 @@ SELECT is(
 
 -- Test 25
 SELECT is(
-    pg_temp.run_as('message_api', $$SELECT email FROM users$$),
+    pg_temp.run_as('message_api', $$SELECT phone_number FROM users$$),
     '42501',
     'message_api cannot read user details'
 );
@@ -306,11 +306,40 @@ SELECT is_empty(
     $q$SELECT r.name || ': ' || pg_temp.run_as(r.name,
            $$SELECT EXISTS(SELECT 1 FROM users WHERE id = 2000 AND NOT COALESCE(is_archived, false))
              AS is_user_active$$)
-       FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api']) AS r(name)
+       FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
        WHERE pg_temp.run_as(r.name,
            $$SELECT EXISTS(SELECT 1 FROM users WHERE id = 2000 AND NOT COALESCE(is_archived, false))
              AS is_user_active$$) <> 'ok'$q$,
     'Every API role can run the is_user_active check of api_lib'
+);
+
+-- Test 25c: a Keycloak access token is matched to its account by e-mail
+-- (api_lib get_user_id_by_email) in the JWT middleware of every API; only
+-- core_api could run it before MAIR-556.
+SELECT is_empty(
+    $q$SELECT r.name FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
+       WHERE pg_temp.run_as(r.name,
+           $$SELECT (array_agg(id))[1] FROM users
+             WHERE lower(email) = lower('paul.owner@roles.test') AND NOT COALESCE(is_archived, false)
+             HAVING count(*) = 1$$) <> 'ok'$q$,
+    'Every API role can resolve a Keycloak e-mail to its account'
+);
+
+---
+--- 7c. COMPLIANCE_API (MAIR-556)
+---
+
+-- Test 25d: no table of its own, nothing to write
+SELECT is_empty(
+    $$SELECT * FROM pg_temp.writable_by('compliance_api')$$,
+    'compliance_api cannot write anywhere'
+);
+
+-- Test 25e
+SELECT is(
+    pg_temp.run_as('compliance_api', $$SELECT first_name FROM users$$),
+    '42501',
+    'compliance_api cannot read user names'
 );
 
 ---
@@ -348,9 +377,9 @@ SELECT is(
 -- Test 29: check_access and is_admin work for every API
 SELECT is(
     (SELECT count(*)::INT
-     FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api']) AS r(name)
+     FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
      WHERE pg_temp.run_as(r.name, $$SELECT check_access(2000, 'groups', 'read', 2000), is_admin(2000)$$) = 'ok'),
-    5,
+    6,
     'Every API role can call check_access and is_admin'
 );
 
