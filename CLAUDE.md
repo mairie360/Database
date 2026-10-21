@@ -486,7 +486,7 @@ Every PR requests a review from the whole team, minus its author: `CarolinHugo`,
 ## Promotion to staging and prod (MAIR-494)
 
 A push to `main` only releases dev (`cicd.yml` stops at `release-dev`). Staging and prod are manual:
-`gh workflow run promote-staging.yml -R mairie360/Database [-f sha=<sha>]`, then `promote-prod.yml`
+`gh workflow run promote-staging.yml -R mairie360/Database` (main's newest commit) or `gh workflow run promote-staging.yml -R mairie360/Database -f sha=SHA` (a given commit), then the same with `promote-prod.yml`
 (environments `Staging` / `Prod`). Staging refuses a commit without `dev-<sha>` and a green main run, and runs
 no extra gate (tests and schema bench run in the main pipeline) on that image; prod refuses one without `staging-<sha>` and tags the version semantic-release computes
 for that commit. `cicd.yml`, `promote-staging.yml` and `promote-prod.yml` pin the same mairie360/CICD release.
