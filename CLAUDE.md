@@ -90,8 +90,8 @@ A script without a threshold fails. Results go to `bench/results/` (gitignored,
 `summary.txt` holds the table). The whole run takes about 9 minutes;
 `bench/run.sh --quick` runs scale 1 only (no growth check) to iterate locally.
 CICD runs `./performance_test.sh` in `database_cicd.yml` (job `performance_tests`,
-on PRs too); `release-staging` needs it, so a breach blocks the promotion to
-staging but not dev.
+on PRs too); `promote-staging.yml` refuses a commit whose main run has a failed
+job (MAIR-494), so a breach blocks the promotion to staging but not dev.
 
 There is no way to run a single test file through `test.sh` — it
 always runs `pg_prove` over `tests/*.sql`. To run one file, exec into a running
@@ -482,3 +482,11 @@ the `plan(N)` count in sync.
 ## Pull request reviewers
 
 Every PR requests a review from the whole team, minus its author: `CarolinHugo`, `LAURETbenjamin`, `MathTek` and `Quentintnrl` (`gh pr create … --reviewer CarolinHugo,LAURETbenjamin,MathTek`). `.github/CODEOWNERS` makes GitHub request them automatically as well.
+
+## Promotion to staging and prod (MAIR-494)
+
+A push to `main` only releases dev (`cicd.yml` stops at `release-dev`). Staging and prod are manual:
+`gh workflow run promote-staging.yml -R mairie360/Database` (main's newest commit) or `gh workflow run promote-staging.yml -R mairie360/Database -f sha=SHA` (a given commit), then the same with `promote-prod.yml`
+(environments `Staging` / `Prod`). Staging refuses a commit without `dev-<sha>` and a green main run, and runs
+no extra gate (tests and schema bench run in the main pipeline) on that image; prod refuses one without `staging-<sha>` and tags the version semantic-release computes
+for that commit. `cicd.yml`, `promote-staging.yml` and `promote-prod.yml` pin the same mairie360/CICD release.
