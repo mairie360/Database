@@ -13,10 +13,10 @@ permissions:
 
 jobs:
   Database-cicd:
-    uses: mairie360/CICD/.github/workflows/database_cicd.yml@v4.4.0
+    uses: mairie360/CICD/.github/workflows/database_cicd.yml@v4.4.1
     with:
       package_name: database
-      cicd_version: v4.4.0  # must match the database_cicd.yml ref above (actions are checked out at this tag)
+      cicd_version: v4.4.1  # must match the database_cicd.yml ref above (actions are checked out at this tag)
     secrets:
       N8N_WEBHOOK_SECRET: ${{ secrets.N8N_WEBHOOK_SECRET }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
