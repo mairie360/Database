@@ -24,11 +24,11 @@ jobs:
       contents: read
       packages: write
       actions: read
-    uses: mairie360/CICD/.github/workflows/promote-staging.yml@v4.4.3
+    uses: mairie360/CICD/.github/workflows/promote-staging.yml@v4.5.0
     with:
       stack: database
       package_name: database
-      cicd_version: v4.4.3
+      cicd_version: v4.5.0
       sha: ${{ inputs.sha }}
     secrets:
       N8N_WEBHOOK_SECRET: ${{ secrets.N8N_WEBHOOK_SECRET }}
