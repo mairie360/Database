@@ -10,7 +10,7 @@
 -- events, the groups and the projects are handed over to an administrator. Direct conversations
 -- stay for the other participant.
 --
--- tests/37_gdpr_erasure_test.sql checks that no value of an anonymized user remains in any text or
+-- tests/41_gdpr_erasure_test.sql checks that no value of an anonymized user remains in any text or
 -- JSON column, and that the export covers every identifier column of the inventory.
 
 DROP FUNCTION IF EXISTS fn_pseudonymize_identity(JSONB, INT);

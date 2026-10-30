@@ -227,6 +227,14 @@
         />
         <rollback/>
     </changeSet>
+    <changeSet id="rep-triggers-roles-replace-default" author="dev" runOnChange="true">
+        <sqlFile
+            path="roles/trigger_replace_default_role.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
 
     <changeSet
         id="rep-functions-sessions-valid"
@@ -375,6 +383,18 @@
         <rollback/>
     </changeSet>
     <changeSet
+        id="rep-functions-messages-track-change"
+        author="dev"
+        runOnChange="true"
+    >
+        <sqlFile
+            path="messages/fn_track_message_change.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+    <changeSet
         id="rep-functions-elearning-progress"
         author="dev"
         runOnChange="true"
@@ -389,6 +409,38 @@
     <changeSet id="rep-functions-project-log" author="dev" runOnChange="true">
         <sqlFile
             path="project/fn_log_task_change.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+    <changeSet id="rep-functions-project-archive" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/fn_set_task_archived_at.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+    <changeSet id="rep-functions-project-task-status" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/fn_apply_task_status.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+    <changeSet id="rep-functions-project-templates" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/fn_project_templates.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+    <changeSet id="rep-functions-project-status-categories" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/fn_check_status_categories.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />
