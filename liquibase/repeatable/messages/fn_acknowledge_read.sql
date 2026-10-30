@@ -6,7 +6,7 @@
 --   * Idempotent, and monotonic: the cursor only moves forward, so a repeated
 --     or stale acknowledgement returns the current count and changes nothing.
 --   * The count is recomputed from the cursor (messages after it, written by
---     someone else) and only counts for agents who receive the conversation's
+--     someone else, deleted ones excluded: MAIR-524 keeps them as tombstones) and only counts for agents who receive the conversation's
 --     notifications, like fn_auto_increment_unread_counter: group members of a
 --     group conversation, members of a direct one, never an excluded agent.
 --   * Messages sent after the cursor are never cleared: the conversation lock
@@ -71,6 +71,7 @@ BEGIN
         FROM messages
         WHERE conversation_id = p_conversation_id
           AND id > v_cursor
+          AND deleted_at IS NULL
           AND owner_id IS DISTINCT FROM p_user_id;
     ELSE
         v_unread := 0;

@@ -3,7 +3,9 @@
 -- Each API gets full DML on the tables of its own domain, and read-only
 -- access (column-level where possible) to the few tables of other domains its
 -- queries actually read. Scopes were derived from the SQL of APIs/Core_API,
--- Project_API, Calendar_API, Message_API, ELearning_API and API_lib.
+-- Project_API, Calendar_API, Message_API, ELearning_API, Compliance_API and
+-- API_lib. Since MAIR-556 the API tests run their queries as these roles, so a
+-- missing grant fails the API's CI.
 --
 -- This file is the single source of truth: it first revokes everything the
 -- API roles hold in `public`, then grants again, and runs on every update so
@@ -23,7 +25,8 @@ DO $$
 DECLARE
     v_role TEXT;
 BEGIN
-    FOREACH v_role IN ARRAY ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']
+    FOREACH v_role IN ARRAY ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api',
+                                  'compliance_api']
     LOOP
         -- ALL TABLES covers views too, and revoking a table privilege also
         -- revokes the matching column privileges.
@@ -39,14 +42,18 @@ $$;
 -- ---------------------------------------------------------------------------
 -- Shared by every API
 -- ---------------------------------------------------------------------------
--- API_lib JwtMiddleware checks that the token's user exists (DoesUserExistById).
-GRANT SELECT (id) ON users TO core_api, project_api, calendar_api, message_api, elearning_api;
+-- API_lib's JwtMiddleware, on every authenticated request of every API:
+-- is_user_active_by_id reads `id` and `is_archived` (MAIR-531), and a Keycloak
+-- access token is matched to its account by e-mail (get_user_id_by_email,
+-- MAIR-140), which answered 42501 outside core_api until MAIR-556.
+GRANT SELECT (id, email, is_archived) ON users
+    TO core_api, project_api, calendar_api, message_api, elearning_api, compliance_api;
 -- check_access() and is_admin() are SECURITY DEFINER, so RightMiddleware /
 -- AdminMiddleware work for every API without reading the RBAC tables.
 -- check_access() writes access_logs, so it is revoked from PUBLIC
 -- (access/fn_check_access.sql) and granted to the API roles only (MAIR-413).
 GRANT EXECUTE ON FUNCTION check_access(INT, VARCHAR, VARCHAR, INT)
-    TO core_api, project_api, calendar_api, message_api, elearning_api;
+    TO core_api, project_api, calendar_api, message_api, elearning_api, compliance_api;
 
 -- ---------------------------------------------------------------------------
 -- core_api: users, auth, sessions, roles, groups, RBAC and ACL
@@ -84,11 +91,14 @@ GRANT EXECUTE ON FUNCTION anonymize_user(INT), export_user_data(INT) TO core_api
 -- ---------------------------------------------------------------------------
 GRANT SELECT, INSERT, UPDATE, DELETE ON projects, project_members, tasks, task_comments,
     task_assignees TO project_api;
+-- Statuses of each project and the project templates they are copied from (MAIR-566).
+GRANT SELECT, INSERT, UPDATE, DELETE ON project_task_statuses, project_templates,
+    project_template_statuses TO project_api;
 -- Written only by the SECURITY DEFINER fn_log_task_change() trigger (MAIR-393).
 GRANT SELECT ON task_history TO project_api;
 
 -- Author names, manager roles and team (group) visibility.
-GRANT SELECT (id, first_name, last_name) ON users TO project_api;
+GRANT SELECT (first_name, last_name) ON users TO project_api;
 GRANT SELECT ON roles, user_roles, group_members TO project_api;
 
 -- ---------------------------------------------------------------------------
@@ -98,8 +108,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON events, event_members, recurrence_rules,
     recurrence_members, user_calendar_params TO calendar_api;
 GRANT SELECT ON v_securable_events TO calendar_api;
 
--- Member validation, manager roles and shared groups.
-GRANT SELECT (id, is_archived) ON users TO calendar_api;
+-- Manager roles and shared groups (member validation reads `id` and
+-- `is_archived`, granted to every API above).
 GRANT SELECT ON roles, user_roles, group_members TO calendar_api;
 
 -- ---------------------------------------------------------------------------
@@ -113,6 +123,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON conversations, conversation_members,
 -- (fn_auto_increment_unread_counter).
 GRANT SELECT ON group_members TO message_api;
 
+-- The chat list, the chat header and the member list show the members' names (MAIR-507).
+GRANT SELECT (first_name, last_name) ON users TO message_api;
+
 -- Moderation by administrators (MAIR-394): the log is append-only for the API.
 GRANT INSERT ON messaging_moderation_log TO message_api;
 
@@ -123,15 +136,15 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON courses, course_modules, course_attachme
     course_ratings, user_courses, user_modules, user_content_progress TO elearning_api;
 
 -- Learner list for the admin screens.
-GRANT SELECT (id, first_name, last_name, is_archived) ON users TO elearning_api;
+GRANT SELECT (first_name, last_name) ON users TO elearning_api;
 
 -- ---------------------------------------------------------------------------
 -- compliance_api: the per-instance compliance service (MAIR-498)
 -- ---------------------------------------------------------------------------
--- No read on the personal tables: the scan and the erasure targets come from SECURITY DEFINER
--- functions that return counts and locations (security/compliance.sql); the erasure itself is
--- anonymize_user() (MAIR-289). The journal is append-only for it too.
-GRANT SELECT (id) ON users TO compliance_api;
+-- Beyond the shared users (id, email, is_archived) grant of every API role (MAIR-556, JWT
+-- middleware), no read on the personal tables: the scan and the erasure targets come from
+-- SECURITY DEFINER functions that return counts and locations (security/compliance.sql); the
+-- erasure itself is anonymize_user() (MAIR-289). The journal is append-only for it too.
 GRANT SELECT, INSERT ON compliance_journal TO compliance_api;
 GRANT SELECT, INSERT, UPDATE ON erasure_steps TO compliance_api;
 GRANT EXECUTE ON FUNCTION fn_compliance_scan() TO compliance_api;
@@ -159,7 +172,8 @@ BEGIN
         CROSS JOIN pg_roles r
         WHERE tbl.relnamespace = 'public'::regnamespace
           AND tbl.relkind IN ('r', 'p')
-          AND r.rolname IN ('core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api')
+          AND r.rolname IN ('core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api',
+                            'compliance_api')
           AND has_table_privilege(r.rolname, tbl.oid, 'INSERT')
     LOOP
         EXECUTE format('GRANT USAGE ON SEQUENCE %s TO %I', v_seq.seq_name, v_seq.rolname);

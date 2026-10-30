@@ -7,87 +7,64 @@
     logicalFilePath="releases"
 >
 
-    <!-- Changesets shipped by the git tag v3.0.1. Their identity does not depend on the
+    <!-- Changesets shipped by the git tag v3.4.0. Their identity does not depend on the
          folder (MAIR-491): renaming it after the release keeps them applied. -->
-
-    <!-- Index on the order of the admin user list (MAIR-477). -->
-    <changeSet id="mair-477-01" author="dev"><sqlFile
-            path="01__users_name_order.sql"
-            splitStatements="false"
-            relativeToChangelogFile="true"
-        /><rollback><sqlFile
-            path="01__users_name_order.rollback.sql"
-            splitStatements="false"
-            relativeToChangelogFile="true"
-        /></rollback></changeSet>
-
-    <!-- One normalized search expression per user, replacing the five trigram indexes (MAIR-477). -->
-    <changeSet id="mair-477-02" author="dev"><sqlFile
-            path="02__users_search_text.sql"
-            splitStatements="false"
-            relativeToChangelogFile="true"
-        /><rollback><sqlFile
-            path="02__users_search_text.rollback.sql"
-            splitStatements="false"
-            relativeToChangelogFile="true"
-        /></rollback></changeSet>
 
     <!-- One-off purge of the passwords and photos copied into users_audit_log (MAIR-286).
          Irreversible: the rollback leaves the rows purged. -->
     <changeSet id="mair-286-01" author="dev"><sqlFile
-            path="03__purge_audit_log_secrets.sql"
+            path="01__purge_audit_log_secrets.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="03__purge_audit_log_secrets.rollback.sql"
+            path="01__purge_audit_log_secrets.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
-
     <!-- Direct conversations and training records stay when a user goes away (MAIR-289). -->
     <changeSet id="mair-289-01" author="dev"><sqlFile
-            path="04__erasure_keeps_shared_rows.sql"
+            path="02__erasure_keeps_shared_rows.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="04__erasure_keeps_shared_rows.rollback.sql"
+            path="02__erasure_keeps_shared_rows.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
     <!-- ANONYMIZE retention strategy (MAIR-289); the enum value stays on rollback. -->
     <changeSet id="mair-289-02" author="dev"><sqlFile
-            path="05__anonymize_strategy.sql"
+            path="03__anonymize_strategy.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="05__anonymize_strategy.rollback.sql"
+            path="03__anonymize_strategy.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
     <!-- Archived accounts anonymized after one year by default (MAIR-289). -->
     <changeSet id="mair-289-03" author="dev"><sqlFile
-            path="06__archived_accounts_policy.sql"
+            path="04__archived_accounts_policy.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="06__archived_accounts_policy.rollback.sql"
+            path="04__archived_accounts_policy.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
     <!-- Journal and erasure steps of the compliance service (MAIR-498). -->
     <changeSet id="mair-498-01" author="dev"><sqlFile
-            path="07__compliance_tables.sql"
+            path="05__compliance_tables.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="07__compliance_tables.rollback.sql"
+            path="05__compliance_tables.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
-    <changeSet id="tag-v3.0.1" author="dev"><tagDatabase tag="v3.0.1"/></changeSet>
+    <changeSet id="tag-v3.4.0" author="dev"><tagDatabase tag="v3.4.0"/></changeSet>
 
 </databaseChangeLog>

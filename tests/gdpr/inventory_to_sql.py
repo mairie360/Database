@@ -2,7 +2,7 @@
 """Loads gdpr/inventory.yaml into the test database (MAIR-286).
 
 Prints SQL that creates `gdpr_test.inventory`, one row per column of the inventory, so that the
-pgTAP tests (tests/36_gdpr_schema_test.sql) check the schema against the decisions written in the
+pgTAP tests (tests/40_gdpr_schema_test.sql) check the schema against the decisions written in the
 inventory instead of a copy of them. Run by docker-compose-test.yml after the migrations:
 
     python3 tests/gdpr/inventory_to_sql.py gdpr/inventory.yaml | psql ...

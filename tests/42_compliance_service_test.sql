@@ -39,10 +39,13 @@ SELECT is(
     0,
     'compliance_api has no privilege on the personal tables'
 );
+-- Like every API role it reads users (id, email, is_archived) for the JWT middleware (MAIR-556),
+-- nothing more of users.
 SELECT ok(
-    NOT has_column_privilege('compliance_api', 'users', 'email', 'SELECT')
-    AND NOT has_column_privilege('compliance_api', 'users', 'password', 'SELECT'),
-    'compliance_api cannot read users.email nor users.password'
+    NOT has_column_privilege('compliance_api', 'users', 'password', 'SELECT')
+    AND NOT has_column_privilege('compliance_api', 'users', 'first_name', 'SELECT')
+    AND NOT has_column_privilege('compliance_api', 'users', 'phone_number', 'SELECT'),
+    'compliance_api cannot read users.password nor the identity and contact columns'
 );
 
 -- Test 4: what it writes.

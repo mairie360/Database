@@ -1,6 +1,6 @@
 -- Core_API admin/list_users/view.rs: admin user list without search, any page
 -- (MAIR-477, measured by the MAIR-474 load test). The ids of the page are read in the
--- order of idx_users_name_order (releases/v3.0.1), then only their rows.
+-- order of idx_users_name_order (releases/v3.1.0), then only their rows.
 \set uid random_exponential(2, 20000 * :scale, 3)
 SELECT EXISTS(SELECT 1 FROM users WHERE id = :uid AND NOT COALESCE(is_archived, false)) AS is_user_active;
 \set off random(0, 20000 * :scale - 20)
