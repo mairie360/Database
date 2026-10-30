@@ -1,5 +1,19 @@
 {
   "extends": [
     "github>mairie360/renovate-config"
+  ],
+  "customManagers": [
+    {
+      "description": "cicd_version follows the `uses:` ref of the three CICD entry points (MAIR-494)",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/(cicd|promote-staging|promote-prod)\\.yml$/"
+      ],
+      "matchStrings": [
+        "cicd_version:\\s*(?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "mairie360/CICD",
+      "datasourceTemplate": "github-tags"
+    }
   ]
 }
