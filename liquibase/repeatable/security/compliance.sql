@@ -1,6 +1,6 @@
 -- Database side of the per-instance compliance service (MAIR-498, Compliance_API).
 -- Everything here returns counts and locations, never a value of a person: the service journals
--- what it finds in compliance_journal (releases/v3.0.1/07) without the data.
+-- what it finds in compliance_journal (releases/v3.4.0/05__compliance_tables.sql) without the data.
 
 -- compliance_journal is append-only: it is the proof of erasure kept for the mairie.
 CREATE OR REPLACE FUNCTION fn_protect_compliance_journal() RETURNS TRIGGER AS $$
@@ -21,8 +21,7 @@ CREATE TRIGGER tr_immutable_compliance_journal
 --   archived_overdue    accounts archived for longer than the `users` policy, not anonymized yet;
 --   erased_user_data    rows still attached to an anonymized account in a table its erasure empties,
 --                       or a personal column of users left filled on an anonymized account.
-DROP FUNCTION IF EXISTS fn_compliance_scan();
-CREATE FUNCTION fn_compliance_scan()
+CREATE OR REPLACE FUNCTION fn_compliance_scan()
 RETURNS TABLE (kind TEXT, location TEXT, rows BIGINT, detail TEXT) AS $$
 DECLARE
     v_policy RECORD;
@@ -93,8 +92,7 @@ $$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 -- What the compliance service needs to propagate the erasure of a user outside the database,
 -- read BEFORE anonymize_user() clears it: the e-mail (Resend contact, Keycloak lookup) and the
 -- Keycloak subject. NULL for an unknown or already anonymized account.
-DROP FUNCTION IF EXISTS fn_erasure_targets(INT);
-CREATE FUNCTION fn_erasure_targets(p_user_id INT)
+CREATE OR REPLACE FUNCTION fn_erasure_targets(p_user_id INT)
 RETURNS JSONB AS $$
     SELECT jsonb_build_object(
         'user_id', u.id,
