@@ -10,8 +10,9 @@ set of PL/pgSQL functions, triggers, and views that push business logic (RBAC/AC
 access control, auditing, soft-deletes, session lifecycle) into the database. It is
 consumed by other Mairie360 services (a Rust backend is referenced in comments).
 
-Comments and identifiers in the SQL are mostly in French; keep that convention when
-editing existing files.
+Many existing SQL comments are still in French. Everything new is written in English (comments,
+identifiers, PL/pgSQL error messages), and the French text you touch is translated, not extended
+(org rule, `../CLAUDE.md` and `../../CLAUDE.md`).
 
 ## Commands
 
