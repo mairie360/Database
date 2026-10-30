@@ -95,7 +95,9 @@ tables:
     not_personal: [id, group_id, created_at, kind, last_activity_at]
 
   course_attachments:
-    not_personal: [id, module_id, file_name, file_type, file_url, file_size_bytes, created_at, title, description, duration_seconds, sort_order, is_required]
+    personal:
+      description: {category: content, erasure: keep, visibility: directory, note: "free text written by the trainer, may name people: shared course material, kept"}
+    not_personal: [id, module_id, file_name, file_type, file_url, file_size_bytes, created_at, title, duration_seconds, sort_order, is_required]
 
   course_modules:
     personal:
