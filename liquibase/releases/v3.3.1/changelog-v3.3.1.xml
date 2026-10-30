@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+    logicalFilePath="releases"
+>
+
+    <!-- Changesets shipped by the git tag v3.3.1. Their identity does not depend on the
+         folder (MAIR-491): renaming it after the release keeps them applied. -->
+
+    <!-- One-off purge of the passwords and photos copied into users_audit_log (MAIR-286).
+         Irreversible: the rollback leaves the rows purged. -->
+    <changeSet id="mair-286-01" author="dev"><sqlFile
+            path="01__purge_audit_log_secrets.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="01__purge_audit_log_secrets.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="tag-v3.3.1" author="dev"><tagDatabase tag="v3.3.1"/></changeSet>
+
+</databaseChangeLog>

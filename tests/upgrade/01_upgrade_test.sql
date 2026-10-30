@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(45);
+SELECT plan(47);
 
 ---
 --- Admin account
@@ -213,7 +213,7 @@ SELECT ok(
 -- changelog had no tag.
 SELECT results_eq(
     $$SELECT tag FROM databasechangelog WHERE tag IS NOT NULL ORDER BY orderexecuted$$,
-    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0')$$,
+    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0'), ('v3.3.1')$$,
     'The database is tagged with the git tags, in order'
 );
 
@@ -269,6 +269,24 @@ SELECT throws_ok(
     '23505',
     NULL,
     'A second role is refused on the upgraded database'
+);
+
+---
+--- Audit log purge (MAIR-286)
+---
+-- Test 46-47: the baseline trigger copied whole rows, Eve's plaintext password included; the
+-- purge of releases/v3.3.1 removed the passwords and photos, and the admin written by HEAD is
+-- audited without its password.
+SELECT is_empty(
+    $$SELECT audit_id FROM users_audit_log
+       WHERE previous_data ?| ARRAY['password', 'photo'] OR new_data ?| ARRAY['password', 'photo']$$,
+    'users_audit_log holds no password nor photo after the upgrade'
+);
+
+SELECT ok(
+    (SELECT count(*) FROM users_audit_log WHERE user_id = 105) > 0
+    AND NOT EXISTS (SELECT 1 FROM users_audit_log WHERE coalesce(previous_data::TEXT, '') || coalesce(new_data::TEXT, '') LIKE '%plaintext-legacy%'),
+    'the purge kept the audit rows of the legacy account, without its plaintext password'
 );
 
 SELECT * FROM finish();

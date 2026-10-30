@@ -10,8 +10,9 @@ set of PL/pgSQL functions, triggers, and views that push business logic (RBAC/AC
 access control, auditing, soft-deletes, session lifecycle) into the database. It is
 consumed by other Mairie360 services (a Rust backend is referenced in comments).
 
-Comments and identifiers in the SQL are mostly in French; keep that convention when
-editing existing files.
+Many existing SQL comments are still in French. Everything new is written in English (comments,
+identifiers, PL/pgSQL error messages), and the French text you touch is translated, not extended
+(org rule, `../CLAUDE.md` and `../../CLAUDE.md`).
 
 ## Commands
 
@@ -113,6 +114,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 - `releases/v3.0.0/` — former v1.9.0–v1.12.0 (`01`–`06`);
 - `releases/v3.1.0/` — first folder with the MAIR-491 identity (`mair-<n>-NN`,
   `logicalFilePath="releases"`).
+- `releases/v3.3.1/` — MAIR-286 (audit log purge).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -346,6 +348,14 @@ What each former schema version did, in order:
    two statuses of one category too, reading `status_id` through `to_jsonb` so the migrations
    replayed after a rollback still update tasks. `tests/39` and the upgrade test cover it.
 
+20. **`mair-286-01`** (`releases/v3.3.1/01`) — one-off purge of `password` and `photo` from
+   `previous_data` / `new_data` of every `users_audit_log` row (MAIR-286): the audit trigger used to
+   copy the whole `users` row, plaintext passwords of the pre-MAIR-169 accounts included. The
+   append-only guard is disabled for that `UPDATE` only. Irreversible (the rollback is a no-op);
+   the record for the mairies is `gdpr/purges.md`. `fn_audit_and_mutate_user()` now leaves those
+   columns out, and its changeset runs before the admin seed in `changelog-repeatable.xml`, so the
+   update that replaces it does not audit the new admin password with the old function.
+
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
@@ -462,15 +472,23 @@ the `plan(N)` count in sync.
 (`delete` / `anonymize` / `keep`, the target behaviour MAIR-289 implements), `visibility`,
 optionally `audit_log: false` (audited table `users` only) and a `note`; the others are
 listed under `not_personal`. It is not checked by `./test.sh`: the `gdpr_inventory` job of
-CICD's `promote-prod.yml` (`stack: database`, from CICD v4.12.0, `actions/promote/gdpr-inventory`;
-this repo moves to v4.12.0 with MAIR-286, whose audit trigger fix the GDPR Semgrep rules of that
-release require)
+CICD's `promote-prod.yml` (`stack: database`, CICD v4.12.0, `actions/promote/gdpr-inventory`)
 runs before the Prod approval, migrates an empty database with the staging images of the promoted
 commit and skips the prod release on a gap (unclassified column,
 stale entry, column referencing `users` that is not an `identifier`); its summary lists the
 inventory changes since the last tag for the Prod approver and Claude's proposals for the
 missing columns. Update the inventory in the PR that adds, renames or drops a column, or the
 next prod release stops.
+
+**GDPR schema tests (MAIR-286).** `docker-compose-test.yml` loads the inventory into
+`gdpr_test.inventory` (`tests/gdpr/inventory_to_sql.py`, `python3-yaml` in the tester image)
+before `pg_prove`; `tests/40_gdpr_schema_test.sql` reads it: no `audit_log: false` column in
+`users_audit_log`, the `ON DELETE` of each foreign key to `users` against its `erasure` (`delete`
+→ `CASCADE`, `anonymize` / `keep` → anything but `CASCADE`), no API role but `core_api` reading a
+`credentials` column, the `users` columns each API role reads (pinned, change them with
+`api_grants.sql`), argon2id hashes only. The exclusion list of `fn_audit_and_mutate_user()` is
+written in the function and checked against the inventory: change both. The upgrade test checks
+the purge of `mair-286-01`.
 
 ## Known inconsistencies (don't "fix" incidentally)
 
