@@ -179,8 +179,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- Everything the schema attaches to the user, as JSON (right of access, GDPR art. 15):
 -- { user: <users row>, data: { "<table>.<column>": [<rows where column = user>] } }
--- for every foreign key to users and the identifier columns without one (audit and moderation
--- logs). Credentials (password, token hashes) are left out; the photo is hex-encoded. Where the user
+-- for every foreign key to users and the identifier columns without one (audit, moderation and
+-- compliance logs). Credentials (password, token hashes) are left out; the photo is hex-encoded. Where the user
 -- is only the author of the action (users_audit_log.action_by, messaging_moderation_log.performed_by)
 -- the row describes someone else: its snapshots / content are left out, the action stays.
 CREATE OR REPLACE FUNCTION export_user_data(p_user_id INT)
@@ -206,7 +206,8 @@ BEGIN
         UNION
         SELECT * FROM (VALUES ('users_audit_log', 'user_id'), ('users_audit_log', 'action_by'),
                               ('messaging_moderation_log', 'target_user_id'),
-                              ('messaging_moderation_log', 'performed_by')) AS extra(table_name, column_name)
+                              ('messaging_moderation_log', 'performed_by'),
+                              ('compliance_journal', 'user_id')) AS extra(table_name, column_name)
         WHERE to_regclass('public.' || extra.table_name) IS NOT NULL
         ORDER BY 1, 2
     LOOP

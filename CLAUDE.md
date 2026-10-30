@@ -114,7 +114,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 - `releases/v3.0.0/` — former v1.9.0–v1.12.0 (`01`–`06`);
 - `releases/v3.1.0/` — first folder with the MAIR-491 identity (`mair-<n>-NN`,
   `logicalFilePath="releases"`).
-- `releases/v3.4.0/` — MAIR-286 (audit log purge), MAIR-289 (erasure); MAIR-289's `feat` renamed
+- `releases/v3.4.0/` — MAIR-286 (audit log purge), MAIR-289 (erasure), MAIR-498 (compliance service); MAIR-289's `feat` renamed
   the unreleased `releases/v3.3.1` into `releases/v3.4.0` (MAIR-491).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
@@ -363,6 +363,17 @@ What each former schema version did, in order:
    a training record is kept); `03` adds `ANONYMIZE` to `archive_strategy_type` (Postgres cannot
    drop it: the rollback leaves it, unused); `04` adds the `users` policy, `1 year`, `ANONYMIZE`
    (the mairie sets its own period in `retention_policies`, MAIR-294).
+
+22. **`mair-498-01`** (`releases/v3.4.0/05`) — tables of the per-instance compliance service
+   (MAIR-498, Compliance_API): `compliance_journal` (append-only, `tr_immutable_compliance_journal`:
+   kind, storage, location, action, rows, masked excerpt, cause hint, the erased `user_id` without
+   foreign key; never a value) and `erasure_steps` (one row per user and step: keycloak, resend,
+   s3, redis, backup_key, database; status, attempts, `last_error` without data). The role
+   `compliance_api` (`api_roles.sql`, `-Dcompliance_api_password`) reads no personal table: it
+   calls `fn_compliance_scan()` (counts of retention-overdue rows, archived-overdue accounts, rows
+   left on anonymized accounts; messages excluded) and `fn_erasure_targets(user_id)` (e-mail and
+   Keycloak subject, read before `anonymize_user()`), both in `repeatable/security/compliance.sql`,
+   writes its journal and the steps, and runs `anonymize_user()`. `tests/42_compliance_service_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

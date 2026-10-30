@@ -329,10 +329,11 @@ SELECT is_empty(
 --- 7c. COMPLIANCE_API (MAIR-556)
 ---
 
--- Test 25d: no table of its own, nothing to write
-SELECT is_empty(
+-- Test 25d: it writes only its own tables, the journal and the erasure steps (MAIR-498)
+SELECT set_eq(
     $$SELECT * FROM pg_temp.writable_by('compliance_api')$$,
-    'compliance_api cannot write anywhere'
+    ARRAY['compliance_journal', 'erasure_steps'],
+    'compliance_api writes only its journal and the erasure steps'
 );
 
 -- Test 25e

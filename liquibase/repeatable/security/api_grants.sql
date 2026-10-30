@@ -139,9 +139,18 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON courses, course_modules, course_attachme
 GRANT SELECT (first_name, last_name) ON users TO elearning_api;
 
 -- ---------------------------------------------------------------------------
--- compliance_api (MAIR-556): no table of its own yet, only the shared grants
--- above (JWT middleware, check_access).
+-- compliance_api: the per-instance compliance service (MAIR-498)
 -- ---------------------------------------------------------------------------
+-- Beyond the shared users (id, email, is_archived) grant of every API role (MAIR-556, JWT
+-- middleware), no read on the personal tables: the scan and the erasure targets come from
+-- SECURITY DEFINER functions that return counts and locations (security/compliance.sql); the
+-- erasure itself is anonymize_user() (MAIR-289). The journal is append-only for it too.
+GRANT SELECT, INSERT ON compliance_journal TO compliance_api;
+GRANT SELECT, INSERT, UPDATE ON erasure_steps TO compliance_api;
+GRANT EXECUTE ON FUNCTION fn_compliance_scan() TO compliance_api;
+GRANT EXECUTE ON FUNCTION fn_erasure_targets(INT) TO compliance_api;
+GRANT EXECUTE ON FUNCTION anonymize_user(INT) TO compliance_api;
+GRANT EXECUTE ON FUNCTION is_user_anonymized(INT) TO compliance_api;
 
 -- ---------------------------------------------------------------------------
 -- Sequences: USAGE on the SERIAL / identity sequences of every table a role
