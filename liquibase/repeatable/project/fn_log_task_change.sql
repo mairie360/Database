@@ -15,6 +15,8 @@ CREATE OR REPLACE FUNCTION fn_log_task_change()
 RETURNS TRIGGER AS $$
 DECLARE
     v_changes JSONB := '{}'::JSONB;
+    v_old_status_id INT;
+    v_new_status_id INT;
 BEGIN
     IF TG_OP = 'INSERT' THEN
         INSERT INTO task_history (task_id, changed_by, action, new_status)
@@ -22,10 +24,22 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    IF OLD.status IS DISTINCT FROM NEW.status THEN
+    -- A move between two statuses of the same category is a status change too (MAIR-566):
+    -- old_status / new_status keep the categories, `changes` names the project statuses.
+    -- status_id is read through to_jsonb: a migration replayed after a rollback of
+    -- releases/v3.1.0 updates tasks before the column exists again.
+    v_old_status_id := (to_jsonb(OLD)->>'status_id')::INT;
+    v_new_status_id := (to_jsonb(NEW)->>'status_id')::INT;
+    IF OLD.status IS DISTINCT FROM NEW.status OR v_old_status_id IS DISTINCT FROM v_new_status_id THEN
         INSERT INTO task_history (task_id, changed_by, action, old_status, new_status, changes)
         VALUES (NEW.id, NEW.updated_by, 'status_changed', OLD.status, NEW.status,
-                jsonb_build_object('status', jsonb_build_object('from', OLD.status, 'to', NEW.status)));
+                jsonb_build_object('status', jsonb_build_object('from', OLD.status, 'to', NEW.status))
+                || CASE WHEN v_new_status_id IS NULL THEN '{}'::JSONB ELSE jsonb_build_object(
+                    'status_id', jsonb_build_object('from', v_old_status_id, 'to', v_new_status_id),
+                    'status_name', jsonb_build_object(
+                        'from', (SELECT name FROM project_task_statuses WHERE id = v_old_status_id),
+                        'to', (SELECT name FROM project_task_statuses WHERE id = v_new_status_id)))
+                   END);
     END IF;
 
     IF OLD.title IS DISTINCT FROM NEW.title THEN

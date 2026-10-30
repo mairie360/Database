@@ -10,7 +10,9 @@
 -- When a parameter is not supplied, Liquibase leaves the placeholder as-is:
 -- the role is then created NOLOGIN if missing, and an existing role keeps
 -- its current password. This keeps stacks that run the migrations without
--- parameters (API integration tests connect as postgres) working.
+-- parameters working. The API tests (mairie360_api_lib test_setup) pass a
+-- password for every role and run the application code as the API's role
+-- (MAIR-556), so a missing grant fails their CI instead of staging.
 --
 -- Each placeholder sits on its own line inside the $pwd$ quote on purpose:
 -- when a "$" directly precedes a placeholder whose parameter is unset,
@@ -37,6 +39,9 @@ BEGIN
             $pwd$),
             ('elearning_api', $pwd$
                 ${elearning_api_password}
+            $pwd$),
+            ('compliance_api', $pwd$
+                ${compliance_api_password}
             $pwd$)
         ) AS r(name, password)
     LOOP

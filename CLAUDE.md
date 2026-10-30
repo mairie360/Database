@@ -90,8 +90,8 @@ A script without a threshold fails. Results go to `bench/results/` (gitignored,
 `summary.txt` holds the table). The whole run takes about 9 minutes;
 `bench/run.sh --quick` runs scale 1 only (no growth check) to iterate locally.
 CICD runs `./performance_test.sh` in `database_cicd.yml` (job `performance_tests`,
-on PRs too); `release-staging` needs it, so a breach blocks the promotion to
-staging but not dev.
+on PRs too); `promote-staging.yml` refuses a commit whose main run has a failed
+job (MAIR-494), so a breach blocks the promotion to staging but not dev.
 
 There is no way to run a single test file through `test.sh` — it
 always runs `pg_prove` over `tests/*.sql`. To run one file, exec into a running
@@ -111,7 +111,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
   v1.0.0–v1.2.0 (`01`–`23`);
 - `releases/v2.0.0/` — former v1.3.0–v1.8.0 (`01`–`11`);
 - `releases/v3.0.0/` — former v1.9.0–v1.12.0 (`01`–`06`);
-- `releases/v3.0.1/` — first folder with the MAIR-491 identity (`mair-<n>-NN`,
+- `releases/v3.1.0/` — first folder with the MAIR-491 identity (`mair-<n>-NN`,
   `logicalFilePath="releases"`).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
@@ -284,7 +284,7 @@ What each former schema version did, in order:
    constraints. Calendar_API applies the same window and answers 400 first.
    `tests/34_events_date_window_test.sql` covers the constraints, the upgrade test the cleanup.
 
-14. **`mair-477-01`** (`releases/v3.0.1/01`) — B-tree `idx_users_name_order` on
+14. **`mair-477-01`** (`releases/v3.1.0/01`) — B-tree `idx_users_name_order` on
    `users (last_name, first_name, id)`, the order of Core_API's admin user list (MAIR-477, found
    by the MAIR-474 load test): without it each page sorted every user (10 143 blocks per
    transaction at a random page in the bench, 249 now). Core_API only orders by it without a
@@ -294,7 +294,7 @@ What each former schema version did, in order:
    `tests/33` drops it in its transaction to read the trigram plans; the bench holds
    `core_admin_users` (OFFSET pages: growth 1.48 by design) and `core_directory_search`.
 
-15. **`mair-477-02`** (`releases/v3.0.1/02`) — one trigram GIN `idx_users_search_text_trgm` on the
+15. **`mair-477-02`** (`releases/v3.1.0/02`) — one trigram GIN `idx_users_search_text_trgm` on the
    expression `lower(first_name || ' ' || last_name || chr(31) || last_name || ' ' || first_name
    || chr(31) || email)`, replacing the five trigram indexes of `rel-1.11.0-02`. The searches of
    Core_API matched five `ILIKE` joined by OR: a broad term read the whole table, five `ILIKE` per
@@ -303,6 +303,48 @@ What each former schema version did, in order:
    keeps a term from matching across fields. An expression index, not a generated column:
    `v_users_active` / `v_users_archived` select `users.*` and would carry a column the rollback
    could not drop. Core_API must write the exact expression; `tests/33` checks the plan.
+16. **`mair-502-01`** (`releases/v3.1.0/03`) — `tasks.archived_at`: a completed task is archived.
+   The repeatable trigger `tr_before_task_archive` (`project/fn_set_task_archived_at.sql`) sets it
+   when a task becomes `completed` (keeping the first date while it stays completed) and clears it
+   when it is reopened; the changeset backfills the completed tasks (`updated_at`). Partial indexes
+   `idx_tasks_project_active` (`project_id, created_at, id`, the order of Project_API's lists) and
+   `idx_tasks_project_archived` (`project_id, archived_at DESC, id DESC`). Project_API shows the
+   active tasks in the project detail and the archived ones in their own list; its counters count
+   both. This `feat` renamed the unreleased `releases/v3.0.1` into `releases/v3.1.0` (MAIR-491).
+17. **`mair-558-01`** (`releases/v3.1.0/06`) — backfills `projects.priority` (rel-1.2.0, default
+   `medium`, written by nobody until then) with the highest priority of each project's tasks, the
+   value Project_API showed before it started storing the priority chosen in the creation form
+   (MAIR-558). `project_status` already had `todo` and `review` (rel-1.2.0), so no schema change.
+   Data only, empty `<rollback/>`; the upgrade test checks it (projects 100 and 101 of its seed).
+18. **`mair-564-01`** (`releases/v3.1.0/07`) — one role per user (MAIR-564): `user_roles_pkey`
+   becomes `(user_id)`, so a second role is a unique violation (`23505`). Accounts holding several
+   roles keep their lowest role id, the one their JWT `role` claim already carried (MAIR-529); the
+   dropped rows are listed in a NOTICE and the rollback (former key `(user_id, role_id)`) does not
+   bring them back. The repeatable trigger `tr_user_roles_replace_default`
+   (`roles/trigger_replace_default_role.sql`, `BEFORE INSERT`) lets a role written after the
+   default Guest replace it (registration then grant, the `mairie360_api_lib` fixtures' `ON
+   CONFLICT DO NOTHING`); any other second role is refused. Core_API grants with
+   `INSERT … ON CONFLICT (user_id) DO UPDATE`, which needs this key: deploy it before (or with)
+   the Core_API release of MAIR-564. `tests/38_one_role_per_user_test.sql` and the upgrade test
+   cover it.
+19. **`mair-566-01`** (`releases/v3.1.0/08`) — task statuses per project, copied from project
+   templates. `project_templates` (`is_default`: the template of a project created without one,
+   undeletable) and `project_template_statuses`; `project_task_statuses` (name, `#RRGGBB` colour,
+   position unique per project and deferred so a reorder can swap, one of the three `task_status`
+   categories `todo` / `in_progress` / `completed`); `projects.template_id`; `tasks.status_id`
+   (`NOT NULL`, `ON DELETE RESTRICT`: a status holding tasks is deleted after they are moved).
+   Seeds the templates Simple (default), Avec validation, Marché public and Événement; existing
+   projects get Simple's statuses and every task the first status of its category (`review`
+   becomes `in_progress`). The behaviour lives in `repeatable/project/`:
+   `fn_apply_task_status` (`tr_before_task_apply_status`, named to fire before
+   `tr_before_task_archive`) keeps `tasks.status` equal to the category of `status_id`, refuses a
+   status of another project (`23503`), and gives a writer setting the category alone the first
+   status of it; `fn_project_templates.sql` sets the default template and copies the template's
+   statuses (and custom fields) into a new project; `fn_check_status_categories.sql` keeps one
+   status per category in every project and template (deferred constraint triggers, `23514`) and
+   moves the tasks of a status whose category changes. `fn_log_task_change` logs a move between
+   two statuses of one category too, reading `status_id` through `to_jsonb` so the migrations
+   replayed after a rollback still update tasks. `tests/39` and the upgrade test cover it.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
@@ -331,7 +373,7 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   named after their ticket, `id="mair-<n>-NN"` (`author="dev"`), plus
   `id="tag-vX.Y.Z"` for the closing tag. Their identity then does not depend on the
   folder: when the folder has to be renamed (another `feat` merged before the prod
-  release turned `v3.0.1` into `v3.1.0`), dev and staging do not run them again,
+  release turned `v3.0.1` into `v3.1.0`, as MAIR-502 did), dev and staging do not run them again,
   and only the renamed `tag-vX.Y.Z` runs. The `rel-1.X.0-NN` ids are frozen.
 - **Release folder gate (CICD `release_folder`, MAIR-491).** Between staging and the
   Prod approval, CICD computes the version `release-prod` will cut (semantic-release
@@ -365,7 +407,8 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   it returns an int status and dynamically queries `public.<resource_name>` by id,
   only for names listed in `resources` (-1 otherwise). It is executable by the API
   roles only, not PUBLIC. Archived users keep their `user_roles` (so `restore_user`
-  gives them back) but `is_admin()` and `check_access()` deny them.
+  gives them back) but `is_admin()` and `check_access()` deny them. A user holds at most one
+  role (`user_roles` is keyed by `user_id`, MAIR-564).
 - **Soft delete.** `users` is never hard-deleted. `DELETE` goes through the
   `v_users_active` / `v_users_archived` views, which have `INSTEAD OF` triggers
   that set `is_archived = TRUE` and `status = 'archived'`. `restore_user(id)`
@@ -385,7 +428,8 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
 - **Sessions** have server-computed expiration and archive/logout triggers
   (`repeatable/sessions/*`, `auth/fn_logout_on_archive.sql`).
 - **Per-API Postgres roles (MAIR-114).** `core_api`, `project_api`,
-  `calendar_api`, `message_api` and `elearning_api` are created by
+  `calendar_api`, `message_api`, `elearning_api` and `compliance_api`
+  (MAIR-556, shared grants only: JWT middleware + `check_access`) are created by
   `repeatable/security/api_roles.sql`, and their privileges are set by
   `repeatable/security/api_grants.sql`. Both files are `runAlways` and are the
   last changesets. Passwords come from `-D<role>_password` changelog parameters
@@ -393,7 +437,12 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   new role is created `NOLOGIN` and an existing role keeps its password.
   `api_grants.sql` revokes everything, then grants again: a **new table or view
   is unreachable by every API until you add it there**. `20_api_roles_test.sql`
-  pins each role's writable tables. Functions and triggers run with the calling
+  pins each role's writable tables. Since MAIR-556 the API tests
+  (`mairie360_api_lib` `test_setup`) pass `-D<role>_password` and run the
+  application code as the API's role, so a missing grant fails the API's CI:
+  the fix belongs here. Every API reads `users (id, email, is_archived)`: the
+  lib's JWT middleware checks the account and matches a Keycloak token by
+  e-mail. Functions and triggers run with the calling
   API's rights, so a trigger that writes logs/audit or touches another domain's
   tables must be `SECURITY DEFINER SET search_path = public, pg_temp` (see
   `fn_archive_user`, `check_access`, and the session log triggers).
@@ -407,6 +456,21 @@ the `_test` suffix is not load-bearing — `15_performance_indexes.sql` and
 `16_default_bigint.sql` are schema-invariant checks that don't follow it). When you
 add a function/trigger/view, add or extend the matching numbered test file and keep
 the `plan(N)` count in sync.
+
+**GDPR inventory (MAIR-285).** `gdpr/inventory.yaml` classifies every column of every
+`public` table (partitions excluded): `personal` columns carry `category`, `erasure`
+(`delete` / `anonymize` / `keep`, the target behaviour MAIR-289 implements), `visibility`,
+optionally `audit_log: false` (audited table `users` only) and a `note`; the others are
+listed under `not_personal`. It is not checked by `./test.sh`: the `gdpr_inventory` job of
+CICD's `promote-prod.yml` (`stack: database`, from CICD v4.12.0, `actions/promote/gdpr-inventory`;
+this repo moves to v4.12.0 with MAIR-286, whose audit trigger fix the GDPR Semgrep rules of that
+release require)
+runs before the Prod approval, migrates an empty database with the staging images of the promoted
+commit and skips the prod release on a gap (unclassified column,
+stale entry, column referencing `users` that is not an `identifier`); its summary lists the
+inventory changes since the last tag for the Prod approver and Claude's proposals for the
+missing columns. Update the inventory in the PR that adds, renames or drops a column, or the
+next prod release stops.
 
 ## Known inconsistencies (don't "fix" incidentally)
 
@@ -433,3 +497,11 @@ the `plan(N)` count in sync.
 ## Pull request reviewers
 
 Every PR requests a review from the whole team, minus its author: `CarolinHugo`, `LAURETbenjamin`, `MathTek` and `Quentintnrl` (`gh pr create … --reviewer CarolinHugo,LAURETbenjamin,MathTek`). `.github/CODEOWNERS` makes GitHub request them automatically as well.
+
+## Promotion to staging and prod (MAIR-494)
+
+A push to `main` only releases dev (`cicd.yml` stops at `release-dev`). Staging and prod are manual:
+`gh workflow run promote-staging.yml -R mairie360/Database` (main's newest commit) or `gh workflow run promote-staging.yml -R mairie360/Database -f sha=SHA` (a given commit), then the same with `promote-prod.yml`
+(environments `Staging` / `Prod`). Staging refuses a commit without `dev-<sha>` and a green main run, and runs
+no extra gate (tests and schema bench run in the main pipeline) on that image; prod refuses one without `staging-<sha>` and tags the version semantic-release computes
+for that commit. `cicd.yml`, `promote-staging.yml` and `promote-prod.yml` pin the same mairie360/CICD release.
