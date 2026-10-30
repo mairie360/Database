@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(19);
+SELECT plan(22);
 
 -- Erasure and export of a user's data (MAIR-289, epic MAIR-284): anonymize_user(),
 -- fn_anonymize_archived_users() through the `users` retention policy, export_user_data().
@@ -34,6 +34,11 @@ INSERT INTO conversation_members (conversation_id, user_id) VALUES (9800, 9800),
 INSERT INTO messages (conversation_id, owner_id, content) VALUES (9800, 9800, 'Hello there'), (9800, 9802, 'Hi');
 INSERT INTO user_courses (user_id, course_id, status)
 SELECT 9800, id, 'completed' FROM courses ORDER BY id LIMIT 1;
+-- Actions of the marker on someone else: the colleague's data must not reach the marker's export.
+INSERT INTO users_audit_log (user_id, action_type, action_by, previous_data, new_data)
+VALUES (9802, 'UPDATE', 9800, '{"email": "colleague.before@example.com"}', '{"email": "colleague.after@example.com"}');
+INSERT INTO messaging_moderation_log (action, conversation_id, message_id, target_user_id, content, performed_by)
+VALUES ('DELETE_MESSAGE', 9800, 1, 9802, 'Text written by the colleague', 9800);
 
 ---
 --- 1. EXPORT (before the erasure)
@@ -113,13 +118,38 @@ SELECT results_eq(
     'the users row is kept without identity, archived'
 );
 
--- Test 7: the audit rows are kept, their identity hashed.
+-- Tests 7-8 (review of #166, CWE-359): the rows where the marker is only the author of the
+-- action keep the action, not the other person's data.
+SELECT ok(
+    (SELECT bool_and(NOT (r ? 'previous_data') AND NOT (r ? 'new_data')) AND count(*) >= 1
+       FROM export, jsonb_array_elements(doc -> 'data' -> 'users_audit_log.action_by') r),
+    'the audit rows the user wrote about someone else are exported without their snapshots'
+);
+SELECT ok(
+    (SELECT bool_and(NOT (r ? 'content')) AND count(*) = 1
+       FROM export, jsonb_array_elements(doc -> 'data' -> 'messaging_moderation_log.performed_by') r)
+    AND position('colleague.after@example.com' IN (SELECT doc::TEXT FROM export)) = 0
+    AND position('Text written by the colleague' IN (SELECT doc::TEXT FROM export)) = 0,
+    'no data of another user reaches the export (moderated content, audit snapshots)'
+);
+
+-- Test 9: the audit rows are kept, their identity hashed.
 SELECT ok(
     (SELECT bool_and(new_data ->> 'email' LIKE 'sha256:%') AND count(*) >= 3 FROM users_audit_log WHERE user_id = 9800),
     'the audit rows stay, with the identity replaced by a hash'
 );
+-- Test 10 (review of #166, CWE-759): the hash is salted, so the identity cannot be found back by
+-- hashing a guess with the public inputs (user id, key).
+SELECT is(
+    (SELECT count(*) FROM users_audit_log
+      WHERE user_id = 9800
+        AND (new_data ->> 'first_name' = 'sha256:' || encode(sha256(convert_to('9800:first_name:Markerqzxwv', 'UTF8')), 'hex')
+          OR new_data ->> 'email' = 'sha256:' || encode(sha256(convert_to('9800:email:gdpr.erasure.qzxwv@example.com', 'UTF8')), 'hex'))),
+    0::bigint,
+    'the identity hashes of the audit rows are salted: a guessed value does not match'
+);
 
--- Tests 8-10: owned objects.
+-- Tests 11-13: owned objects.
 SELECT is((SELECT count(*) FROM events WHERE id = 9800), 0::bigint, 'the private event of the user is deleted');
 SELECT is((SELECT owner_id FROM events WHERE id = 9801), (SELECT (r ->> 'handed_over_to')::int FROM result),
           'the public event is handed over to the administrator');
@@ -127,7 +157,7 @@ SELECT ok((SELECT owner_id = (SELECT (r ->> 'handed_over_to')::int FROM result) 
           AND (SELECT owner_id = (SELECT (r ->> 'handed_over_to')::int FROM result) FROM projects WHERE id = 9800),
           'the group and the project are handed over to the administrator');
 
--- Test 11: the direct conversation stays for the other participant, messages included.
+-- Test 14: the direct conversation stays for the other participant, messages included.
 SELECT ok(
     (SELECT count(*) = 2 FROM messages WHERE conversation_id = 9800)
     AND EXISTS (SELECT 1 FROM conversation_members WHERE conversation_id = 9800 AND user_id = 9802)
@@ -135,7 +165,7 @@ SELECT ok(
     'the direct conversation and its messages stay for the other participant'
 );
 
--- Test 12: the rows marked erasure: delete are gone.
+-- Test 15: the rows marked erasure: delete are gone.
 SELECT ok(
     NOT EXISTS (SELECT 1 FROM sessions WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_identities WHERE user_id = 9800)
@@ -144,13 +174,13 @@ SELECT ok(
     'sessions, identities, memberships and roles of the user are deleted'
 );
 
--- Test 13: the training record is kept.
+-- Test 16: the training record is kept.
 SELECT ok(
     NOT EXISTS (SELECT 1 FROM courses) OR EXISTS (SELECT 1 FROM user_courses WHERE user_id = 9800),
     'the training record is kept'
 );
 
--- Tests 14-16: idempotent, not restorable, the seeded administrator is protected.
+-- Tests 17-19: idempotent, not restorable, the seeded administrator is protected.
 SELECT is((SELECT anonymize_user(9800) ->> 'already_anonymized'), 'true', 'a second call does nothing');
 SELECT throws_ok('SELECT restore_user(9800)', '23001', NULL, 'an anonymized account cannot be restored');
 SELECT throws_ok('SELECT anonymize_user(1)', '23001', NULL, 'the seeded administrator cannot be anonymized');
@@ -168,11 +198,11 @@ ALTER TABLE users_audit_log DISABLE TRIGGER tr_immutable_audit;
 UPDATE users_audit_log SET action_date = now() - interval '2 years' WHERE user_id = 9803 AND action_type = 'ARCHIVE';
 ALTER TABLE users_audit_log ENABLE TRIGGER tr_immutable_audit;
 
--- Test 17: the policy is configuration (1 year by default).
+-- Test 20: the policy is configuration (1 year by default).
 SELECT is((SELECT retention_period FROM retention_policies WHERE table_name = 'users'), interval '1 year',
           'archived accounts are anonymized after 1 year by default, read from retention_policies');
 
--- Test 18: fn_apply_retention_policies() anonymizes the old archive only.
+-- Tests 21-22: fn_apply_retention_policies() anonymizes the old archive only.
 SELECT is(
     (SELECT affected FROM fn_apply_retention_policies() WHERE table_name = 'users'),
     1::bigint,
