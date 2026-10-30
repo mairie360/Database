@@ -4,7 +4,7 @@
 --   anonymize  the users row stays, without its identity (names, e-mail, phone, photo, biography,
 --              password): the references of shared objects (messages, comments, tasks, events)
 --              keep pointing to it and no longer name anyone; the identity copied into
---              users_audit_log is replaced by a hash;
+--              users_audit_log is replaced by a salted hash whose salt is never stored;
 --   keep       records kept on purpose (security logs, training records, moderation evidence).
 -- Owned objects (decisions of MAIR-289): the private events of the user are deleted, the other
 -- events, the groups and the projects are handed over to an administrator. Direct conversations
@@ -14,15 +14,18 @@
 -- JSON column, and that the export covers every identifier column of the inventory.
 
 DROP FUNCTION IF EXISTS fn_pseudonymize_identity(JSONB, INT);
+DROP FUNCTION IF EXISTS fn_pseudonymize_identity(JSONB, INT, TEXT);
 DROP FUNCTION IF EXISTS anonymize_user(INT);
 DROP FUNCTION IF EXISTS fn_anonymize_archived_users(INTERVAL);
 DROP FUNCTION IF EXISTS export_user_data(INT);
 DROP FUNCTION IF EXISTS is_user_anonymized(INT);
 
 -- The identity keys of a users row copy (users_audit_log.previous_data / new_data), each replaced by
--- `sha256:<hex>` of the user id, the key and the value: the record of what happened stays, it no
--- longer says who the person was.
-CREATE OR REPLACE FUNCTION fn_pseudonymize_identity(p_data JSONB, p_user_id INT)
+-- `sha256:<hex>` of a salt, the user id, the key and the value: the record of what happened stays
+-- (equal values of one history keep equal digests), it no longer says who the person was. The
+-- salt is drawn once per erasure by anonymize_user() and never stored: without it, names, phone
+-- numbers or e-mails could be found back by hashing a dictionary (CWE-759).
+CREATE OR REPLACE FUNCTION fn_pseudonymize_identity(p_data JSONB, p_user_id INT, p_salt TEXT)
 RETURNS JSONB AS $$
 DECLARE
     v_key TEXT;
@@ -36,7 +39,7 @@ BEGIN
         IF v_out ? v_key AND jsonb_typeof(v_out -> v_key) <> 'null'
            AND (v_out ->> v_key) NOT LIKE 'sha256:%' THEN
             v_out := jsonb_set(v_out, ARRAY[v_key], to_jsonb('sha256:' || encode(sha256(
-                convert_to(p_user_id || ':' || v_key || ':' || (v_out ->> v_key), 'UTF8')), 'hex')));
+                convert_to(p_salt || ':' || p_user_id || ':' || v_key || ':' || (v_out ->> v_key), 'UTF8')), 'hex')));
         END IF;
     END LOOP;
     RETURN v_out;
@@ -61,6 +64,8 @@ DECLARE
     v_admin INT;
     v_sessions UUID[];
     v_events INT;
+    -- Salt of the audit pseudonymization, drawn here and never stored (see fn_pseudonymize_identity).
+    v_salt TEXT := gen_random_uuid()::TEXT;
 BEGIN
     IF p_user_id = 1 THEN
         RAISE EXCEPTION 'The seeded administrator (id 1) cannot be anonymized' USING ERRCODE = 'restrict_violation';
@@ -130,8 +135,8 @@ BEGIN
     -- The audit rows of the user, the ones the two updates above just wrote included.
     PERFORM set_config('mairie360.audit_pseudonymize', 'on', TRUE);
     UPDATE users_audit_log
-    SET previous_data = fn_pseudonymize_identity(previous_data, user_id),
-        new_data = fn_pseudonymize_identity(new_data, user_id)
+    SET previous_data = fn_pseudonymize_identity(previous_data, user_id, v_salt),
+        new_data = fn_pseudonymize_identity(new_data, user_id, v_salt)
     WHERE user_id = p_user_id;
     PERFORM set_config('mairie360.audit_pseudonymize', 'off', TRUE);
 
@@ -175,12 +180,15 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 -- Everything the schema attaches to the user, as JSON (right of access, GDPR art. 15):
 -- { user: <users row>, data: { "<table>.<column>": [<rows where column = user>] } }
 -- for every foreign key to users and the identifier columns without one (audit and moderation
--- logs). Credentials (password, token hashes) are left out; the photo is hex-encoded.
+-- logs). Credentials (password, token hashes) are left out; the photo is hex-encoded. Where the user
+-- is only the author of the action (users_audit_log.action_by, messaging_moderation_log.performed_by)
+-- the row describes someone else: its snapshots / content are left out, the action stays.
 CREATE OR REPLACE FUNCTION export_user_data(p_user_id INT)
 RETURNS JSONB AS $$
 DECLARE
     v_ref RECORD;
     v_rows JSONB;
+    v_strip TEXT[];
     v_data JSONB := '{}';
     v_user JSONB;
 BEGIN
@@ -202,10 +210,14 @@ BEGIN
         WHERE to_regclass('public.' || extra.table_name) IS NOT NULL
         ORDER BY 1, 2
     LOOP
+        v_strip := ARRAY['password', 'token_hash'] || CASE v_ref.table_name || '.' || v_ref.column_name
+            WHEN 'users_audit_log.action_by' THEN ARRAY['previous_data', 'new_data']
+            WHEN 'messaging_moderation_log.performed_by' THEN ARRAY['content']
+            ELSE ARRAY[]::TEXT[] END;
         EXECUTE format(
-            'SELECT coalesce(jsonb_agg(to_jsonb(t) - ARRAY[''password'', ''token_hash'']), ''[]'') FROM public.%I t WHERE t.%I = $1',
+            'SELECT coalesce(jsonb_agg(to_jsonb(t) - $2), ''[]'') FROM public.%I t WHERE t.%I = $1',
             v_ref.table_name, v_ref.column_name)
-        INTO v_rows USING p_user_id;
+        INTO v_rows USING p_user_id, v_strip;
         v_data := v_data || jsonb_build_object(v_ref.table_name || '.' || v_ref.column_name, v_rows);
     END LOOP;
     RETURN jsonb_build_object('user', v_user, 'data', v_data, 'exported_at', now());

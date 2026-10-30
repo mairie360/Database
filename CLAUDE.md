@@ -10,8 +10,9 @@ set of PL/pgSQL functions, triggers, and views that push business logic (RBAC/AC
 access control, auditing, soft-deletes, session lifecycle) into the database. It is
 consumed by other Mairie360 services (a Rust backend is referenced in comments).
 
-Comments and identifiers in the SQL are mostly in French; keep that convention when
-editing existing files.
+Many existing SQL comments are still in French. Everything new is written in English (comments,
+identifiers, PL/pgSQL error messages), and the French text you touch is translated, not extended
+(org rule, `../CLAUDE.md` and `../../CLAUDE.md`).
 
 ## Commands
 
@@ -357,10 +358,10 @@ What each former schema version did, in order:
    update that replaces it does not audit the new admin password with the old function.
 
 21. **`mair-289-01`–`03`** (`releases/v3.4.0/02`–`04`) — erasure of a user (MAIR-289), rollback
-   per changeset. `04` turns the `ON DELETE CASCADE` of `conversations.direct_user_low/high` and
+   per changeset. `02` turns the `ON DELETE CASCADE` of `conversations.direct_user_low/high` and
    `user_courses.user_id` into `NO ACTION` (a direct conversation stays for the other participant,
-   a training record is kept); `05` adds `ANONYMIZE` to `archive_strategy_type` (Postgres cannot
-   drop it: the rollback leaves it, unused); `06` adds the `users` policy, `1 year`, `ANONYMIZE`
+   a training record is kept); `03` adds `ANONYMIZE` to `archive_strategy_type` (Postgres cannot
+   drop it: the rollback leaves it, unused); `04` adds the `users` policy, `1 year`, `ANONYMIZE`
    (the mairie sets its own period in `retention_policies`, MAIR-294).
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
@@ -492,7 +493,9 @@ RETURNS JSONB` (SECURITY DEFINER, executable by `core_api`) follows the `erasure
 private events of the user deleted, the other events, groups and projects handed over to the lowest
 active administrator, the `delete` rows removed, the account archived then its identity cleared
 (`Anonymized User`, `anonymized-<id>@anonymized.invalid`, no password, phone, photo, biography),
-its `users_audit_log` identity keys replaced by `sha256:` hashes (`fn_pseudonymize_identity`; the
+its `users_audit_log` identity keys replaced by `sha256:` hashes salted with a random value drawn
+per erasure and never stored, so they cannot be reversed by hashing guesses
+(`fn_pseudonymize_identity(data, user_id, salt)`; the
 guard `fn_protect_audit_log` lets only that rewrite through, under the transaction-local flag
 `mairie360.audit_pseudonymize`). It returns `{ user_id, already_anonymized, handed_over_to,
 deleted_private_events, revoked_sessions }`: Core publishes the sessions to the revocation list.
@@ -501,7 +504,9 @@ anonymized account (`is_user_anonymized()`). `fn_anonymize_archived_users(interv
 accounts archived (last `ARCHIVE` of the audit log) for longer than the `users` policy, through
 `fn_apply_retention_policies()` (`ANONYMIZE`). `export_user_data(p_user_id INT) RETURNS JSONB`
 (`core_api`) returns the users row without password and, per foreign key to `users` plus the audit
-and moderation logs, the rows of the user without credentials. `tests/41_gdpr_erasure_test.sql`:
+and moderation logs, the rows of the user without credentials; where the user only authored the
+action (`users_audit_log.action_by`, `messaging_moderation_log.performed_by`) the snapshots /
+content, which describe someone else, are left out. `tests/41_gdpr_erasure_test.sql`:
 no value of an anonymized marker left in any text / JSON / bytea column, export covering every
 identifier column of the inventory, retention run anonymizing a back-dated archive only.
 
