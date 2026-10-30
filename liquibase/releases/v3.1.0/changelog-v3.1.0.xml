@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+    logicalFilePath="releases"
+>
+
+    <!-- Changesets shipped by the git tag v3.1.0. Their identity does not depend on the
+         folder (MAIR-491): renaming it after the release keeps them applied. -->
+
+    <!-- Index on the order of the admin user list (MAIR-477). -->
+    <changeSet id="mair-477-01" author="dev"><sqlFile
+            path="01__users_name_order.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="01__users_name_order.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- One normalized search expression per user, replacing the five trigram indexes (MAIR-477). -->
+    <changeSet id="mair-477-02" author="dev"><sqlFile
+            path="02__users_search_text.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="02__users_search_text.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- A completed task is archived: tasks.archived_at, kept by fn_set_task_archived_at (MAIR-502). -->
+    <changeSet id="mair-502-01" author="dev"><sqlFile
+            path="03__tasks_archived_at.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="03__tasks_archived_at.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Messages and conversations changed since a cursor: updated_at, edited_at, tombstones, last_activity_at (MAIR-524). -->
+    <changeSet id="mair-524-01" author="dev"><sqlFile
+            path="04__messages_change_tracking.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="04__messages_change_tracking.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Cross-project task list of Project_API by assignee and due date (MAIR-524). -->
+    <changeSet id="mair-524-02" author="dev"><sqlFile
+            path="05__tasks_assignee_due.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="05__tasks_assignee_due.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- The existing projects keep the priority Project_API showed, the highest of their tasks (MAIR-558).
+         No rollback: the column predates this changeset and nothing wrote it before. -->
+    <changeSet id="mair-558-01" author="dev"><sqlFile
+            path="06__projects_priority_backfill.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback/></changeSet>
+
+    <!-- One role per user: user_roles is keyed by the user, extra roles dropped (MAIR-564). -->
+    <changeSet id="mair-564-01" author="dev"><sqlFile
+            path="07__one_role_per_user.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="07__one_role_per_user.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Task statuses per project, copied from project templates (MAIR-566). -->
+    <changeSet id="mair-566-01" author="dev"><sqlFile
+            path="08__project_task_statuses.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="08__project_task_statuses.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="tag-v3.1.0" author="dev"><tagDatabase tag="v3.1.0"/></changeSet>
+
+</databaseChangeLog>

@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(2);
 
--- MAIR-477 (releases/v3.0.1): index on the order of Core_API's admin user list.
+-- MAIR-477 (releases/v3.1.0): index on the order of Core_API's admin user list.
 
 -- Plan of `p_sql`, one line per row of EXPLAIN, joined.
 CREATE FUNCTION pg_temp.plan_of(p_sql TEXT) RETURNS TEXT AS $$

@@ -2,7 +2,7 @@ BEGIN;
 SELECT plan(11);
 
 -- MAIR-477: lint findings dropped (releases/v3.0.0, repeatable/users/trigger_user_update.sql)
--- and the trigram index of the user searches (releases/v3.0.1, which replaced the five of
+-- and the trigram index of the user searches (releases/v3.1.0, which replaced the five of
 -- releases/v3.0.0).
 
 -- Plan of `p_sql`, one line per row of EXPLAIN, joined.
@@ -23,7 +23,7 @@ SELECT has_extension('pg_trgm', 'pg_trgm is installed');
 SELECT ok(
     EXISTS (SELECT 1 FROM pg_indexes WHERE tablename = 'users'
             AND indexname = 'idx_users_search_text_trgm' AND indexdef LIKE '%gin_trgm_ops%'),
-    'Trigram index on the search expression (releases/v3.0.1)'
+    'Trigram index on the search expression (releases/v3.1.0)'
 );
 SELECT hasnt_index('users', 'idx_users_first_name_trgm', 'Replaced by idx_users_search_text_trgm');
 SELECT hasnt_index('users', 'idx_users_last_name_trgm', 'Replaced by idx_users_search_text_trgm');
@@ -36,7 +36,7 @@ SELECT has_trigger('users', 'tr_10_users_updated_at', 'tr_10_users_updated_at st
 SELECT hasnt_index('user_roles', 'idx_user_roles_user', 'Redundant idx_user_roles_user is dropped');
 
 -- The search of Core_API (users/list_directory, admin/list_users) matches one lowered
--- expression (releases/v3.0.1): it must be the expression of idx_users_search_text_trgm, or
+-- expression (releases/v3.1.0): it must be the expression of idx_users_search_text_trgm, or
 -- every search reads the whole table. Sequential scans are disabled so the plan does not depend
 -- on the size of the test data; with them disabled, the planner walks the whole B-tree
 -- idx_users_name_order rather than any other index on the handful of test rows, so it is dropped

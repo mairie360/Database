@@ -1,7 +1,7 @@
 -- One-off purge of the passwords and photos copied into users_audit_log (MAIR-286, epic MAIR-284).
 --
--- Until MAIR-286, fn_audit_and_mutate_user() copied the whole users row (to_jsonb(OLD) /
--- to_jsonb(NEW)) into users_audit_log on every write: the password hash, and the plaintext
+-- Until MAIR-286, fn_audit_and_mutate_user() copied the whole users row (the old and new rows as
+-- JSON) into users_audit_log on every write: the password hash, and the plaintext
 -- password of the accounts created before MAIR-169 (migrate_legacy_password() rewrote them with an
 -- UPDATE, whose previous_data kept the plaintext), plus the photo. The trigger now leaves out the
 -- columns gdpr/inventory.yaml marks `audit_log: false`; this changeset removes the same keys from

@@ -64,11 +64,9 @@ VALUES
     (9702, 'Bob', 'Other', 'bob@identities.test',
      '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g', 'active');
 INSERT INTO user_roles (user_id, role_id)
-VALUES
-    (9701, (SELECT id FROM roles WHERE name = 'Maire')),
-    (9701, (SELECT id FROM roles WHERE name = 'User'));
+VALUES (9701, (SELECT id FROM roles WHERE name = 'Maire'));
 -- Fire the deferred default-role trigger now so 9700/9702 get Guest and
--- 9701 keeps exactly the roles above.
+-- 9701 keeps exactly the role above (one role per user, MAIR-564).
 SET CONSTRAINTS ALL IMMEDIATE;
 
 -- Test 8
@@ -192,9 +190,9 @@ SELECT results_eq(
     $$SELECT email, enabled, has_local_password, roles, identities
       FROM v_users_sso_export WHERE id = 9701$$,
     $$VALUES ('alice@identities.test'::varchar, TRUE, TRUE,
-              ARRAY['Maire', 'User']::varchar[],
+              ARRAY['Maire']::varchar[],
               '{"keycloak": "sub-alice-v2", "franceconnect": "fc-alice"}'::jsonb)$$,
-    'The export lists roles and provider links of a migrated user'
+    'The export lists the role and provider links of a migrated user'
 );
 
 DELETE FROM v_users_active WHERE id = 9700;

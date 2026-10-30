@@ -1,9 +1,9 @@
 # Personal data inventory of the schema (MAIR-285, epic MAIR-284).
 #
 # Every column of every table of the `public` schema is listed here, either under `personal` or
-# under `not_personal`. The `gdpr_inventory` job of the CICD (database_cicd.yml, after
-# release-staging and before the Prod approval) migrates an empty database with the images
-# promoted to staging and blocks the prod release when a column is missing, when an entry names a
+# under `not_personal`. The `gdpr_inventory` job of the CICD (promote-prod.yml, before the Prod
+# approval) migrates an empty database with the staging images of the promoted commit and blocks
+# the prod release when a column is missing, when an entry names a
 # column that no longer exists, or when a column that references `users` is not an `identifier`.
 # Its job summary lists the changes of this file since the last release, for the Prod approver,
 # and a classification proposed by Claude for each missing column: review it, then add it here.
@@ -92,13 +92,17 @@ tables:
       created_by: {category: identifier, erasure: anonymize, visibility: members}
       direct_user_low: {category: identifier, erasure: delete, visibility: members, note: "ON DELETE CASCADE removes the whole direct conversation, the other participant's messages included: to decide in MAIR-289"}
       direct_user_high: {category: identifier, erasure: delete, visibility: members, note: "same as direct_user_low"}
-    not_personal: [id, group_id, created_at, kind]
+    not_personal: [id, group_id, created_at, kind, last_activity_at]
 
   course_attachments:
-    not_personal: [id, module_id, file_name, file_type, file_url, file_size_bytes, created_at, title, description, duration_seconds, sort_order, is_required]
+    personal:
+      description: {category: content, erasure: keep, visibility: directory, note: "free text written by the trainer, may name people: shared course material, kept"}
+    not_personal: [id, module_id, file_name, file_type, file_url, file_size_bytes, created_at, title, duration_seconds, sort_order, is_required]
 
   course_modules:
-    not_personal: [id, course_id, title, content, sort_order, created_at]
+    personal:
+      content: {category: content, erasure: keep, visibility: directory, note: "free text written by the trainer, may name people: shared course material, kept"}
+    not_personal: [id, course_id, title, sort_order, created_at]
 
   course_ratings:
     personal:
@@ -112,7 +116,8 @@ tables:
     personal:
       instructor_user_id: {category: identifier, erasure: anonymize, visibility: directory}
       instructor_label: {category: identity, erasure: keep, visibility: directory, note: "free label, may name a trainer who is not an agent: cleared by hand on request"}
-    not_personal: [id, title, description, created_at, instructor_group_id, category, level, is_mandatory, deadline]
+      description: {category: content, erasure: keep, visibility: directory, note: "free text written by agents, may name people: shared course material, kept"}
+    not_personal: [id, title, created_at, instructor_group_id, category, level, is_mandatory, deadline]
 
   databasechangelog:
     not_personal: [id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id]
@@ -149,7 +154,8 @@ tables:
   groups:
     personal:
       owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "NOT NULL and ON DELETE RESTRICT: the erasure must hand the group over to another agent (MAIR-289)"}
-    not_personal: [id, name, description, created_at]
+      description: {category: content, erasure: keep, visibility: members, note: "free text written by agents, may name people: shared with the group, kept"}
+    not_personal: [id, name, created_at]
 
   message_business_links:
     not_personal: [id, message_id, project_id, task_id, event_id]
@@ -164,6 +170,9 @@ tables:
       owner_id: {category: identifier, erasure: anonymize, visibility: members}
       content: {category: content, erasure: keep, visibility: members, note: "kept for the other participants, the author is anonymized"}
       created_at: {category: activity, erasure: keep, visibility: members}
+      updated_at: {category: activity, erasure: keep, visibility: members}
+      edited_at: {category: activity, erasure: keep, visibility: members, note: "when the author edited the message"}
+      deleted_at: {category: activity, erasure: keep, visibility: members, note: "when the author or a moderator deleted the message"}
     not_personal: [id, conversation_id, reply_to_id]
 
   messaging_moderation_log:
@@ -183,12 +192,23 @@ tables:
       project_id: {category: activity, erasure: delete, visibility: members}
       user_id: {category: identifier, erasure: delete, visibility: members}
 
+  project_task_statuses:
+    not_personal: [id, project_id, name, color, category, position]
+
+  project_template_statuses:
+    not_personal: [id, template_id, name, color, category, position]
+
+  project_templates:
+    personal:
+      description: {category: content, erasure: keep, visibility: directory, note: "free text written by agents, may name people: shared template, kept"}
+    not_personal: [id, name, custom_field_schema, is_default, created_at, updated_at]
+
   projects:
     personal:
       description: {category: content, erasure: keep, visibility: members}
       owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "ON DELETE RESTRICT: the erasure must hand the project over to another agent (MAIR-289)"}
       responsible_id: {category: identifier, erasure: anonymize, visibility: members}
-    not_personal: [id, title, status, custom_field_schema, created_at, priority, due_date, labels]
+    not_personal: [id, title, status, custom_field_schema, created_at, priority, due_date, labels, template_id]
 
   recurrence_members:
     personal:
@@ -253,7 +273,7 @@ tables:
       custom_fields: {category: content, erasure: keep, visibility: members}
       assigned_to: {category: identifier, erasure: anonymize, visibility: members, note: "legacy single assignee, replaced by task_assignees"}
       updated_by: {category: identifier, erasure: anonymize, visibility: members}
-    not_personal: [id, project_id, title, status, priority, due_date, updated_at, created_at]
+    not_personal: [id, project_id, title, status, priority, due_date, updated_at, created_at, archived_at, status_id]
 
   unread_counters:
     personal:

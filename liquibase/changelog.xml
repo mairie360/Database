@@ -22,7 +22,12 @@
     />
 
     <include
-        file="releases/v3.0.1/changelog-v3.0.1.xml"
+        file="releases/v3.1.0/changelog-v3.1.0.xml"
+        relativeToChangelogFile="true"
+    />
+
+    <include
+        file="releases/v3.3.1/changelog-v3.3.1.xml"
         relativeToChangelogFile="true"
     />
 
