@@ -1,6 +1,6 @@
 -- Database side of the per-instance compliance service (MAIR-498, Compliance_API).
 -- Everything here returns counts and locations, never a value of a person: the service journals
--- what it finds in compliance_journal (releases/v3.0.1/07) without the data.
+-- what it finds in compliance_journal (releases/v3.4.0/05__compliance_tables.sql) without the data.
 
 -- compliance_journal is append-only: it is the proof of erasure kept for the mairie.
 CREATE OR REPLACE FUNCTION fn_protect_compliance_journal() RETURNS TRIGGER AS $$
