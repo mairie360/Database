@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+    logicalFilePath="releases"
+>
+
+    <!-- Changesets shipped by the git tag v3.4.0. Their identity does not depend on the
+         folder (MAIR-491): renaming it after the release keeps them applied. -->
+
+    <!-- One-off purge of the passwords and photos copied into users_audit_log (MAIR-286).
+         Irreversible: the rollback leaves the rows purged. -->
+    <changeSet id="mair-286-01" author="dev"><sqlFile
+            path="01__purge_audit_log_secrets.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="01__purge_audit_log_secrets.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+    <!-- Direct conversations and training records stay when a user goes away (MAIR-289). -->
+    <changeSet id="mair-289-01" author="dev"><sqlFile
+            path="02__erasure_keeps_shared_rows.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="02__erasure_keeps_shared_rows.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- ANONYMIZE retention strategy (MAIR-289); the enum value stays on rollback. -->
+    <changeSet id="mair-289-02" author="dev"><sqlFile
+            path="03__anonymize_strategy.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="03__anonymize_strategy.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Archived accounts anonymized after one year by default (MAIR-289). -->
+    <changeSet id="mair-289-03" author="dev"><sqlFile
+            path="04__archived_accounts_policy.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="04__archived_accounts_policy.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="tag-v3.4.0" author="dev"><tagDatabase tag="v3.4.0"/></changeSet>
+
+</databaseChangeLog>

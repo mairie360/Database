@@ -114,7 +114,8 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 - `releases/v3.0.0/` — former v1.9.0–v1.12.0 (`01`–`06`);
 - `releases/v3.1.0/` — first folder with the MAIR-491 identity (`mair-<n>-NN`,
   `logicalFilePath="releases"`).
-- `releases/v3.3.1/` — MAIR-286 (audit log purge).
+- `releases/v3.4.0/` — MAIR-286 (audit log purge), MAIR-289 (erasure); MAIR-289's `feat` renamed
+  the unreleased `releases/v3.3.1` into `releases/v3.4.0` (MAIR-491).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -348,13 +349,20 @@ What each former schema version did, in order:
    two statuses of one category too, reading `status_id` through `to_jsonb` so the migrations
    replayed after a rollback still update tasks. `tests/39` and the upgrade test cover it.
 
-20. **`mair-286-01`** (`releases/v3.3.1/01`) — one-off purge of `password` and `photo` from
+20. **`mair-286-01`** (`releases/v3.4.0/01`) — one-off purge of `password` and `photo` from
    `previous_data` / `new_data` of every `users_audit_log` row (MAIR-286): the audit trigger used to
    copy the whole `users` row, plaintext passwords of the pre-MAIR-169 accounts included. The
    append-only guard is disabled for that `UPDATE` only. Irreversible (the rollback is a no-op);
    the record for the mairies is `gdpr/purges.md`. `fn_audit_and_mutate_user()` now leaves those
    columns out, and its changeset runs before the admin seed in `changelog-repeatable.xml`, so the
    update that replaces it does not audit the new admin password with the old function.
+
+21. **`mair-289-01`–`03`** (`releases/v3.4.0/02`–`04`) — erasure of a user (MAIR-289), rollback
+   per changeset. `02` turns the `ON DELETE CASCADE` of `conversations.direct_user_low/high` and
+   `user_courses.user_id` into `NO ACTION` (a direct conversation stays for the other participant,
+   a training record is kept); `03` adds `ANONYMIZE` to `archive_strategy_type` (Postgres cannot
+   drop it: the rollback leaves it, unused); `04` adds the `users` policy, `1 year`, `ANONYMIZE`
+   (the mairie sets its own period in `retention_policies`, MAIR-294).
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
@@ -479,6 +487,28 @@ stale entry, column referencing `users` that is not an `identifier`); its summar
 inventory changes since the last tag for the Prod approver and Claude's proposals for the
 missing columns. Update the inventory in the PR that adds, renames or drops a column, or the
 next prod release stops.
+
+**Erasure and export (MAIR-289, `repeatable/users/anonymize_user.sql`).** `anonymize_user(p_user_id INT)
+RETURNS JSONB` (SECURITY DEFINER, executable by `core_api`) follows the `erasure` of the inventory:
+private events of the user deleted, the other events, groups and projects handed over to the lowest
+active administrator, the `delete` rows removed, the account archived then its identity cleared
+(`Anonymized User`, `anonymized-<id>@anonymized.invalid`, no password, phone, photo, biography),
+its `users_audit_log` identity keys replaced by `sha256:` hashes salted with a random value drawn
+per erasure and never stored, so they cannot be reversed by hashing guesses
+(`fn_pseudonymize_identity(data, user_id, salt)`; the
+guard `fn_protect_audit_log` lets only that rewrite through, under the transaction-local flag
+`mairie360.audit_pseudonymize`). It returns `{ user_id, already_anonymized, handed_over_to,
+deleted_private_events, revoked_sessions }`: Core publishes the sessions to the revocation list.
+Refused for id 1 and without another active admin; idempotent; `restore_user()` refuses an
+anonymized account (`is_user_anonymized()`). `fn_anonymize_archived_users(interval)` runs it on the
+accounts archived (last `ARCHIVE` of the audit log) for longer than the `users` policy, through
+`fn_apply_retention_policies()` (`ANONYMIZE`). `export_user_data(p_user_id INT) RETURNS JSONB`
+(`core_api`) returns the users row without password and, per foreign key to `users` plus the audit
+and moderation logs, the rows of the user without credentials; where the user only authored the
+action (`users_audit_log.action_by`, `messaging_moderation_log.performed_by`) the snapshots /
+content, which describe someone else, are left out. `tests/41_gdpr_erasure_test.sql`:
+no value of an anonymized marker left in any text / JSON / bytea column, export covering every
+identifier column of the inventory, retention run anonymizing a back-dated archive only.
 
 **GDPR schema tests (MAIR-286).** `docker-compose-test.yml` loads the inventory into
 `gdpr_test.inventory` (`tests/gdpr/inventory_to_sql.py`, `python3-yaml` in the tester image)

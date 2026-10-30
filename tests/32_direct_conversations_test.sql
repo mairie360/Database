@@ -86,14 +86,15 @@ WHERE res.name = 'conversations' AND p.action = 'delete';
 SELECT is(check_access(3102, 'conversations', 'delete', 3100), 1, 'An ACL grants the deletion of one conversation');
 
 ---
---- CASCADE
+--- ERASURE (MAIR-289)
 ---
--- Users are archived, never deleted, by the platform; a hard delete takes the
--- direct conversation with it, like its membership rows.
-DELETE FROM users WHERE id = 3101;
-SELECT ok(
-    NOT EXISTS (SELECT 1 FROM conversations WHERE id = 3100),
-    'Deleting a participant account deletes the direct conversation'
+-- Users are archived and anonymized, never deleted, by the platform: the direct
+-- conversation stays for the other participant, so a hard delete is refused.
+SELECT throws_ok(
+    'DELETE FROM users WHERE id = 3101',
+    '23503',
+    NULL,
+    'Deleting a participant account is refused: the conversation stays for the other one'
 );
 
 SELECT * FROM finish();

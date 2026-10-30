@@ -77,8 +77,8 @@ UPDATE sessions SET expires_at = now() - interval '1 year' WHERE token_hash = 'o
 
 SELECT results_eq(
     $$SELECT table_name, affected FROM fn_apply_retention_policies() ORDER BY table_name$$,
-    $$VALUES ('access_logs'::text, 1::bigint), ('sessions'::text, 1::bigint)$$,
-    'retention drops the expired partition and deletes the expired session'
+    $$VALUES ('access_logs'::text, 1::bigint), ('sessions'::text, 1::bigint), ('users'::text, 0::bigint)$$,
+    'retention drops the expired partition, deletes the expired session and anonymizes no recent archive'
 );
 
 SELECT is(to_regclass('public.access_logs_y2020m01'), NULL, 'the expired partition is gone');

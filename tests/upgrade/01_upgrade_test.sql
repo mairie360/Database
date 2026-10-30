@@ -213,7 +213,7 @@ SELECT ok(
 -- changelog had no tag.
 SELECT results_eq(
     $$SELECT tag FROM databasechangelog WHERE tag IS NOT NULL ORDER BY orderexecuted$$,
-    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0'), ('v3.3.1')$$,
+    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0'), ('v3.4.0')$$,
     'The database is tagged with the git tags, in order'
 );
 
@@ -275,7 +275,7 @@ SELECT throws_ok(
 --- Audit log purge (MAIR-286)
 ---
 -- Test 46-47: the baseline trigger copied whole rows, Eve's plaintext password included; the
--- purge of releases/v3.3.1 removed the passwords and photos, and the admin written by HEAD is
+-- purge of releases/v3.4.0 removed the passwords and photos, and the admin written by HEAD is
 -- audited without its password.
 SELECT is_empty(
     $$SELECT audit_id FROM users_audit_log

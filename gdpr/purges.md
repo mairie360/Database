@@ -12,7 +12,7 @@ SELECT id, dateexecuted FROM databasechangelog WHERE id LIKE 'mair-286-%';
 
 ## `mair-286-01`: passwords and photos in `users_audit_log` (MAIR-286)
 
-- **Release**: the first one that ships `liquibase/releases/v3.3.1/01__purge_audit_log_secrets.sql` (v3.3.1).
+- **Release**: the first one that ships `liquibase/releases/v3.4.0/01__purge_audit_log_secrets.sql` (v3.4.0).
 - **What was kept**: until MAIR-286, every write to `users` copied the whole row into
   `users_audit_log` (`previous_data` / `new_data`), retained 10 years and append-only. This
   included the password hash, the **plaintext password** of the accounts created before MAIR-169
