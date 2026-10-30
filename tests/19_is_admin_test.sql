@@ -21,12 +21,15 @@ WHERE u.email = 'ulysse.user@test.com' AND r.name = 'User';
 SET CONSTRAINTS ALL IMMEDIATE;
 SET CONSTRAINTS ALL DEFERRED;
 
+-- Un seul rôle par utilisateur (MAIR-564) : Mathis est promu de User à Admin.
 INSERT INTO users (first_name, last_name, email, password)
-VALUES ('Mathis', 'Multi', 'mathis.multi@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
+VALUES ('Mathis', 'Promu', 'mathis.multi@test.com', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g');
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r
-WHERE u.email = 'mathis.multi@test.com' AND r.name IN ('User', 'Admin');
+WHERE u.email = 'mathis.multi@test.com' AND r.name = 'User';
 SET CONSTRAINTS ALL IMMEDIATE;
+UPDATE user_roles SET role_id = (SELECT id FROM roles WHERE name = 'Admin')
+WHERE user_id = (SELECT id FROM users WHERE email = 'mathis.multi@test.com');
 
 -- Guest attribué par le filet de sécurité
 INSERT INTO users (first_name, last_name, email, password)
@@ -39,10 +42,10 @@ SELECT ok(
     'is_admin doit renvoyer vrai pour un utilisateur ayant le rôle Admin'
 );
 
--- Test 2: un utilisateur avec plusieurs rôles dont Admin est admin
+-- Test 2: un utilisateur promu Admin (son rôle remplacé) est admin
 SELECT ok(
     is_admin((SELECT id FROM users WHERE email = 'mathis.multi@test.com')),
-    'is_admin doit renvoyer vrai si Admin fait partie des rôles'
+    'is_admin doit renvoyer vrai pour un utilisateur promu Admin'
 );
 
 -- Test 3: un User n'est pas admin

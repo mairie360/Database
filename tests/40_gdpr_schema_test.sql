@@ -114,12 +114,14 @@ SELECT is_empty(
         JOIN pg_class t ON t.relname = i.table_name AND t.relnamespace = 'public'::regnamespace
        CROSS JOIN pg_roles r
        WHERE i.category = 'credentials'
-         AND r.rolname IN ('project_api', 'calendar_api', 'message_api', 'elearning_api')
+         AND r.rolname IN ('project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api')
          AND has_column_privilege(r.rolname, t.oid, i.column_name, 'SELECT')$$,
     'no API role but core_api can read a credentials column (password, token hash)'
 );
 
--- Tests 11-14: what each API role can read of users, pinned (security/api_grants.sql).
+-- Tests 11-14: what each API role can read of users, pinned (security/api_grants.sql). Every API
+-- role reads (id, email, is_archived): the JWT middleware of mairie360_api_lib checks the account
+-- and matches a Keycloak token to it by e-mail (MAIR-556).
 CREATE FUNCTION pg_temp.readable_user_columns(p_role TEXT) RETURNS SETOF TEXT AS $$
     SELECT a.attname::TEXT FROM pg_attribute a
      WHERE a.attrelid = 'public.users'::regclass AND a.attnum > 0 AND NOT a.attisdropped
@@ -127,17 +129,17 @@ CREATE FUNCTION pg_temp.readable_user_columns(p_role TEXT) RETURNS SETOF TEXT AS
 $$ LANGUAGE sql;
 
 SELECT set_eq($$SELECT pg_temp.readable_user_columns('project_api')$$,
-              ARRAY['id', 'first_name', 'last_name'],
-              'project_api reads the id and the names of users, nothing else');
+              ARRAY['id', 'email', 'is_archived', 'first_name', 'last_name'],
+              'project_api reads the shared columns and the names of users, nothing else');
 SELECT set_eq($$SELECT pg_temp.readable_user_columns('calendar_api')$$,
-              ARRAY['id', 'is_archived'],
-              'calendar_api reads the id and the archived flag of users, nothing else');
+              ARRAY['id', 'email', 'is_archived'],
+              'calendar_api reads the shared columns of users, nothing else');
 SELECT set_eq($$SELECT pg_temp.readable_user_columns('message_api')$$,
-              ARRAY['id'],
-              'message_api reads the id of users, nothing else');
+              ARRAY['id', 'email', 'is_archived', 'first_name', 'last_name'],
+              'message_api reads the shared columns and the names of users, nothing else');
 SELECT set_eq($$SELECT pg_temp.readable_user_columns('elearning_api')$$,
-              ARRAY['id', 'first_name', 'last_name', 'is_archived'],
-              'elearning_api reads the id, the names and the archived flag of users, nothing else');
+              ARRAY['id', 'email', 'is_archived', 'first_name', 'last_name'],
+              'elearning_api reads the shared columns and the names of users, nothing else');
 
 -- Tests 15-18: column_privs_are on the password hash, for every API role.
 SELECT column_privs_are('public', 'users', 'password', 'core_api', ARRAY['INSERT', 'SELECT', 'UPDATE'],

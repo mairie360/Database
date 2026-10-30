@@ -36,6 +36,10 @@ INSERT INTO users (id, first_name, last_name, email, password, status, is_archiv
 
 
 INSERT INTO user_roles (user_id, role_id) VALUES (100, 4), (101, 4), (102, 4), (103, 1);
+-- Accounts holding several roles, as a registration (default Guest) followed by an
+-- administrator's grant left them before MAIR-564: 101 is User and Responsable, 102 User
+-- and Guest. The migration keeps their lowest role id.
+INSERT INTO user_roles (user_id, role_id) VALUES (101, 3), (102, 5);
 -- Phone numbers as the APIs wrote them before MAIR-480: a French mobile, a mobile of
 -- La Réunion and a French number written with its calling code; 103 has none.
 UPDATE users SET phone_number = '0612345678' WHERE id = 100;
@@ -59,16 +63,23 @@ INSERT INTO access_logs (user_id, resource_name, instance_id, action, result, re
 
 -- Projects and tasks.
 INSERT INTO projects (id, title, status, owner_id, responsible_id, labels) VALUES
-    (100, 'Road works', 'active', 100, 101, ARRAY['roads']);
+    (100, 'Road works', 'active', 100, 101, ARRAY['roads']),
+    -- No task: keeps the default priority after MAIR-558.
+    (101, 'Library survey', 'active', 100, NULL, '{}');
 INSERT INTO project_members (project_id, user_id) VALUES (100, 100), (100, 101);
 -- 101 keeps its comments and history in custom_fields, as Project_API wrote
 -- them before MAIR-393.
-INSERT INTO tasks (id, project_id, title, status, assigned_to, custom_fields) VALUES
-    (100, 100, 'Close the street', 'todo', 101, '{}'),
+-- 100 is `high`: project 100 takes it as its priority (MAIR-558).
+INSERT INTO tasks (id, project_id, title, status, assigned_to, custom_fields, priority) VALUES
+    (100, 100, 'Close the street', 'todo', 101, '{}', 'high'),
     (101, 100, 'Reopen the street', 'in_progress', NULL,
      '{"fields": [{"label": "Budget"}],
        "comments": [{"author": {"id": "user-100"}, "message": "Barriers ordered", "createdAt": "2026-09-01T08:00:00Z"}],
-       "history": [{"author": {"id": "user-101"}, "action": "task_updated", "label": "Title changed", "createdAt": "2026-09-02T08:00:00Z"}]}');
+       "history": [{"author": {"id": "user-101"}, "action": "task_updated", "label": "Title changed", "createdAt": "2026-09-02T08:00:00Z"}]}', 'low'),
+    -- Completed before MAIR-502: archived by the upgrade.
+    (102, 100, 'Order the barriers', 'completed', NULL, '{}', 'medium'),
+    -- `review`, never written by Project_API: in progress after MAIR-566.
+    (103, 100, 'Check the signs', 'review', NULL, '{}', 'low');
 INSERT INTO task_assignees (task_id, user_id) VALUES (100, 101);
 
 -- Calendar.
