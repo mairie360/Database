@@ -12,12 +12,12 @@ ADD --checksum=sha256:6e0e4cc2d8cae902084f8a2b18728b073a6fd9d1f87c9d8bff8f298c18
 
 # The base image lags behind Ubuntu security updates, and lpm (Liquibase Package
 # Manager) is a Go binary only used by the entrypoint's optional INSTALL_MYSQL,
-# which the migration job never sets: upgrade OpenSSL and drop lpm so the image
-# passes the Trivy gate.
+# which the migration job never sets: upgrade OpenSSL and Brotli (CVE-2026-111497,
+# MAIR-739) and drop lpm so the image passes the Trivy gate.
 USER root
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --only-upgrade --no-install-recommends openssl libssl3t64; \
+    apt-get install -y --only-upgrade --no-install-recommends openssl libssl3t64 libbrotli1; \
     rm -rf /var/lib/apt/lists/*; \
     rm -f /liquibase/bin/lpm
 USER liquibase
