@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+echo "🚀 CICD version check (MAIR-771)..."
+./cicd_version_test.sh
+
 echo "🚀 Nettoyage complet..."
 docker compose -f docker-compose-test.yml down -v --remove-orphans
 

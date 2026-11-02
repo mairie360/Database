@@ -491,7 +491,7 @@ the `plan(N)` count in sync.
 (`delete` / `anonymize` / `keep`, the target behaviour MAIR-289 implements), `visibility`,
 optionally `audit_log: false` (audited table `users` only) and a `note`; the others are
 listed under `not_personal`. It is not checked by `./test.sh`: the `gdpr_inventory` job of
-CICD's `promote-prod.yml` (`stack: database`, CICD v4.12.0, `actions/promote/gdpr-inventory`)
+CICD's `promote-prod.yml` (`stack: database`, CICD v5.2.2, `actions/promote/gdpr-inventory`)
 runs before the Prod approval, migrates an empty database with the staging images of the promoted
 commit and skips the prod release on a gap (unclassified column,
 stale entry, column referencing `users` that is not an `identifier`); its summary lists the
