@@ -13,9 +13,9 @@ permissions:
 
 jobs:
   gdpr:
-    uses: mairie360/CICD/.github/workflows/gdpr-pr-cicd.yml@v4.12.0
+    uses: mairie360/CICD/.github/workflows/gdpr-pr-cicd.yml@v5.2.2
     with:
-      cicd_version: v4.12.0
+      cicd_version: v5.2.2
       # This repo holds the inventory: a "Yes" must change it in the same PR.
       inventory_path: gdpr/inventory.yaml
     secrets: inherit # nosemgrep: yaml.github-actions.security.secrets-inherit.secrets-inherit
