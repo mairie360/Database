@@ -409,3 +409,8 @@ redis:
   "core-api:{token}/forgot_password_email": {personal: true, category: contact, max_ttl_seconds: 1800}
   "core-api:{user_id}/first_connection_token": {personal: true, category: credentials, max_ttl_seconds: 86400}
   "core-api:{token}/first_connection_id": {personal: true, category: identifier, max_ttl_seconds: 86400}
+  # Read-through cache of the list routes (mairie360_api_lib smart_db::read_cache, MAIR-524). An
+  # entry holds a page of a list for one caller (`u{user_id}`) or for everyone (`shared`); the
+  # generation key holds a random value, renewed by each write, that every entry key embeds.
+  "read-cache:{namespace}:{generation}:{user}:{params_sha256}": {personal: true, category: activity, max_ttl_seconds: 300, note: "a cached page of a list route for one caller (u<user id>) or shared; MAX_READ_CACHE_TTL"}
+  "read-cache:{namespace}:generation": {personal: false, max_ttl_seconds: 604800, note: "random generation of a cache namespace, READ_CACHE_GENERATION_TTL (7 days)"}
