@@ -19,7 +19,15 @@ SAMPLES = [
     ("core-api:0a1b2c/forgot_password_email", 1800),
     ("core-api:42/first_connection_token", 86400),
     ("core-api:0a1b2c/first_connection_id", 86400),
-    # mairie360_api_lib read cache: entries per caller and shared, and the namespace generation.
+    # mairie360_api_lib read cache: entries per caller and shared, and the namespace generation,
+    # with the role prefix of each API that uses it (Redis ACL of an instance, MAIR-267) and
+    # without it (test stacks, no ACL).
+    ("core-api:read-cache:directory:0:u42:" + "ab" * 32, 300),
+    ("core-api:read-cache:directory:generation", 7 * 24 * 3600),
+    ("project-api:read-cache:projects:0:u42:" + "ab" * 32, 300),
+    ("project-api:read-cache:projects:generation", 7 * 24 * 3600),
+    ("calendar-api:read-cache:calendar:9f8e7d6c:shared:" + "cd" * 32, 300),
+    ("calendar-api:read-cache:calendar:generation", 7 * 24 * 3600),
     ("read-cache:projects:0:u42:" + "ab" * 32, 300),
     ("read-cache:calendar:9f8e7d6c:shared:" + "cd" * 32, 300),
     ("read-cache:projects:generation", 7 * 24 * 3600),
