@@ -58,6 +58,9 @@ services:
       python3 /workspace/tests/gdpr/inventory_to_sql.py /workspace/gdpr/inventory.yaml
       | psql -q -v ON_ERROR_STOP=1 -h database -U postgres -d core &&
 
+      echo '--- CHECKING THE REDIS KEYS OF THE GDPR INVENTORY ---' &&
+      python3 /workspace/tests/gdpr/redis_prefixes_test.py /workspace/gdpr/inventory.yaml &&
+
       echo '--- RUNNING TESTS ---' &&
       pg_prove -h database -U postgres -d core /workspace/tests/*.sql &&
 

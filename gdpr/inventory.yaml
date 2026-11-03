@@ -409,3 +409,21 @@ redis:
   "core-api:{token}/forgot_password_email": {personal: true, category: contact, max_ttl_seconds: 1800}
   "core-api:{user_id}/first_connection_token": {personal: true, category: credentials, max_ttl_seconds: 86400}
   "core-api:{token}/first_connection_id": {personal: true, category: identifier, max_ttl_seconds: 86400}
+  # Same keys on the test stacks, which have no Redis ACL and send them without the role prefix.
+  "{email}/forgot_password_token": {personal: true, category: credentials, max_ttl_seconds: 1800, note: "test stacks without Redis ACL (no role prefix)"}
+  "{token}/forgot_password_email": {personal: true, category: contact, max_ttl_seconds: 1800, note: "test stacks without Redis ACL (no role prefix)"}
+  "{user_id}/first_connection_token": {personal: true, category: credentials, max_ttl_seconds: 86400, note: "test stacks without Redis ACL (no role prefix)"}
+  "{token}/first_connection_id": {personal: true, category: identifier, max_ttl_seconds: 86400, note: "test stacks without Redis ACL (no role prefix)"}
+  # Read-through cache of the list routes (mairie360_api_lib smart_db::read_cache, MAIR-524), used
+  # by Core (`directory`), Project (`projects`) and Calendar (`calendar`). An entry holds a page of a
+  # list for one caller (`u{user_id}`) or for everyone (`shared`); the generation key holds a random
+  # value, renewed by each write, that every entry key embeds. With the Redis ACL of an instance the
+  # keys carry the role prefix of the API (MAIR-267); test stacks have no ACL and send them as is.
+  "core-api:read-cache:{namespace}:{generation}:{user}:{params_sha256}": {personal: true, category: activity, max_ttl_seconds: 300, note: "a cached page of a list route for one caller (u<user id>) or shared; MAX_READ_CACHE_TTL"}
+  "core-api:read-cache:{namespace}:generation": {personal: false, max_ttl_seconds: 604800, note: "random generation of a cache namespace, READ_CACHE_GENERATION_TTL (7 days)"}
+  "project-api:read-cache:{namespace}:{generation}:{user}:{params_sha256}": {personal: true, category: activity, max_ttl_seconds: 300, note: "a cached page of a list route for one caller (u<user id>) or shared; MAX_READ_CACHE_TTL"}
+  "project-api:read-cache:{namespace}:generation": {personal: false, max_ttl_seconds: 604800, note: "random generation of a cache namespace, READ_CACHE_GENERATION_TTL (7 days)"}
+  "calendar-api:read-cache:{namespace}:{generation}:{user}:{params_sha256}": {personal: true, category: activity, max_ttl_seconds: 300, note: "a cached page of a list route for one caller (u<user id>) or shared; MAX_READ_CACHE_TTL"}
+  "calendar-api:read-cache:{namespace}:generation": {personal: false, max_ttl_seconds: 604800, note: "random generation of a cache namespace, READ_CACHE_GENERATION_TTL (7 days)"}
+  "read-cache:{namespace}:{generation}:{user}:{params_sha256}": {personal: true, category: activity, max_ttl_seconds: 300, note: "test stacks without Redis ACL (no role prefix): a cached page of a list route"}
+  "read-cache:{namespace}:generation": {personal: false, max_ttl_seconds: 604800, note: "test stacks without Redis ACL (no role prefix): generation of a cache namespace"}
