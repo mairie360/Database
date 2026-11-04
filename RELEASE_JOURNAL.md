@@ -1,55 +1,61 @@
 # Journal des releases — Database
 
-<!-- release-journal-state {"dev": "1fcf3fbc047909e854927b6d0879643c782c93d5", "prod": "1706a71bfaea64d866c1dfe4289fe8d9d3f5199c", "prod_tag": "v3.3.0", "staging": "1706a71bfaea64d866c1dfe4289fe8d9d3f5199c", "updated": {"dev": "2026-11-03 13:50 UTC", "prod": "2026-10-21 09:11 UTC", "staging": "2026-10-21 03:14 UTC"}} -->
+<!-- release-journal-state {"dev": "c4fa2dd7dfaa01a0f41c90c5bf004dce5703b86c", "prod": "1706a71bfaea64d866c1dfe4289fe8d9d3f5199c", "prod_tag": "v3.3.0", "staging": "1706a71bfaea64d866c1dfe4289fe8d9d3f5199c", "updated": {"dev": "2026-11-04 14:08 UTC", "prod": "2026-10-21 09:11 UTC", "staging": "2026-10-21 03:14 UTC"}} -->
 > Tenu à jour par la CI (`mairie360/CICD`, action `release/release-journal`) à chaque passage en dev, staging et prod. Ne pas modifier à la main : le fichier est réécrit au passage suivant.
 
 | Environnement | Version | Commit | Mis à jour |
 | --- | --- | --- | --- |
 | prod | v3.3.0 | `1706a71` | 2026-10-21 09:11 UTC |
 | staging | — | `1706a71` | 2026-10-21 03:14 UTC |
-| dev | — | `1fcf3fb` | 2026-11-03 13:50 UTC |
+| dev | — | `c4fa2dd` | 2026-11-04 14:08 UTC |
 
 ## Ajouté sur main depuis la dernière release prod (v3.3.0)
 
 #### Nouveautés
-- Journal de conformité `compliance_journal` (append-only, trigger `tr_immutable_compliance_journal`) et table `erasure_steps` pour le service de conformité de l'instance ; rôle `compliance_api` qui ne lit aucune table personnelle et passe par `fn_compliance_scan()`, `fn_erasure_targets(INT)` et `anonymize_user(INT)`. (MAIR-498, [#173](https://github.com/mairie360/Database/pull/173))
-- Effacement d'un utilisateur par `anonymize_user(p_user_id INT)` (rôle `core_api`) : suppression des événements privés, transfert des autres événements, groupes et projets à un administrateur, suppression des lignes marquées `delete`, archivage puis effacement de l'identité du compte. Renvoie `{ user_id, already_anonymized, handed_over_to, deleted_private_events, revoked_sessions }`. Refusé pour l'id 1 et sans autre administrateur actif (`23001`). (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
-- Export des données d'un utilisateur par `export_user_data(p_user_id INT)` (rôle `core_api`), et fonctions `fn_anonymize_archived_users(INTERVAL)` et `is_user_anonymized(INT)`. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
-- Inventaire RGPD copié dans l'image `liquibase-migrations` à `/gdpr/inventory.yaml`, lisible par tout utilisateur de l'image. (MAIR-500, [#177](https://github.com/mairie360/Database/pull/177))
+- Tables `compliance_journal` (journal append-only des constats et effacements, sans valeur) et `erasure_steps` (étapes d'effacement par utilisateur : keycloak, resend, s3, redis, backup_key, database), avec le rôle `compliance_api` qui ne lit aucune table personnelle et appelle `fn_compliance_scan()` et `fn_erasure_targets(user_id)`. (MAIR-498, [#173](https://github.com/mairie360/Database/pull/173))
+- Effacement d'un utilisateur par `anonymize_user(p_user_id INT)` (exécutée par `core_api`) : suppression des événements privés, transfert des autres événements, groupes et projets à un administrateur actif, suppression des lignes marquées `delete`, archivage puis anonymisation du compte, remplacement des clés d'identité de `users_audit_log` par des hachages `sha256:`. Retour : `{ user_id, already_anonymized, handed_over_to, deleted_private_events, revoked_sessions }`. Refusée pour l'id 1 et sans autre administrateur actif (`23001`). (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+- `export_user_data(p_user_id INT)` renvoie les données d'un utilisateur (`{ user, data, exported_at }`), sans le mot de passe. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+- `fn_anonymize_archived_users(INTERVAL)` anonymise les comptes archivés depuis plus longtemps que la période de la politique `users` (1 an par défaut), via `fn_apply_retention_policies()` avec `ANONYMIZE`. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
 
 #### Changements de comportement
-- `users_audit_log` n'enregistre plus les colonnes `password` ni `photo` de `users` (`fn_audit_and_mutate_user()`). La migration `mair-286-01` retire ces clés des lignes déjà présentes ; l'opération est irréversible (rollback sans effet). (MAIR-286, [#164](https://github.com/mairie360/Database/pull/164))
-- Lors de la suppression d'une ligne `users`, les conversations directes ne sont plus supprimées en cascade (`direct_user_low` et `direct_user_high` passent de `ON DELETE CASCADE` à `NO ACTION`), et les formations suivies (`user_courses.user_id`) sont conservées. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
-- La politique `users` de `retention_policies` est ajoutée : un compte archivé depuis plus d'un an (`ANONYMIZE`, durée modifiable par instance) est anonymisé automatiquement. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
-- `restore_user()` refuse désormais un compte anonymisé (`is_user_anonymized()`). (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+- Suppression d'un compte : les conversations directes restent pour l'autre participant, car `conversations.direct_user_low` et `direct_user_high` passent de `ON DELETE CASCADE` à `NO ACTION`. Les formations suivies (`user_courses.user_id`) ne sont plus supprimées en cascade avec l'utilisateur. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+- `restore_user()` refuse désormais un compte anonymisé (`is_user_anonymized()`). Un appelant qui restaure un compte effacé reçoit une erreur. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+- Nouvelle valeur `ANONYMIZE` pour `archive_strategy_type` et politique `users` à `1 year` : les comptes archivés depuis plus d'un an sont anonymisés. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+
+#### Corrections
+- Journal d'audit des comptes (`users_audit_log`) : avant, chaque écriture sur `users` copiait la ligne entière, avec le hash du mot de passe, le mot de passe en clair des comptes antérieurs à MAIR-169 et la photo. Maintenant, `password` et `photo` sont exclus du journal. La migration `mair-286-01` retire ces clés des lignes déjà écrites, de façon irréversible (le rollback ne fait rien). Voir `gdpr/purges.md`. (MAIR-286, [#164](https://github.com/mairie360/Database/pull/164))
 
 #### Technique
-- Passage de `cicd.yml`, `promote-staging.yml`, `promote-prod.yml` et `gdpr-pr.yml` à mairie360/CICD v5.2.2, avec `ANTHROPIC_API_KEY` et `ANTHROPIC_WORKSPACE_ID` transmis pour les contrôles RGPD. Nouveau `cicd_version_test.sh`, lancé par `./test.sh`, qui vérifie que tous les workflows appellent la même version de CICD. (MAIR-771, [#218](https://github.com/mairie360/Database/pull/218))
-- Nouveau workflow `gdpr-pr.yml` qui vérifie la section « Données personnelles » des PR, et section `redis` de l'inventaire (clés Redis, TTL maximum) avec le test `redis_prefixes_test.py`. (MAIR-295, [#168](https://github.com/mairie360/Database/pull/168) ; MAIR-499, [#175](https://github.com/mairie360/Database/pull/175) ; MAIR-497, [#222](https://github.com/mairie360/Database/pull/222))
-- Mise à jour de `libbrotli1` (CVE-2026-111497) dans `liquibase/Dockerfile`, pour que le scan Trivy de `release-dev` passe à nouveau. (MAIR-739, [#216](https://github.com/mairie360/Database/pull/216))
-- Chemins `LIQUIBASE_SEARCH_PATH` mis à jour de `releases/v3.3.1` vers `releases/v3.4.0`, et tests GDPR du schéma (`tests/gdpr/inventory_to_sql.py`, inventaire chargé dans les tests). (MAIR-286, [#164](https://github.com/mairie360/Database/pull/164) ; MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
-- Versions de CICD alignées sur v4.4.1, v4.4.2 puis v4.4.3 pour les promotions (MAIR-612, [#210](https://github.com/mairie360/Database/pull/210), [#212](https://github.com/mairie360/Database/pull/212), [#214](https://github.com/mairie360/Database/pull/214)), puis v4.12.0 (MAIR-286, [#164](https://github.com/mairie360/Database/pull/164)).
+- Inventaire RGPD `gdpr/inventory.yaml` : classification de chaque colonne (291 colonnes, 46 tables), section `redis` avec TTL, clés du cache de lecture (`read-cache:…`) et clé des liens Keycloak à usage unique ; tests `tests/gdpr/redis_prefixes_test.py`, `tests/40`, `tests/41` et `tests/42`. (MAIR-285, MAIR-499, MAIR-497, MAIR-609, MAIR-286, [#154](https://github.com/mairie360/Database/pull/154), [#175](https://github.com/mairie360/Database/pull/175), [#222](https://github.com/mairie360/Database/pull/222), [#224](https://github.com/mairie360/Database/pull/224))
+- L'inventaire est copié dans l'image `liquibase-migrations` à `/gdpr/inventory.yaml` (MAIR-500, [#177](https://github.com/mairie360/Database/pull/177)). Les colonnes de `compliance_journal` et `erasure_steps` sont consignées dans l'inventaire.
+- Workflow `gdpr-pr.yml` : checklist RGPD sur les pull requests (MAIR-295, [#168](https://github.com/mairie360/Database/pull/168)).
+- Passage de CICD de v4.4.0 à v5.2.2 dans les workflows, avec le script `cicd_version_test.sh` qui vérifie l'alignement des versions (MAIR-612 : [#210](https://github.com/mairie360/Database/pull/210), [#212](https://github.com/mairie360/Database/pull/212), [#214](https://github.com/mairie360/Database/pull/214) ; MAIR-771 : [#218](https://github.com/mairie360/Database/pull/218)).
+- `libbrotli1` mis à jour dans l'image `liquibase-migrations` pour corriger CVE-2026-111497, qui bloquait `release-dev` au scan Trivy (MAIR-739, [#216](https://github.com/mairie360/Database/pull/216)).
+- `LIQUIBASE_SEARCH_PATH` pointe sur `releases/v3.4.0` au lieu de `v3.3.1` dans les compose (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166)).
 
 ## Différence dev → staging (en dev, pas encore en staging)
 
 #### Nouveautés
-- Journal de conformité `compliance_journal` (append-only, trigger `tr_immutable_compliance_journal`) et table `erasure_steps` pour le service de conformité de l'instance ; rôle `compliance_api` qui ne lit aucune table personnelle et passe par `fn_compliance_scan()`, `fn_erasure_targets(INT)` et `anonymize_user(INT)`. (MAIR-498, [#173](https://github.com/mairie360/Database/pull/173))
-- Effacement d'un utilisateur par `anonymize_user(p_user_id INT)` (rôle `core_api`) : suppression des événements privés, transfert des autres événements, groupes et projets à un administrateur, suppression des lignes marquées `delete`, archivage puis effacement de l'identité du compte. Renvoie `{ user_id, already_anonymized, handed_over_to, deleted_private_events, revoked_sessions }`. Refusé pour l'id 1 et sans autre administrateur actif (`23001`). (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
-- Export des données d'un utilisateur par `export_user_data(p_user_id INT)` (rôle `core_api`), et fonctions `fn_anonymize_archived_users(INTERVAL)` et `is_user_anonymized(INT)`. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
-- Inventaire RGPD copié dans l'image `liquibase-migrations` à `/gdpr/inventory.yaml`, lisible par tout utilisateur de l'image. (MAIR-500, [#177](https://github.com/mairie360/Database/pull/177))
+- Tables `compliance_journal` (journal append-only des constats et effacements, sans valeur) et `erasure_steps` (étapes d'effacement par utilisateur : keycloak, resend, s3, redis, backup_key, database), avec le rôle `compliance_api` qui ne lit aucune table personnelle et appelle `fn_compliance_scan()` et `fn_erasure_targets(user_id)`. (MAIR-498, [#173](https://github.com/mairie360/Database/pull/173))
+- Effacement d'un utilisateur par `anonymize_user(p_user_id INT)` (exécutée par `core_api`) : suppression des événements privés, transfert des autres événements, groupes et projets à un administrateur actif, suppression des lignes marquées `delete`, archivage puis anonymisation du compte, remplacement des clés d'identité de `users_audit_log` par des hachages `sha256:`. Retour : `{ user_id, already_anonymized, handed_over_to, deleted_private_events, revoked_sessions }`. Refusée pour l'id 1 et sans autre administrateur actif (`23001`). (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+- `export_user_data(p_user_id INT)` renvoie les données d'un utilisateur (`{ user, data, exported_at }`), sans le mot de passe. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+- `fn_anonymize_archived_users(INTERVAL)` anonymise les comptes archivés depuis plus longtemps que la période de la politique `users` (1 an par défaut), via `fn_apply_retention_policies()` avec `ANONYMIZE`. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
 
 #### Changements de comportement
-- `users_audit_log` n'enregistre plus les colonnes `password` ni `photo` de `users` (`fn_audit_and_mutate_user()`). La migration `mair-286-01` retire ces clés des lignes déjà présentes ; l'opération est irréversible (rollback sans effet). (MAIR-286, [#164](https://github.com/mairie360/Database/pull/164))
-- Lors de la suppression d'une ligne `users`, les conversations directes ne sont plus supprimées en cascade (`direct_user_low` et `direct_user_high` passent de `ON DELETE CASCADE` à `NO ACTION`), et les formations suivies (`user_courses.user_id`) sont conservées. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
-- La politique `users` de `retention_policies` est ajoutée : un compte archivé depuis plus d'un an (`ANONYMIZE`, durée modifiable par instance) est anonymisé automatiquement. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
-- `restore_user()` refuse désormais un compte anonymisé (`is_user_anonymized()`). (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+- Suppression d'un compte : les conversations directes restent pour l'autre participant, car `conversations.direct_user_low` et `direct_user_high` passent de `ON DELETE CASCADE` à `NO ACTION`. Les formations suivies (`user_courses.user_id`) ne sont plus supprimées en cascade avec l'utilisateur. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+- `restore_user()` refuse désormais un compte anonymisé (`is_user_anonymized()`). Un appelant qui restaure un compte effacé reçoit une erreur. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+- Nouvelle valeur `ANONYMIZE` pour `archive_strategy_type` et politique `users` à `1 year` : les comptes archivés depuis plus d'un an sont anonymisés. (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
+
+#### Corrections
+- Journal d'audit des comptes (`users_audit_log`) : avant, chaque écriture sur `users` copiait la ligne entière, avec le hash du mot de passe, le mot de passe en clair des comptes antérieurs à MAIR-169 et la photo. Maintenant, `password` et `photo` sont exclus du journal. La migration `mair-286-01` retire ces clés des lignes déjà écrites, de façon irréversible (le rollback ne fait rien). Voir `gdpr/purges.md`. (MAIR-286, [#164](https://github.com/mairie360/Database/pull/164))
 
 #### Technique
-- Passage de `cicd.yml`, `promote-staging.yml`, `promote-prod.yml` et `gdpr-pr.yml` à mairie360/CICD v5.2.2, avec `ANTHROPIC_API_KEY` et `ANTHROPIC_WORKSPACE_ID` transmis pour les contrôles RGPD. Nouveau `cicd_version_test.sh`, lancé par `./test.sh`, qui vérifie que tous les workflows appellent la même version de CICD. (MAIR-771, [#218](https://github.com/mairie360/Database/pull/218))
-- Nouveau workflow `gdpr-pr.yml` qui vérifie la section « Données personnelles » des PR, et section `redis` de l'inventaire (clés Redis, TTL maximum) avec le test `redis_prefixes_test.py`. (MAIR-295, [#168](https://github.com/mairie360/Database/pull/168) ; MAIR-499, [#175](https://github.com/mairie360/Database/pull/175) ; MAIR-497, [#222](https://github.com/mairie360/Database/pull/222))
-- Mise à jour de `libbrotli1` (CVE-2026-111497) dans `liquibase/Dockerfile`, pour que le scan Trivy de `release-dev` passe à nouveau. (MAIR-739, [#216](https://github.com/mairie360/Database/pull/216))
-- Chemins `LIQUIBASE_SEARCH_PATH` mis à jour de `releases/v3.3.1` vers `releases/v3.4.0`, et tests GDPR du schéma (`tests/gdpr/inventory_to_sql.py`, inventaire chargé dans les tests). (MAIR-286, [#164](https://github.com/mairie360/Database/pull/164) ; MAIR-289, [#166](https://github.com/mairie360/Database/pull/166))
-- Versions de CICD alignées sur v4.4.1, v4.4.2 puis v4.4.3 pour les promotions (MAIR-612, [#210](https://github.com/mairie360/Database/pull/210), [#212](https://github.com/mairie360/Database/pull/212), [#214](https://github.com/mairie360/Database/pull/214)), puis v4.12.0 (MAIR-286, [#164](https://github.com/mairie360/Database/pull/164)).
+- Inventaire RGPD `gdpr/inventory.yaml` : classification de chaque colonne (291 colonnes, 46 tables), section `redis` avec TTL, clés du cache de lecture (`read-cache:…`) et clé des liens Keycloak à usage unique ; tests `tests/gdpr/redis_prefixes_test.py`, `tests/40`, `tests/41` et `tests/42`. (MAIR-285, MAIR-499, MAIR-497, MAIR-609, MAIR-286, [#154](https://github.com/mairie360/Database/pull/154), [#175](https://github.com/mairie360/Database/pull/175), [#222](https://github.com/mairie360/Database/pull/222), [#224](https://github.com/mairie360/Database/pull/224))
+- L'inventaire est copié dans l'image `liquibase-migrations` à `/gdpr/inventory.yaml` (MAIR-500, [#177](https://github.com/mairie360/Database/pull/177)). Les colonnes de `compliance_journal` et `erasure_steps` sont consignées dans l'inventaire.
+- Workflow `gdpr-pr.yml` : checklist RGPD sur les pull requests (MAIR-295, [#168](https://github.com/mairie360/Database/pull/168)).
+- Passage de CICD de v4.4.0 à v5.2.2 dans les workflows, avec le script `cicd_version_test.sh` qui vérifie l'alignement des versions (MAIR-612 : [#210](https://github.com/mairie360/Database/pull/210), [#212](https://github.com/mairie360/Database/pull/212), [#214](https://github.com/mairie360/Database/pull/214) ; MAIR-771 : [#218](https://github.com/mairie360/Database/pull/218)).
+- `libbrotli1` mis à jour dans l'image `liquibase-migrations` pour corriger CVE-2026-111497, qui bloquait `release-dev` au scan Trivy (MAIR-739, [#216](https://github.com/mairie360/Database/pull/216)).
+- `LIQUIBASE_SEARCH_PATH` pointe sur `releases/v3.4.0` au lieu de `v3.3.1` dans les compose (MAIR-289, [#166](https://github.com/mairie360/Database/pull/166)).
 
 ## Différence staging → prod (en staging, pas encore en prod)
 
@@ -60,6 +66,7 @@ _Rien._
 <!-- release-journal-history:start -->
 | Date | Environnement | Version | Commit | Run |
 | --- | --- | --- | --- | --- |
+| 2026-11-04 14:08 UTC | dev | — | `c4fa2dd` | [run](https://github.com/mairie360/Database/actions/runs/41843779424) |
 | 2026-11-03 13:50 UTC | dev | — | `1fcf3fb` | [run](https://github.com/mairie360/Database/actions/runs/41647256820) |
 | 2026-11-02 23:56 UTC | dev | — | `ba1419d` | [run](https://github.com/mairie360/Database/actions/runs/41548528544) |
 | 2026-10-31 00:27 UTC | dev | — | `c5b8e22` | [run](https://github.com/mairie360/Database/actions/runs/41149888015) |
