@@ -414,6 +414,10 @@ redis:
   "{token}/forgot_password_email": {personal: true, category: contact, max_ttl_seconds: 1800, note: "test stacks without Redis ACL (no role prefix)"}
   "{user_id}/first_connection_token": {personal: true, category: credentials, max_ttl_seconds: 86400, note: "test stacks without Redis ACL (no role prefix)"}
   "{token}/first_connection_id": {personal: true, category: identifier, max_ttl_seconds: 86400, note: "test stacks without Redis ACL (no role prefix)"}
+  # Used Keycloak console links (MAIR-609): the random `jti` of a single-use link, value `1`, kept
+  # until the link expires so it cannot be opened twice. The user id stays in the signed link only.
+  "core-api:keycloak-console:used-link:{jti}": {personal: false, max_ttl_seconds: 120, note: "single-use Keycloak console links, LINK_TOKEN_TTL_SECONDS"}
+  "keycloak-console:used-link:{jti}": {personal: false, max_ttl_seconds: 120, note: "test stacks without Redis ACL (no role prefix)"}
   # Read-through cache of the list routes (mairie360_api_lib smart_db::read_cache, MAIR-524), used
   # by Core (`directory`), Project (`projects`) and Calendar (`calendar`). An entry holds a page of a
   # list for one caller (`u{user_id}`) or for everyone (`shared`); the generation key holds a random
