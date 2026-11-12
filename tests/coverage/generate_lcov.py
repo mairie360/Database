@@ -54,32 +54,38 @@ def build_function_map():
     return mapping
 
 
-def fetch_profiler_rows():
-    query = """
-    SELECT n.nspname, p.proname, t.lineno,
-           COALESCE((SELECT sum(x) FROM unnest(t.exec_stmts) x), 0) AS hits
+PROFILER_QUERY = """
+    SELECT p.proname, t.lineno,
+           CASE WHEN t.exec_stmts IS NULL THEN -1
+                ELSE COALESCE((SELECT sum(x) FROM unnest(t.exec_stmts) x), 0) END AS hits
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
     JOIN pg_language l ON l.oid = p.prolang
     CROSS JOIN LATERAL plpgsql_profiler_function_tb(p.oid) t
     WHERE l.lanname = 'plpgsql'
       AND n.nspname = 'public'
-      -- exclut les fonctions internes des extensions (pgtap, plpgsql_check...)
+      -- skips the functions that belong to extensions (pgtap, plpgsql_check...)
       AND NOT EXISTS (
         SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e'
       )
-    ORDER BY n.nspname, p.proname, t.lineno;
-    """
+    ORDER BY p.proname, t.lineno;
+"""
+
+
+def fetch_profiler_rows():
+    """(function name, body line, hits). plpgsql_check gives no execution count
+    (NULL) to the lines that hold no statement (blank, comment, DECLARE, END...):
+    they are left out. Counting them as 0 hits made every function look partly
+    uncovered and the report impossible to read."""
     result = subprocess.run(
-        ["psql", "-h", "database", "-U", "postgres", "-d", "core", "-At", "-F,", "-c", query],
+        ["psql", "-h", "database", "-U", "postgres", "-d", "core", "-At", "-F,", "-c", PROFILER_QUERY],
         capture_output=True, text=True, check=True,
     )
     rows = []
     for row in csv.reader(result.stdout.splitlines()):
-        if not row or len(row) != 4:
+        if len(row) != 3 or int(row[2]) < 0:
             continue
-        _schema, proname, lineno, hits = row
-        rows.append((proname, int(lineno), int(hits)))
+        rows.append((row[0], int(row[1]), int(row[2])))
     return rows
 
 
