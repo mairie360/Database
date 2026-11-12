@@ -1,10 +1,13 @@
-# Coverage is reported for information only: no minimum is enforced, and the
-# codecov/project and codecov/patch checks never fail a PR.
+# MAIR-239: the PL/pgSQL line coverage is measured on executable lines only
+# (tests/coverage/generate_lcov.py), 96 % when this gate was set. A PR fails
+# when the project drops below 90 % (2 % of slack for a refactor that moves
+# lines) or when the lines it changes are covered below 80 %.
 coverage:
   status:
     project:
       default:
-        informational: true
+        target: 90%
+        threshold: 2%
     patch:
       default:
-        informational: true
+        target: 80%
