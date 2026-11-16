@@ -54,9 +54,8 @@ def build_function_map():
     return mapping
 
 
-def fetch_profiler_rows():
-    query = """
-    SELECT n.nspname, p.proname, t.lineno,
+PROFILER_QUERY = """
+    SELECT p.proname, t.lineno,
            COALESCE((SELECT sum(x) FROM unnest(t.exec_stmts) x), 0) AS hits
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
@@ -64,22 +63,36 @@ def fetch_profiler_rows():
     CROSS JOIN LATERAL plpgsql_profiler_function_tb(p.oid) t
     WHERE l.lanname = 'plpgsql'
       AND n.nspname = 'public'
-      -- exclut les fonctions internes des extensions (pgtap, plpgsql_check...)
+      -- only the lines that hold a statement: blank, comment, DECLARE and END
+      -- lines have no command (cmds_on_row NULL). A function the tests never
+      -- call has no execution count either (exec_stmts NULL), but its
+      -- statements still count, with 0 hits.
+      AND t.cmds_on_row > 0
+      -- skips the functions that belong to extensions (pgtap, plpgsql_check...)
       AND NOT EXISTS (
         SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e'
       )
-    ORDER BY n.nspname, p.proname, t.lineno;
-    """
+    ORDER BY p.proname, t.lineno;
+"""
+
+
+def fetch_profiler_rows():
+    """(function name, body line, hits) of every line that holds a statement.
+    plpgsql_check gives the lines without a statement (blank, comment, DECLARE,
+    END...) no command (cmds_on_row NULL), and the query leaves them out:
+    counting them as 0 hits made every function look partly uncovered. The
+    statements of a function that was never called have no execution count
+    (NULL) but still count, as 0 hits, so an untested function lowers the
+    coverage instead of disappearing from it."""
     result = subprocess.run(
-        ["psql", "-h", "database", "-U", "postgres", "-d", "core", "-At", "-F,", "-c", query],
+        ["psql", "-h", "database", "-U", "postgres", "-d", "core", "-At", "-F,", "-c", PROFILER_QUERY],
         capture_output=True, text=True, check=True,
     )
     rows = []
     for row in csv.reader(result.stdout.splitlines()):
-        if not row or len(row) != 4:
+        if len(row) != 3:
             continue
-        _schema, proname, lineno, hits = row
-        rows.append((proname, int(lineno), int(hits)))
+        rows.append((row[0], int(row[1]), int(row[2])))
     return rows
 
 
