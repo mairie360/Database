@@ -35,8 +35,18 @@ CREATE TABLE two_factor_policy_audit_log (
 
 CREATE OR REPLACE FUNCTION fn_audit_two_factor_policy() RETURNS TRIGGER AS $$
 BEGIN
+    -- Columns listed one by one, not to_jsonb(OLD|NEW): the audit log is kept for years, so a column
+    -- added to this table later must be chosen for it on purpose (GDPR whole-row rule, MAIR-286).
     INSERT INTO two_factor_policy_audit_log (action_by, previous_data, new_data)
-    VALUES (NEW.updated_by, to_jsonb(OLD), to_jsonb(NEW));
+    VALUES (
+        NEW.updated_by,
+        jsonb_build_object('id', OLD.id, 'required', OLD.required, 'totp_allowed', OLD.totp_allowed,
+            'passkey_allowed', OLD.passkey_allowed, 'backup_codes_allowed', OLD.backup_codes_allowed,
+            'updated_by', OLD.updated_by, 'updated_at', OLD.updated_at),
+        jsonb_build_object('id', NEW.id, 'required', NEW.required, 'totp_allowed', NEW.totp_allowed,
+            'passkey_allowed', NEW.passkey_allowed, 'backup_codes_allowed', NEW.backup_codes_allowed,
+            'updated_by', NEW.updated_by, 'updated_at', NEW.updated_at)
+    );
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
