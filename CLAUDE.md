@@ -121,6 +121,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 - `releases/v3.6.0/` — MAIR-808 (two-factor policy of the instance).
 - `releases/v3.7.0/` — MAIR-810 (passkeys of the accounts).
 - `releases/v3.8.0/` — previous refresh token of a session, reuse detection.
+- `releases/v3.9.0/` — groups linked to a project.
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -409,6 +410,12 @@ What each former schema version did, in order:
    session up by the previous hash to tell a reuse within its grace window (refused) from a later one (session
    revoked). `v_sessions` (`SELECT *`) is not recreated: Core reads these columns from `sessions`. Test
    `tests/47_sessions_refresh_token_reuse_test.sql`.
+
+27. **`mair-683-01`** (`releases/v3.9.0/01`) — groups linked to a project: `project_groups` (`project_id`,
+   `group_id`, `linked_at`; primary key on the pair, `idx_project_groups_group_id`), `ON DELETE CASCADE` on both
+   sides. Every current and future member of a linked group sees the project in Project_API, with the rights of a
+   project member; Project_API checks the caller may link the group and keeps one group per project. `project_api`
+   writes the table and reads `groups (id, name)`. Test `tests/48_project_groups_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

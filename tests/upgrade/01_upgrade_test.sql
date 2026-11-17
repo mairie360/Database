@@ -213,7 +213,7 @@ SELECT ok(
 -- changelog had no tag.
 SELECT results_eq(
     $$SELECT tag FROM databasechangelog WHERE tag IS NOT NULL ORDER BY orderexecuted$$,
-    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0'), ('v3.4.0'), ('v3.4.1'), ('v3.5.0'), ('v3.6.0'), ('v3.7.0'), ('v3.8.0')$$,
+    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0'), ('v3.4.0'), ('v3.4.1'), ('v3.5.0'), ('v3.6.0'), ('v3.7.0'), ('v3.8.0'), ('v3.9.0')$$,
     'The database is tagged with the git tags, in order'
 );
 

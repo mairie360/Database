@@ -110,6 +110,9 @@ GRANT SELECT ON task_history TO project_api;
 -- Author names, manager roles and team (group) visibility.
 GRANT SELECT (first_name, last_name) ON users TO project_api;
 GRANT SELECT ON roles, user_roles, group_members TO project_api;
+-- Groups linked to a project (their members see it): existence check and names.
+GRANT SELECT, INSERT, DELETE ON project_groups TO project_api;
+GRANT SELECT (id, name) ON groups TO project_api;
 
 -- ---------------------------------------------------------------------------
 -- calendar_api: events and recurrences
