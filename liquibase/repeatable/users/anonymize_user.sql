@@ -207,6 +207,7 @@ BEGIN
           AND c.connamespace = 'public'::regnamespace AND NOT t.relispartition
         UNION
         SELECT * FROM (VALUES ('users_audit_log', 'user_id'), ('users_audit_log', 'action_by'),
+                              ('two_factor_policy', 'updated_by'),
                               ('two_factor_policy_audit_log', 'action_by'),
                               ('messaging_moderation_log', 'target_user_id'),
                               ('messaging_moderation_log', 'performed_by'),

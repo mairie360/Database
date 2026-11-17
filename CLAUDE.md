@@ -391,7 +391,8 @@ What each former schema version did, in order:
    MAIR-804): `two_factor_policy`, a single row (`id = 1`, never inserted or deleted) with `required`
    (off at first), the allowed modes `totp_allowed` / `passkey_allowed` (off until MAIR-810) /
    `backup_codes_allowed`, at least one real mode allowed (`chk_two_factor_policy_one_mode`), and
-   `updated_by` / `updated_at`. Only `core_api` reads and updates it. A trigger writes every change
+   `updated_by` (no foreign key, like the audit tables: the policy survives a `TRUNCATE users CASCADE` of the
+   test tooling; exported through the extra list of `export_user_data`) / `updated_at`. Only `core_api` reads and updates it. A trigger writes every change
    (author, before, after) to `two_factor_policy_audit_log`, append-only and out of reach of the API
    roles. Tests `tests/45_two_factor_policy_test.sql`, `20_api_roles_test.sql`.
 
