@@ -304,6 +304,17 @@ tables:
       conversation_id: {category: activity, erasure: delete, visibility: self}
       unread_count: {category: activity, erasure: delete, visibility: self}
 
+  two_factor_policy:
+    personal:
+      updated_by: {category: identifier, erasure: keep, visibility: admin, note: "administrator who last changed the policy; the reference stays and points to the anonymized users row (MAIR-808)"}
+    not_personal: [id, required, totp_allowed, passkey_allowed, backup_codes_allowed, updated_at]
+
+  two_factor_policy_audit_log:
+    personal:
+      action_by: {category: identifier, erasure: keep, visibility: internal, note: "audit evidence, append-only: administrator who changed the policy (MAIR-808)"}
+      action_date: {category: activity, erasure: keep, visibility: internal}
+    not_personal: [audit_id, previous_data, new_data]
+
   user_backup_codes:
     personal:
       id: {category: identifier, erasure: delete, visibility: internal}

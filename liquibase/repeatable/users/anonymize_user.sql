@@ -207,6 +207,8 @@ BEGIN
           AND c.connamespace = 'public'::regnamespace AND NOT t.relispartition
         UNION
         SELECT * FROM (VALUES ('users_audit_log', 'user_id'), ('users_audit_log', 'action_by'),
+                              ('two_factor_policy', 'updated_by'),
+                              ('two_factor_policy_audit_log', 'action_by'),
                               ('messaging_moderation_log', 'target_user_id'),
                               ('messaging_moderation_log', 'performed_by'),
                               ('compliance_journal', 'user_id')) AS extra(table_name, column_name)
@@ -215,6 +217,7 @@ BEGIN
     LOOP
         v_strip := ARRAY['password', 'token_hash'] || CASE v_ref.table_name || '.' || v_ref.column_name
             WHEN 'users_audit_log.action_by' THEN ARRAY['previous_data', 'new_data']
+            WHEN 'two_factor_policy_audit_log.action_by' THEN ARRAY['previous_data', 'new_data']
             WHEN 'messaging_moderation_log.performed_by' THEN ARRAY['content']
             ELSE ARRAY[]::TEXT[] END;
         EXECUTE format(
