@@ -8,7 +8,7 @@
 --   * v_securable_events and v_securable_sessions inject the resource id;
 --   * fn_refresh_updated_at (users.updated_at is rewritten on every UPDATE).
 BEGIN;
-SELECT plan(18);
+SELECT plan(20);
 
 INSERT INTO users (id, first_name, last_name, email, password, status)
 VALUES
@@ -122,7 +122,6 @@ SELECT is(
       WHERE ac.group_id = 4410
         AND ac.resource_instance_id = 44100
         AND ac.resource_id = (SELECT id FROM resources WHERE name = 'events')
-        AND p.resource_id = ac.resource_id
         AND p.action IN ('read', 'update', 'delete')),
     ARRAY['delete', 'read', 'update'],
     'An event with an owner group gives that group read, update and delete on it'
@@ -131,6 +130,33 @@ SELECT is(
     (SELECT count(*)::INT FROM access_control WHERE resource_instance_id = 44100 AND group_id IS DISTINCT FROM 4410),
     0,
     'The ACL of a group-owned event is written for the owner group only'
+);
+SELECT is(
+    (SELECT count(*)::INT FROM access_control ac JOIN permissions p ON p.id = ac.permission_id
+      WHERE ac.resource_instance_id = 44100
+        AND ac.resource_id = (SELECT id FROM resources WHERE name = 'events')
+        AND p.resource_id <> ac.resource_id),
+    0,
+    'No ACL row of a group-owned event pairs the events resource with a permission of another resource'
+);
+
+-- Release v3.4.1 purge: a row left by the former trigger (events resource + permission of another resource) goes away,
+-- the correct rows stay. The statement is the one of releases/v3.4.1/01__purge_misattributed_event_acl.sql.
+INSERT INTO access_control (group_id, resource_id, resource_instance_id, permission_id)
+SELECT 4410, res.id, 44100, p.id
+FROM resources res, permissions p
+WHERE res.name = 'events' AND p.resource_id <> res.id AND p.action = 'read'
+LIMIT 1;
+DELETE FROM access_control ac
+USING permissions p, resources res
+WHERE p.id = ac.permission_id
+  AND res.id = ac.resource_id
+  AND res.name = 'events'
+  AND p.resource_id <> ac.resource_id;
+SELECT is(
+    (SELECT count(*)::INT FROM access_control WHERE resource_instance_id = 44100),
+    3,
+    'The v3.4.1 purge removes the misattributed ACL rows and keeps the 3 correct ones'
 );
 
 ---

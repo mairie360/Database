@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+    logicalFilePath="releases"
+>
+
+    <!-- Group-owned events no longer get ACL rows for the permissions of other resources (MAIR-535).
+         The function itself is fixed in repeatable/calendar/fn_set_group_accesses.sql. -->
+    <changeSet id="mair-535-01" author="dev"><sqlFile
+            path="01__purge_misattributed_event_acl.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="01__purge_misattributed_event_acl.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="tag-v3.4.1" author="dev"><tagDatabase tag="v3.4.1"/></changeSet>
+
+</databaseChangeLog>
