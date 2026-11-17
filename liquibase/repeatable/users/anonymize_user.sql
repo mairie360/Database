@@ -116,6 +116,7 @@ BEGIN
     DELETE FROM user_identities WHERE user_id = p_user_id;
     DELETE FROM user_modules WHERE user_id = p_user_id;
     DELETE FROM user_notification_settings WHERE user_id = p_user_id;
+    DELETE FROM user_passkeys WHERE user_id = p_user_id;
     DELETE FROM user_preferences WHERE user_id = p_user_id;
     DELETE FROM user_totp WHERE user_id = p_user_id;
 

@@ -72,6 +72,8 @@ GRANT SELECT ON v_users_sso_export TO core_api;
 -- Second factor (MAIR-805): TOTP secret (sealed by Core) and hashed backup codes, Core's business only.
 -- Rows are deleted when the 2FA is disabled or reset by an administrator.
 GRANT SELECT, INSERT, UPDATE, DELETE ON user_totp, user_backup_codes TO core_api;
+GRANT SELECT, INSERT, UPDATE, DELETE ON user_passkeys TO core_api;
+GRANT USAGE, SELECT ON SEQUENCE user_passkeys_id_seq TO core_api;
 
 -- Two-factor policy of the instance (MAIR-808): the single row is read and updated by Core, never
 -- inserted or deleted. Its audit log has no API privilege: a SECURITY DEFINER trigger writes it.
