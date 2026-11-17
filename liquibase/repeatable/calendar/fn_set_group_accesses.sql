@@ -7,6 +7,7 @@ BEGIN
     SELECT NEW.owner_group_id, res.id, NEW.id, p.id
     FROM resources res, permissions p
     WHERE res.name = 'events'
+      AND p.resource_id = res.id  -- MAIR-535: only the permissions of the events resource, not those of every resource
       AND p.action IN ('read', 'update', 'delete');
 
     RETURN NEW;
