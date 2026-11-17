@@ -124,7 +124,7 @@ SELECT is(
 -- Tests 7-11: each API writes only to its own domain
 SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('core_api')$$,
-    $$VALUES ('access_control'), ('group_members'), ('groups'), ('roles'), ('sessions'),
+    $$VALUES ('access_control'), ('group_members'), ('groups'), ('roles'), ('sessions'), ('two_factor_policy'),
              ('user_backup_codes'), ('user_identities'), ('user_notification_settings'),
              ('user_preferences'), ('user_roles'), ('user_totp'), ('users'), ('v_users_active')$$,
     'core_api writes only to the core domain'

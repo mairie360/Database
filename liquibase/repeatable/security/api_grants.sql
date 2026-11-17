@@ -73,6 +73,10 @@ GRANT SELECT ON v_users_sso_export TO core_api;
 -- Rows are deleted when the 2FA is disabled or reset by an administrator.
 GRANT SELECT, INSERT, UPDATE, DELETE ON user_totp, user_backup_codes TO core_api;
 
+-- Two-factor policy of the instance (MAIR-808): the single row is read and updated by Core, never
+-- inserted or deleted. Its audit log has no API privilege: a SECURITY DEFINER trigger writes it.
+GRANT SELECT, UPDATE ON two_factor_policy TO core_api;
+
 GRANT SELECT, INSERT, UPDATE, DELETE ON sessions TO core_api;
 GRANT SELECT ON v_sessions, session_settings TO core_api;
 

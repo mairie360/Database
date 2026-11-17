@@ -118,6 +118,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 - `releases/v3.4.0/` — MAIR-286 (audit log purge), MAIR-289 (erasure), MAIR-498 (compliance service); MAIR-289's `feat` renamed
   the unreleased `releases/v3.3.1` into `releases/v3.4.0` (MAIR-491).
 - `releases/v3.5.0/` — MAIR-805 (TOTP second factor managed by Core).
+- `releases/v3.6.0/` — MAIR-808 (two-factor policy of the instance).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -385,6 +386,14 @@ What each former schema version did, in order:
    `anonymize_user()` deletes both, `fn_compliance_scan()` checks them, `gdpr/inventory.yaml` lists
    them as credentials; tests `tests/44_user_totp_test.sql`, `20_api_roles_test.sql`,
    `41_gdpr_erasure_test.sql`.
+
+24. **`mair-808-01`** (`releases/v3.6.0/01`) — two-factor policy of the instance (MAIR-808, epic
+   MAIR-804): `two_factor_policy`, a single row (`id = 1`, never inserted or deleted) with `required`
+   (off at first), the allowed modes `totp_allowed` / `passkey_allowed` (off until MAIR-810) /
+   `backup_codes_allowed`, at least one real mode allowed (`chk_two_factor_policy_one_mode`), and
+   `updated_by` / `updated_at`. Only `core_api` reads and updates it. A trigger writes every change
+   (author, before, after) to `two_factor_policy_audit_log`, append-only and out of reach of the API
+   roles. Tests `tests/45_two_factor_policy_test.sql`, `20_api_roles_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
