@@ -69,6 +69,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON user_preferences, user_notification_sett
 GRANT SELECT, INSERT, UPDATE, DELETE ON user_identities TO core_api;
 GRANT SELECT ON v_users_sso_export TO core_api;
 
+-- Second factor (MAIR-805): TOTP secret (sealed by Core) and hashed backup codes, Core's business only.
+-- Rows are deleted when the 2FA is disabled or reset by an administrator.
+GRANT SELECT, INSERT, UPDATE, DELETE ON user_totp, user_backup_codes TO core_api;
+
 GRANT SELECT, INSERT, UPDATE, DELETE ON sessions TO core_api;
 GRANT SELECT ON v_sessions, session_settings TO core_api;
 

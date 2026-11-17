@@ -21,6 +21,9 @@ INSERT INTO sessions (id, user_id, token_hash, device_info) VALUES
     ('7a1f0000-0000-4000-8000-000000009800', 9800, 'erasure-session', 'Firefox 140 on Linux');
 -- connection_logs (security log, kept) copies the device: a user agent, never the identity.
 INSERT INTO user_identities (user_id, provider, subject) VALUES (9800, 'keycloak', 'kc-gdpr-erasure-qzxwv');
+-- Second factor (MAIR-805): sealed secret and hashed backup codes are erased with the account.
+INSERT INTO user_totp (user_id, secret_encrypted, confirmed_at) VALUES (9800, '\xdeadbeef'::bytea, now());
+INSERT INTO user_backup_codes (user_id, code_hash) VALUES (9800, '$argon2id$v=19$m=16,t=2,p=1$c2FsdHNhbHQ$aGFzaGhhc2g');
 INSERT INTO groups (id, name, owner_id) VALUES (9800, 'Group of the marker', 9800);
 -- The owner becomes a member by trigger (fn_add_owner_to_group).
 INSERT INTO group_members (group_id, user_id) VALUES (9800, 9802);
@@ -169,9 +172,11 @@ SELECT ok(
 SELECT ok(
     NOT EXISTS (SELECT 1 FROM sessions WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_identities WHERE user_id = 9800)
+    AND NOT EXISTS (SELECT 1 FROM user_totp WHERE user_id = 9800)
+    AND NOT EXISTS (SELECT 1 FROM user_backup_codes WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM group_members WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = 9800),
-    'sessions, identities, memberships and roles of the user are deleted'
+    'sessions, identities, second factor, memberships and roles of the user are deleted'
 );
 
 -- Test 16: the training record is kept.
