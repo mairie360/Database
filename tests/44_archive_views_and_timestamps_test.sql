@@ -8,7 +8,7 @@
 --   * v_securable_events and v_securable_sessions inject the resource id;
 --   * fn_refresh_updated_at (users.updated_at is rewritten on every UPDATE).
 BEGIN;
-SELECT plan(20);
+SELECT plan(21);
 
 INSERT INTO users (id, first_name, last_name, email, password, status)
 VALUES
@@ -147,16 +147,36 @@ SELECT 4410, res.id, 44100, p.id
 FROM resources res, permissions p
 WHERE res.name = 'events' AND p.resource_id <> res.id AND p.action = 'read'
 LIMIT 1;
+INSERT INTO groups (id, owner_id, name, description) VALUES (4411, 4402, 'MAIR-535 other group', 'does not own the event');
+-- Decoys the purge must keep: same shape but a group that does not own the event, and an instance that is no event.
+INSERT INTO access_control (group_id, resource_id, resource_instance_id, permission_id)
+SELECT 4411, res.id, 44100, p.id
+FROM resources res, permissions p
+WHERE res.name = 'events' AND p.resource_id <> res.id AND p.action = 'read'
+LIMIT 1;
+INSERT INTO access_control (group_id, resource_id, resource_instance_id, permission_id)
+SELECT 4410, res.id, 99999999, p.id
+FROM resources res, permissions p
+WHERE res.name = 'events' AND p.resource_id <> res.id AND p.action = 'read'
+LIMIT 1;
 DELETE FROM access_control ac
-USING permissions p, resources res
+USING permissions p, resources res, events e
 WHERE p.id = ac.permission_id
   AND res.id = ac.resource_id
   AND res.name = 'events'
+  AND e.id = ac.resource_instance_id
+  AND e.owner_group_id = ac.group_id
+  AND p.action IN ('read', 'update', 'delete')
   AND p.resource_id <> ac.resource_id;
 SELECT is(
     (SELECT count(*)::INT FROM access_control WHERE resource_instance_id = 44100),
-    3,
-    'The v3.4.1 purge removes the misattributed ACL rows and keeps the 3 correct ones'
+    4,
+    'The v3.4.1 purge removes the misattributed ACL rows and keeps the 3 correct ones plus the row of another group'
+);
+SELECT is(
+    (SELECT count(*)::INT FROM access_control WHERE resource_instance_id = 99999999),
+    1,
+    'The v3.4.1 purge keeps a row whose instance is not an event'
 );
 
 ---

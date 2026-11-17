@@ -8,8 +8,10 @@
 >
 
     <!-- Group-owned events no longer get ACL rows for the permissions of other resources (MAIR-535).
-         The function itself is fixed in repeatable/calendar/fn_set_group_accesses.sql. -->
-    <changeSet id="mair-535-01" author="dev"><sqlFile
+         The function itself is fixed in repeatable/calendar/fn_set_group_accesses.sql.
+         runOnChange: the purge was narrowed to the old trigger's footprint after a first merge; re-running the
+         DELETE is idempotent. -->
+    <changeSet id="mair-535-01" author="dev" runOnChange="true"><sqlFile
             path="01__purge_misattributed_event_acl.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
