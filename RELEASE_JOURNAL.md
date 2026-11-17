@@ -1,16 +1,18 @@
 # Journal des releases — Database
 
-<!-- release-journal-state {"dev": "d7266cad7a82195bb5b624d9dd7b3e5d92aa55c0", "prod": "c4fa2dd7dfaa01a0f41c90c5bf004dce5703b86c", "prod_tag": "v3.4.0", "staging": "c4fa2dd7dfaa01a0f41c90c5bf004dce5703b86c", "updated": {"dev": "2026-11-17 19:34 UTC", "prod": "2026-11-12 23:38 UTC", "staging": "2026-11-12 22:33 UTC"}} -->
+<!-- release-journal-state {"dev": "08b194d72573f2da9a81847fc1940d16fce2860a", "prod": "c4fa2dd7dfaa01a0f41c90c5bf004dce5703b86c", "prod_tag": "v3.4.0", "staging": "c4fa2dd7dfaa01a0f41c90c5bf004dce5703b86c", "updated": {"dev": "2026-11-17 20:55 UTC", "prod": "2026-11-12 23:38 UTC", "staging": "2026-11-12 22:33 UTC"}} -->
 > Tenu à jour par la CI (`mairie360/CICD`, action `release/release-journal`) à chaque passage en dev, staging et prod. Ne pas modifier à la main : le fichier est réécrit au passage suivant.
 
 | Environnement | Version | Commit | Mis à jour |
 | --- | --- | --- | --- |
 | prod | v3.4.0 | `c4fa2dd` | 2026-11-12 23:38 UTC |
 | staging | — | `c4fa2dd` | 2026-11-12 22:33 UTC |
-| dev | — | `d7266ca` | 2026-11-17 19:34 UTC |
+| dev | — | `08b194d` | 2026-11-17 20:55 UTC |
 
 ## Ajouté sur main depuis la dernière release prod (v3.4.0)
 
+- feat: MAIR-810 Passkeys managed by Core ([#239](https://github.com/mairie360/Database/pull/239))
+- feat: MAIR-808 Make the two-factor authentication mandatory (instance policy) ([#235](https://github.com/mairie360/Database/pull/235))
 - fix: MAIR-535 Fix the ACL of group-owned events and cover the secured views ([#241](https://github.com/mairie360/Database/pull/241))
 - fix: MAIR-805 Upgrade apt in the migrations image (CVE-2026-109518) ([#240](https://github.com/mairie360/Database/pull/240))
 - feat: MAIR-805 Two-factor authentication by authenticator app (TOTP) and backup codes in Core ([#233](https://github.com/mairie360/Database/pull/233))
@@ -21,6 +23,8 @@
 
 ## Différence dev → staging (en dev, pas encore en staging)
 
+- feat: MAIR-810 Passkeys managed by Core ([#239](https://github.com/mairie360/Database/pull/239))
+- feat: MAIR-808 Make the two-factor authentication mandatory (instance policy) ([#235](https://github.com/mairie360/Database/pull/235))
 - fix: MAIR-535 Fix the ACL of group-owned events and cover the secured views ([#241](https://github.com/mairie360/Database/pull/241))
 - fix: MAIR-805 Upgrade apt in the migrations image (CVE-2026-109518) ([#240](https://github.com/mairie360/Database/pull/240))
 - feat: MAIR-805 Two-factor authentication by authenticator app (TOTP) and backup codes in Core ([#233](https://github.com/mairie360/Database/pull/233))
@@ -40,6 +44,7 @@ _Rien._
 <!-- release-journal-history:start -->
 | Date | Environnement | Version | Commit | Run |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 20:55 UTC | dev | — | `08b194d` | [run](https://github.com/mairie360/Database/actions/runs/44173631410) |
 | 2026-11-17 19:34 UTC | dev | — | `d7266ca` | [run](https://github.com/mairie360/Database/actions/runs/44159239092) |
 | 2026-11-17 19:05 UTC | dev | — | `7350c33` | [run](https://github.com/mairie360/Database/actions/runs/44153931776) |
 | 2026-11-12 23:38 UTC | prod | v3.4.0 | `c4fa2dd` | [run](https://github.com/mairie360/Database/actions/runs/43330181912) |
