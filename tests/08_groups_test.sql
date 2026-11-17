@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(11);
+SELECT plan(13);
 
 ---
 --- 1. PRÉPARATION DES DONNÉES
@@ -54,24 +54,9 @@ SELECT throws_ok(
     'On ne peut pas archiver un utilisateur qui possède encore un groupe (RESTRICT)'
 );
 
--- Test : Suppression en cascade des membres lors de l'archivage
--- Pour Paul (membre simple), la FK est ON DELETE CASCADE.
--- On simule d'abord le trigger de nettoyage nécessaire pour Paul
-CREATE OR REPLACE FUNCTION fn_cleanup_group_members_on_archive()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF (OLD.is_archived = FALSE AND NEW.is_archived = TRUE) THEN
-        DELETE FROM group_members WHERE user_id = NEW.id;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER tr_cleanup_group_members
-    BEFORE UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION fn_cleanup_group_members_on_archive();
-
--- On archive le membre Paul
+-- Aucun trigger ne retire les membres à l'archivage : un utilisateur archivé garde
+-- son appartenance aux groupes pour que restore_user() le remette tel qu'il était
+-- (MAIR-535). La FK ON DELETE CASCADE ne joue que sur un DELETE réel.
 SELECT lives_ok(
     $$ UPDATE users SET is_archived = TRUE, status = 'archived' WHERE id = 301 $$,
     'L''archivage d''un membre simple doit être possible'
@@ -79,8 +64,18 @@ SELECT lives_ok(
 
 SELECT is(
     (SELECT count(*)::INT FROM group_members WHERE group_id = 1),
-    1,
-    'Paul doit avoir été retiré du groupe automatiquement après archivage'
+    2,
+    'L''archivage conserve Paul dans group_members'
+);
+
+SELECT lives_ok(
+    $$ SELECT restore_user(301) $$,
+    'restore_user remet Paul en service'
+);
+
+SELECT ok(
+    EXISTS (SELECT 1 FROM group_members WHERE group_id = 1 AND user_id = 301),
+    'Après restore_user, Paul est toujours membre du groupe Alpha'
 );
 
 ---

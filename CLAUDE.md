@@ -443,9 +443,14 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   `v_users_active` / `v_users_archived` views, which have `INSTEAD OF` triggers
   that set `is_archived = TRUE` and `status = 'archived'`. `restore_user(id)`
   reverses it. Filtered index `idx_users_not_archived` stands in for partitioning.
-- **Immutable audit.** `users_audit_log` and `access_logs` are append-only —
-  triggers `RAISE EXCEPTION` (SQLSTATE `P0001`) on any `DELETE`/`UPDATE`. Tests
-  assert this. `access_logs` is `PARTITION BY RANGE (timestamp)` with a `DEFAULT`
+- **Immutable audit.** `users_audit_log` is append-only: trigger `tr_immutable_audit`
+  (`users/fn_protect_audit_log.sql`) raises `users_audit_log is append-only` (SQLSTATE
+  `P0001`) on any `DELETE`/`UPDATE`, except the pseudonymisation `UPDATE` of the GDPR
+  erasure (`mairie360.audit_pseudonymize`). `access_logs` has **no trigger**: it is
+  protected by privileges only — the API roles have no privilege on it (asserted by
+  `tests/20_api_roles_test.sql`) and `check_access()` (SECURITY DEFINER) is the only
+  writer. A superuser or the table owner can still change it. Tests assert both.
+  `access_logs` is `PARTITION BY RANGE (timestamp)` with a `DEFAULT`
   partition.
 - **Protected rows.** Triggers block renaming/deleting critical roles
   (`roles/fn_protect_critical_roles.sql`, `fn_protect_role_names.sql`). The admin

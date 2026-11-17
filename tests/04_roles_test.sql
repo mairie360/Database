@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(9); -- On prévoit 10 tests
+SELECT plan(12);
 
 ---
 --- 1. TESTS DE STRUCTURE & DONNÉES INITIALES
@@ -53,36 +53,29 @@ SELECT ok(
 --- 4. TEST DE SÉCURITÉ : ARCHIVAGE ET RÔLES
 ---
 
--- Scénario : On archive l'utilisateur.
--- Comme pour les sessions, l'update sur users (is_archived = TRUE)
--- DOIT échouer si on n'a pas nettoyé user_roles, OU le trigger de nettoyage doit agir.
-
--- Note : Il te manque le trigger de nettoyage pour user_roles (similaire à celui des sessions)
--- Ajoutons-le dans le test pour valider qu'il est nécessaire.
-
-CREATE OR REPLACE FUNCTION fn_cleanup_user_roles_on_archive()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF (OLD.is_archived = FALSE AND NEW.is_archived = TRUE) THEN
-        DELETE FROM user_roles WHERE user_id = NEW.id;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER tr_05_cleanup_roles_on_archive
-    BEFORE UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION fn_cleanup_user_roles_on_archive();
-
--- Maintenant on test l'archivage
+-- Scénario : on archive l'utilisateur. Aucun trigger ne nettoie user_roles à
+-- l'archivage : l'utilisateur archivé garde ses rôles pour que restore_user()
+-- le remette en service tel qu'il était (MAIR-535).
 SELECT lives_ok(
     $$ UPDATE users SET is_archived = TRUE, status = 'archived' WHERE id = 200 $$,
-    'L''archivage doit réussir car le nouveau trigger nettoie user_roles'
+    'L''archivage d''un utilisateur qui a un rôle doit réussir'
 );
 
-SELECT is_empty(
-    $$ SELECT 1 FROM user_roles WHERE user_id = 200 $$,
-    'Les rôles de Marc doivent être supprimés lors de son archivage'
+SELECT is(
+    (SELECT count(*)::INT FROM user_roles WHERE user_id = 200),
+    1,
+    'L''archivage conserve les rôles de Marc (user_roles n''est pas nettoyé)'
+);
+
+SELECT lives_ok(
+    $$ SELECT restore_user(200) $$,
+    'restore_user remet Marc en service'
+);
+
+SELECT is(
+    (SELECT role_id FROM user_roles WHERE user_id = 200),
+    (SELECT id FROM roles WHERE name = 'User'),
+    'Après restore_user, Marc retrouve son rôle User'
 );
 
 ---
@@ -93,6 +86,14 @@ SELECT ok(
     updated_at >= created_at,
     'Le timestamp updated_at doit être cohérent'
 ) FROM roles WHERE name = 'Admin';
+
+-- update_roles_modtime (BEFORE UPDATE) réécrit updated_at, même si l'UPDATE tente de le fixer
+UPDATE roles SET description = description, updated_at = '2000-01-01 00:00:00+00' WHERE name = 'Guest';
+SELECT is(
+    (SELECT updated_at FROM roles WHERE name = 'Guest'),
+    now(),
+    'update_roles_modtime remet updated_at à now() à chaque UPDATE d''un rôle'
+);
 
 SELECT * FROM finish();
 ROLLBACK;
