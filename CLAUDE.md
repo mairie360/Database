@@ -117,6 +117,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
   `logicalFilePath="releases"`).
 - `releases/v3.4.0/` — MAIR-286 (audit log purge), MAIR-289 (erasure), MAIR-498 (compliance service); MAIR-289's `feat` renamed
   the unreleased `releases/v3.3.1` into `releases/v3.4.0` (MAIR-491).
+- `releases/v3.5.0/` — MAIR-805 (TOTP second factor managed by Core).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -375,6 +376,15 @@ What each former schema version did, in order:
    left on anonymized accounts; messages excluded) and `fn_erasure_targets(user_id)` (e-mail and
    Keycloak subject, read before `anonymize_user()`), both in `repeatable/security/compliance.sql`,
    writes its journal and the steps, and runs `anonymize_user()`. `tests/42_compliance_service_test.sql`.
+
+23. **`mair-805-01`** (`releases/v3.5.0/01`) — second factor managed by Core (MAIR-805, epic MAIR-804,
+   replaces Keycloak's 2FA): `user_totp` (one row per user: TOTP secret sealed by Core with AES-GCM,
+   the key `TOTP_ENCRYPTION_KEY` stays outside the database; `confirmed_at` NULL while the enrolment
+   is pending; `last_used_step` refuses a replayed code) and `user_backup_codes` (Argon2 hashes of
+   the single-use codes, `used_at`). Only `core_api` reads or writes them (`api_grants.sql`).
+   `anonymize_user()` deletes both, `fn_compliance_scan()` checks them, `gdpr/inventory.yaml` lists
+   them as credentials; tests `tests/44_user_totp_test.sql`, `20_api_roles_test.sql`,
+   `41_gdpr_erasure_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

@@ -110,12 +110,14 @@ BEGIN
     DELETE FROM sessions WHERE user_id = p_user_id;
     DELETE FROM task_assignees WHERE user_id = p_user_id;
     DELETE FROM unread_counters WHERE user_id = p_user_id;
+    DELETE FROM user_backup_codes WHERE user_id = p_user_id;
     DELETE FROM user_calendar_params WHERE user_id = p_user_id;
     DELETE FROM user_content_progress WHERE user_id = p_user_id;
     DELETE FROM user_identities WHERE user_id = p_user_id;
     DELETE FROM user_modules WHERE user_id = p_user_id;
     DELETE FROM user_notification_settings WHERE user_id = p_user_id;
     DELETE FROM user_preferences WHERE user_id = p_user_id;
+    DELETE FROM user_totp WHERE user_id = p_user_id;
 
     -- Archived (fn_archive_user cleans what is left), then without identity. The roles go after the
     -- archiving: restore_user() of an anonymized account is refused anyway.

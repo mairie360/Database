@@ -304,6 +304,14 @@ tables:
       conversation_id: {category: activity, erasure: delete, visibility: self}
       unread_count: {category: activity, erasure: delete, visibility: self}
 
+  user_backup_codes:
+    personal:
+      id: {category: identifier, erasure: delete, visibility: internal}
+      user_id: {category: identifier, erasure: delete, visibility: internal}
+      code_hash: {category: credentials, erasure: delete, visibility: internal, note: "Argon2 hash of a single-use backup code (MAIR-805)"}
+      used_at: {category: connection, erasure: delete, visibility: internal}
+      created_at: {category: connection, erasure: delete, visibility: internal}
+
   user_calendar_params:
     personal:
       default_event_visibility: {category: preferences, erasure: delete, visibility: self}
@@ -362,6 +370,15 @@ tables:
       date_format: {category: preferences, erasure: delete, visibility: self}
       home_page: {category: preferences, erasure: delete, visibility: self}
       auto_open_notifications: {category: preferences, erasure: delete, visibility: self}
+
+  user_totp:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: internal}
+      secret_encrypted: {category: credentials, erasure: delete, visibility: internal, note: "TOTP secret sealed by Core (AES-GCM, key outside the database), never returned after enrolment (MAIR-805)"}
+      confirmed_at: {category: account, erasure: delete, visibility: internal}
+      last_used_step: {category: connection, erasure: delete, visibility: internal}
+      created_at: {category: account, erasure: delete, visibility: internal}
+      updated_at: {category: account, erasure: delete, visibility: internal}
 
   user_roles:
     personal:
