@@ -264,6 +264,8 @@ tables:
       id: {category: connection, erasure: delete, visibility: self}
       user_id: {category: identifier, erasure: delete, visibility: self}
       token_hash: {category: credentials, erasure: delete, visibility: internal}
+      previous_token_hash: {category: credentials, erasure: delete, visibility: internal, note: "hash of the refresh token replaced by the last rotation, to detect its reuse"}
+      rotated_at: {category: connection, erasure: delete, visibility: internal}
       device_info: {category: connection, erasure: delete, visibility: self}
       ip_address: {category: connection, erasure: delete, visibility: self, note: "kept for security while the session lives (MAIR-290 decision); deleted with the session"}
       created_at: {category: connection, erasure: delete, visibility: self}

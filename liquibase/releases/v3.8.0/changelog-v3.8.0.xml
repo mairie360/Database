@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+    logicalFilePath="releases"
+>
+
+    <!-- Changesets shipped by the git tag v3.8.0. Their identity does not depend on the
+         folder: renaming it after the release keeps them applied. -->
+
+    <!-- Previous refresh token of a session and its rotation time, to detect its reuse. -->
+    <changeSet id="mair-695-01" author="dev"><sqlFile
+            path="01__sessions_refresh_token_reuse.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="01__sessions_refresh_token_reuse.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="tag-v3.8.0" author="dev"><tagDatabase tag="v3.8.0"/></changeSet>
+
+</databaseChangeLog>
