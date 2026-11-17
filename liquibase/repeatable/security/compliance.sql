@@ -64,7 +64,7 @@ BEGIN
         'course_ratings', 'event_members', 'group_members', 'message_mentions', 'project_members',
         'recurrence_members', 'sessions', 'task_assignees', 'unread_counters', 'user_calendar_params',
         'user_content_progress', 'user_identities', 'user_modules', 'user_notification_settings',
-        'user_backup_codes', 'user_preferences', 'user_roles', 'user_totp']
+        'user_backup_codes', 'user_passkeys', 'user_preferences', 'user_roles', 'user_totp']
     LOOP
         EXECUTE format(
             'SELECT count(*) FROM public.%I t JOIN users u ON u.id = t.user_id

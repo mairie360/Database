@@ -391,6 +391,16 @@ tables:
       created_at: {category: account, erasure: delete, visibility: internal}
       updated_at: {category: account, erasure: delete, visibility: internal}
 
+  user_passkeys:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: internal}
+      credential_id: {category: credentials, erasure: delete, visibility: internal, note: "identifier of the WebAuthn credential given by the authenticator (MAIR-810)"}
+      passkey: {category: credentials, erasure: delete, visibility: internal, note: "serialized WebAuthn credential (public key, signature counter), never returned by the API (MAIR-810)"}
+      label: {category: account, erasure: delete, visibility: self, note: "name the agent gave to the passkey (device)"}
+      created_at: {category: account, erasure: delete, visibility: self}
+      last_used_at: {category: connection, erasure: delete, visibility: self}
+    not_personal: [id]
+
   user_roles:
     personal:
       user_id: {category: identifier, erasure: delete, visibility: directory, note: "kept while the account is only archived, so that restore_user() gives the roles back; deleted at anonymization"}

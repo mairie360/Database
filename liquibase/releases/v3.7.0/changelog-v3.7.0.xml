@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+    logicalFilePath="releases"
+>
+
+    <!-- Changesets shipped by the git tag v3.7.0. Their identity does not depend on the
+         folder (MAIR-491): renaming it after the release keeps them applied. -->
+
+    <!-- Passkeys (WebAuthn) of the accounts (MAIR-810). -->
+    <changeSet id="mair-810-01" author="dev"><sqlFile
+            path="01__user_passkeys.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="01__user_passkeys.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="tag-v3.7.0" author="dev"><tagDatabase tag="v3.7.0"/></changeSet>
+
+</databaseChangeLog>

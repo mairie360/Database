@@ -24,6 +24,8 @@ INSERT INTO user_identities (user_id, provider, subject) VALUES (9800, 'keycloak
 -- Second factor (MAIR-805): sealed secret and hashed backup codes are erased with the account.
 INSERT INTO user_totp (user_id, secret_encrypted, confirmed_at) VALUES (9800, '\xdeadbeef'::bytea, now());
 INSERT INTO user_backup_codes (user_id, code_hash) VALUES (9800, '$argon2id$v=19$m=16,t=2,p=1$c2FsdHNhbHQ$aGFzaGhhc2g');
+-- Passkey (MAIR-810): the credential is erased with the account.
+INSERT INTO user_passkeys (user_id, credential_id, passkey, label) VALUES (9800, '\xc0ffee9800'::bytea, '{"cred":"x"}'::jsonb, 'Laptop');
 INSERT INTO groups (id, name, owner_id) VALUES (9800, 'Group of the marker', 9800);
 -- The owner becomes a member by trigger (fn_add_owner_to_group).
 INSERT INTO group_members (group_id, user_id) VALUES (9800, 9802);
@@ -174,6 +176,7 @@ SELECT ok(
     AND NOT EXISTS (SELECT 1 FROM user_identities WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_totp WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_backup_codes WHERE user_id = 9800)
+    AND NOT EXISTS (SELECT 1 FROM user_passkeys WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM group_members WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = 9800),
     'sessions, identities, second factor, memberships and roles of the user are deleted'

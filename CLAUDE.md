@@ -119,6 +119,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
   the unreleased `releases/v3.3.1` into `releases/v3.4.0` (MAIR-491).
 - `releases/v3.5.0/` — MAIR-805 (TOTP second factor managed by Core).
 - `releases/v3.6.0/` — MAIR-808 (two-factor policy of the instance).
+- `releases/v3.7.0/` — MAIR-810 (passkeys of the accounts).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -395,6 +396,11 @@ What each former schema version did, in order:
    test tooling; exported through the extra list of `export_user_data`) / `updated_at`. Only `core_api` reads and updates it. A trigger writes every change
    (author, before, after) to `two_factor_policy_audit_log`, append-only and out of reach of the API
    roles. Tests `tests/45_two_factor_policy_test.sql`, `20_api_roles_test.sql`.
+
+25. **`mair-810-01`** (`releases/v3.7.0/01`) — passkeys (WebAuthn) managed by Core (MAIR-810, epic MAIR-804):
+   `user_passkeys` (several per user, `credential_id` unique, `passkey` the serialized credential never returned
+   by the API, `label`, `last_used_at`), `ON DELETE CASCADE` and deleted by `anonymize_user()`. Only `core_api`
+   has privileges on it. Test `tests/46_user_passkeys_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

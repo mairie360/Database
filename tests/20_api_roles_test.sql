@@ -98,9 +98,10 @@ SELECT results_eq(
     SELECT r.name FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
     WHERE has_table_privilege(r.name, 'user_totp', 'SELECT')
        OR has_table_privilege(r.name, 'user_backup_codes', 'SELECT')
+       OR has_table_privilege(r.name, 'user_passkeys', 'SELECT')
     $$,
     $$VALUES ('core_api')$$,
-    'Only core_api can read user_totp and user_backup_codes'
+    'Only core_api can read user_totp, user_backup_codes and user_passkeys'
 );
 
 -- Test 5: users are never hard-deleted, not even by core_api
@@ -126,7 +127,7 @@ SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('core_api')$$,
     $$VALUES ('access_control'), ('group_members'), ('groups'), ('roles'), ('sessions'), ('two_factor_policy'),
              ('user_backup_codes'), ('user_identities'), ('user_notification_settings'),
-             ('user_preferences'), ('user_roles'), ('user_totp'), ('users'), ('v_users_active')$$,
+             ('user_passkeys'), ('user_preferences'), ('user_roles'), ('user_totp'), ('users'), ('v_users_active')$$,
     'core_api writes only to the core domain'
 );
 SELECT results_eq(
