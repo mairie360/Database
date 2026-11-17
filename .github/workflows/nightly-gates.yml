@@ -32,13 +32,13 @@ jobs:
       sha: ${{ steps.check.outputs.sha }}
       ai: ${{ steps.check.outputs.ai }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: mairie360/CICD
-          ref: v5.10.0
+          ref: d93c55255ddbe42244a816b7625e3731de7c66f0 # v5.11.0
           path: cicd-repo
           sparse-checkout: actions
       - id: check
@@ -54,11 +54,11 @@ jobs:
       contents: read
       packages: write
       actions: read
-    uses: mairie360/CICD/.github/workflows/promote-staging.yml@v5.10.0
+    uses: mairie360/CICD/.github/workflows/promote-staging.yml@d93c55255ddbe42244a816b7625e3731de7c66f0 # v5.11.0
     with:
       stack: database
       package_name: database
-      cicd_version: v5.10.0
+      cicd_version: "d93c55255ddbe42244a816b7625e3731de7c66f0" # v5.11.0
       sha: ${{ needs.check.outputs.sha }}
       dry_run: true
     secrets:
@@ -73,11 +73,11 @@ jobs:
       contents: write
       packages: write
       actions: read
-    uses: mairie360/CICD/.github/workflows/promote-prod.yml@v5.10.0
+    uses: mairie360/CICD/.github/workflows/promote-prod.yml@d93c55255ddbe42244a816b7625e3731de7c66f0 # v5.11.0
     with:
       stack: database
       package_name: database
-      cicd_version: v5.10.0
+      cicd_version: "d93c55255ddbe42244a816b7625e3731de7c66f0" # v5.11.0
       sha: ${{ needs.check.outputs.sha }}
       dry_run: true
     secrets:
