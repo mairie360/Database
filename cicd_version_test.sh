@@ -45,8 +45,8 @@ elif [ "$(printf '%s\n%s\n' "$expected" "$MIN_CICD" | sort -V | head -n 1)" != "
   status=1
 fi
 
-if ! grep -qE 'secrets: inherit|ANTHROPIC_API_KEY:' .github/workflows/promote-prod.yml; then
-  echo "MAIR-771: promote-prod.yml does not pass ANTHROPIC_API_KEY: the AI review of the inventory is skipped"
+if ! grep -qE 'ANTHROPIC_REVIEW_API_KEY:' .github/workflows/promote-prod.yml; then
+  echo "MAIR-771: promote-prod.yml does not pass ANTHROPIC_REVIEW_API_KEY: the AI review of the inventory is skipped"
   status=1
 fi
 
