@@ -3,4 +3,4 @@
 -- Password Manager, Bitwarden, ...). The front offers it as the name of the passkey. NULL when the
 -- authenticator is unknown or gave no AAGUID, and for the passkeys registered before this column.
 ALTER TABLE user_passkeys
-    ADD COLUMN provider VARCHAR(100) CHECK (provider IS NULL OR btrim(provider) <> '');
+    ADD COLUMN provider VARCHAR(100) CHECK (provider IS NULL OR provider ~ '\S');

@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(17);
+SELECT plan(18);
 
 -- Passkeys (WebAuthn) managed by Core (MAIR-810): releases/v3.7.0/01. Several per user, the credential
 -- identifier is unique, they go with the account, only core_api touches them.
@@ -48,6 +48,10 @@ SELECT lives_ok(
 SELECT throws_ok(
     $$INSERT INTO user_passkeys (user_id, credential_id, passkey, label, provider) VALUES (9971, '\x06'::bytea, '{}'::jsonb, 'Blank', '  ')$$,
     '23514', NULL, 'a blank manager name is refused (NULL says unknown)'
+);
+SELECT throws_ok(
+    $$INSERT INTO user_passkeys (user_id, credential_id, passkey, label, provider) VALUES (9971, '\x07'::bytea, '{}'::jsonb, 'Tab', E'\t\n')$$,
+    '23514', NULL, 'a tab or newline only manager name is refused too'
 );
 
 -- Cascade.
