@@ -1,20 +1,16 @@
 name: Auto Approve Renovate
-on: pull_request_target
+# The reusable workflow of mairie360/CICD approves a Renovate pull request only while Renovate alone
+# wrote and pushed its branch, and takes the approval back after any other push.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions: {}
 
 jobs:
   auto-approve:
-    runs-on: ubuntu-latest
-    # On ajoute explicitement les permissions ici
     permissions:
       pull-requests: write
-      contents: write
-    if: github.actor == 'renovate[bot]'
-    steps:
-      # Non-critical: only approves Renovate PRs, so the mutable tag is accepted.
-      - uses: hmarr/auto-approve-action@v4 # nosemgrep: yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      # - uses: hmarr/auto-approve-action@v4
-      #   with:
-      #     github-token: ${{ secrets.MY_TECH_ACCOUNT_PAT }}
+    uses: mairie360/CICD/.github/workflows/auto-approve.yml@v5.14.0
+    with:
+      cicd_version: v5.14.0   # same release as the `uses:` ref

@@ -6,6 +6,7 @@ echo "🚀 CICD version check (MAIR-771)..."
 
 echo "🚀 CI secrets check..."
 ./ci_secrets_test.sh
+./auto_approve_test.sh
 
 echo "🚀 Nettoyage complet..."
 docker compose -f docker-compose-test.yml down -v --remove-orphans
