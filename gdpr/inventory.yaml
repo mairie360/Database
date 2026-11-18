@@ -404,7 +404,7 @@ tables:
       label: {category: account, erasure: delete, visibility: self, note: "name the agent gave to the passkey (device)"}
       created_at: {category: account, erasure: delete, visibility: self}
       last_used_at: {category: connection, erasure: delete, visibility: self}
-    not_personal: [id]
+    not_personal: [id, provider]
 
   user_roles:
     personal:
