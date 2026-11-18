@@ -215,6 +215,9 @@ tables:
       project_id: {category: activity, erasure: delete, visibility: members}
       user_id: {category: identifier, erasure: delete, visibility: members}
 
+  project_groups:
+    not_personal: [project_id, group_id, linked_at]
+
   project_task_statuses:
     not_personal: [id, project_id, name, color, category, position]
 
