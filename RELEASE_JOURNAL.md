@@ -1,16 +1,17 @@
 # Journal des releases — Database
 
-<!-- release-journal-state {"dev": "08b194d72573f2da9a81847fc1940d16fce2860a", "prod": "c4fa2dd7dfaa01a0f41c90c5bf004dce5703b86c", "prod_tag": "v3.4.0", "staging": "c4fa2dd7dfaa01a0f41c90c5bf004dce5703b86c", "updated": {"dev": "2026-11-17 20:55 UTC", "prod": "2026-11-12 23:38 UTC", "staging": "2026-11-12 22:33 UTC"}} -->
+<!-- release-journal-state {"dev": "3e9706f3bf96b97767e6d16bd19446a423a9e8bb", "prod": "c4fa2dd7dfaa01a0f41c90c5bf004dce5703b86c", "prod_tag": "v3.4.0", "staging": "c4fa2dd7dfaa01a0f41c90c5bf004dce5703b86c", "updated": {"dev": "2026-11-18 00:12 UTC", "prod": "2026-11-12 23:38 UTC", "staging": "2026-11-12 22:33 UTC"}} -->
 > Tenu à jour par la CI (`mairie360/CICD`, action `release/release-journal`) à chaque passage en dev, staging et prod. Ne pas modifier à la main : le fichier est réécrit au passage suivant.
 
 | Environnement | Version | Commit | Mis à jour |
 | --- | --- | --- | --- |
 | prod | v3.4.0 | `c4fa2dd` | 2026-11-12 23:38 UTC |
 | staging | — | `c4fa2dd` | 2026-11-12 22:33 UTC |
-| dev | — | `08b194d` | 2026-11-17 20:55 UTC |
+| dev | — | `3e9706f` | 2026-11-18 00:12 UTC |
 
 ## Ajouté sur main depuis la dernière release prod (v3.4.0)
 
+- feat: MAIR-695 Detect refresh token reuse (#243) ([#243](https://github.com/mairie360/Database/pull/243))
 - feat: MAIR-810 Passkeys managed by Core ([#239](https://github.com/mairie360/Database/pull/239))
 - feat: MAIR-808 Make the two-factor authentication mandatory (instance policy) ([#235](https://github.com/mairie360/Database/pull/235))
 - fix: MAIR-535 Fix the ACL of group-owned events and cover the secured views ([#241](https://github.com/mairie360/Database/pull/241))
@@ -23,6 +24,7 @@
 
 ## Différence dev → staging (en dev, pas encore en staging)
 
+- feat: MAIR-695 Detect refresh token reuse (#243) ([#243](https://github.com/mairie360/Database/pull/243))
 - feat: MAIR-810 Passkeys managed by Core ([#239](https://github.com/mairie360/Database/pull/239))
 - feat: MAIR-808 Make the two-factor authentication mandatory (instance policy) ([#235](https://github.com/mairie360/Database/pull/235))
 - fix: MAIR-535 Fix the ACL of group-owned events and cover the secured views ([#241](https://github.com/mairie360/Database/pull/241))
@@ -44,6 +46,7 @@ _Rien._
 <!-- release-journal-history:start -->
 | Date | Environnement | Version | Commit | Run |
 | --- | --- | --- | --- | --- |
+| 2026-11-18 00:12 UTC | dev | — | `3e9706f` | [run](https://github.com/mairie360/Database/actions/runs/44205338422) |
 | 2026-11-17 20:55 UTC | dev | — | `08b194d` | [run](https://github.com/mairie360/Database/actions/runs/44173631410) |
 | 2026-11-17 19:34 UTC | dev | — | `d7266ca` | [run](https://github.com/mairie360/Database/actions/runs/44159239092) |
 | 2026-11-17 19:05 UTC | dev | — | `7350c33` | [run](https://github.com/mairie360/Database/actions/runs/44153931776) |
