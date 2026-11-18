@@ -129,6 +129,10 @@ def check(root, allowed, gdpr):
                 wanted = DRY_RUN_REVIEW if callee == "promote-prod.yml [dry-run]" and key == "ANTHROPIC_REVIEW_API_KEY" else "${{ secrets.%s }}" % key
                 if value != wanted:
                     errors.append(f"{where}: {key}: {value}, expected {wanted}")
+            if callee.endswith("[dry-run]") and not any(
+                re.match(r"^ {6}dry_run:\s*['\"]?true['\"]?$", line) for line in job["lines"]
+            ):
+                errors.append(f"{where}: no dry_run: true")
             if called.group(1) == "gdpr-pr-cicd.yml":
                 gdpr_callers += 1
         if release_reads(live) != in_allowed:
