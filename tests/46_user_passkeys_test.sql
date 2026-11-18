@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(13);
+SELECT plan(18);
 
 -- Passkeys (WebAuthn) managed by Core (MAIR-810): releases/v3.7.0/01. Several per user, the credential
 -- identifier is unique, they go with the account, only core_api touches them.
@@ -34,6 +34,24 @@ SELECT throws_ok(
 SELECT throws_ok(
     $$INSERT INTO user_passkeys (user_id, credential_id, passkey, label) VALUES (9999999, '\x04'::bytea, '{}'::jsonb, 'Ghost')$$,
     '23503', NULL, 'a passkey needs an existing user'
+);
+
+
+-- Name of the passkey manager (releases/v3.10.0/01): optional, never blank.
+SELECT has_column('user_passkeys', 'provider', 'a passkey can carry the name of its manager');
+SELECT col_is_null('user_passkeys', 'provider', 'the manager is optional (unknown authenticator)');
+SELECT lives_ok(
+    $$INSERT INTO user_passkeys (user_id, credential_id, passkey, label, provider)
+      VALUES (9971, '\x05'::bytea, '{}'::jsonb, 'Phone', 'iCloud Keychain')$$,
+    'a passkey keeps the name of its manager'
+);
+SELECT throws_ok(
+    $$INSERT INTO user_passkeys (user_id, credential_id, passkey, label, provider) VALUES (9971, '\x06'::bytea, '{}'::jsonb, 'Blank', '  ')$$,
+    '23514', NULL, 'a blank manager name is refused (NULL says unknown)'
+);
+SELECT throws_ok(
+    $$INSERT INTO user_passkeys (user_id, credential_id, passkey, label, provider) VALUES (9971, '\x07'::bytea, '{}'::jsonb, 'Tab', E'\t\n')$$,
+    '23514', NULL, 'a tab or newline only manager name is refused too'
 );
 
 -- Cascade.

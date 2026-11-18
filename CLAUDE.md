@@ -122,6 +122,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 - `releases/v3.7.0/` — MAIR-810 (passkeys of the accounts).
 - `releases/v3.8.0/` — previous refresh token of a session, reuse detection.
 - `releases/v3.9.0/` — groups linked to a project.
+- `releases/v3.10.0/` — MAIR-810 (name of the passkey manager).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -403,6 +404,9 @@ What each former schema version did, in order:
    `user_passkeys` (several per user, `credential_id` unique, `passkey` the serialized credential never returned
    by the API, `label`, `last_used_at`), `ON DELETE CASCADE` and deleted by `anonymize_user()`. Only `core_api`
    has privileges on it. Test `tests/46_user_passkeys_test.sql`.
+
+26b. **`mair-810-02`** (`releases/v3.10.0/01`) — `user_passkeys.provider`: name of the passkey manager Core deduces from the
+   AAGUID at registration (NULL when unknown or for older passkeys, never blank). Test `tests/46_user_passkeys_test.sql`.
 
 26. **`mair-695-01`** (`releases/v3.8.0/01`) — reuse of a rotated refresh token: `sessions.previous_token_hash`
    (hash of the token the last rotation replaced) and `sessions.rotated_at`, both NULL until the first rotation, with
