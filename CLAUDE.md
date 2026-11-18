@@ -120,6 +120,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 - `releases/v3.5.0/` — MAIR-805 (TOTP second factor managed by Core).
 - `releases/v3.6.0/` — MAIR-808 (two-factor policy of the instance).
 - `releases/v3.7.0/` — MAIR-810 (passkeys of the accounts).
+- `releases/v3.8.0/` — previous refresh token of a session, reuse detection.
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -401,6 +402,13 @@ What each former schema version did, in order:
    `user_passkeys` (several per user, `credential_id` unique, `passkey` the serialized credential never returned
    by the API, `label`, `last_used_at`), `ON DELETE CASCADE` and deleted by `anonymize_user()`. Only `core_api`
    has privileges on it. Test `tests/46_user_passkeys_test.sql`.
+
+26. **`mair-695-01`** (`releases/v3.8.0/01`) — reuse of a rotated refresh token: `sessions.previous_token_hash`
+   (hash of the token the last rotation replaced) and `sessions.rotated_at`, both NULL until the first rotation, with
+   the partial index `idx_sessions_previous_token_hash`. Core_API writes them in its rotation `UPDATE` and looks a
+   session up by the previous hash to tell a reuse within its grace window (refused) from a later one (session
+   revoked). `v_sessions` (`SELECT *`) is not recreated: Core reads these columns from `sessions`. Test
+   `tests/47_sessions_refresh_token_reuse_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
