@@ -227,7 +227,7 @@ tables:
   project_templates:
     personal:
       description: {category: content, erasure: keep, visibility: directory, note: "free text written by agents, may name people: shared template, kept"}
-      created_by: {category: identifier, erasure: anonymize, visibility: admin, note: "author of the template: only an administrator or the author manages it; after an erasure the reference points to the anonymized account, so only an administrator manages it"}
+      created_by: {category: identifier, erasure: anonymize, visibility: admin, note: "author of the template: only an administrator or the author manages it; after an erasure the reference points to the anonymized account, so only an administrator manages it; not a foreign key (see CLAUDE.md, mair-691-02), a hard delete leaves an id that matches nobody"}
     not_personal: [id, name, custom_field_schema, is_default, created_at, updated_at]
 
   projects:
