@@ -22,6 +22,7 @@ SAMPLES = [
     # E-mail change of Core: the pending address, and the token of the account (one hour).
     ("core-api:0a1b2c/email_change_request", 3600),
     ("core-api:42/email_change_token", 3600),
+    ("core-api:0a1b2c/email_change_spent", 3600),
     # Test stacks without Redis ACL: Core's first-connection and forgotten-password keys unprefixed
     # (the Login front's GDPR simulation, MAIR-497).
     ("3/first_connection_token", 86400),
@@ -30,6 +31,7 @@ SAMPLES = [
     ("0a1b2c/forgot_password_email", 1800),
     ("0a1b2c/email_change_request", 3600),
     ("42/email_change_token", 3600),
+    ("0a1b2c/email_change_spent", 3600),
     # mairie360_api_lib read cache: entries per caller and shared, and the namespace generation,
     # with the role prefix of each API that uses it (Redis ACL of an instance, MAIR-267) and
     # without it (test stacks, no ACL).
