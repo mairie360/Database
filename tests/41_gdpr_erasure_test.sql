@@ -20,7 +20,6 @@ UPDATE users SET first_name = 'Markerqzxwv' WHERE id = 9800; -- one more audit r
 INSERT INTO sessions (id, user_id, token_hash, device_info) VALUES
     ('7a1f0000-0000-4000-8000-000000009800', 9800, 'erasure-session', 'Firefox 140 on Linux');
 -- connection_logs (security log, kept) copies the device: a user agent, never the identity.
-INSERT INTO user_identities (user_id, provider, subject) VALUES (9800, 'keycloak', 'kc-gdpr-erasure-qzxwv');
 -- Second factor (MAIR-805): sealed secret and hashed backup codes are erased with the account.
 INSERT INTO user_totp (user_id, secret_encrypted, confirmed_at) VALUES (9800, '\xdeadbeef'::bytea, now());
 INSERT INTO user_backup_codes (user_id, code_hash) VALUES (9800, '$argon2id$v=19$m=16,t=2,p=1$c2FsdHNhbHQ$aGFzaGhhc2g');
@@ -173,7 +172,6 @@ SELECT ok(
 -- Test 15: the rows marked erasure: delete are gone.
 SELECT ok(
     NOT EXISTS (SELECT 1 FROM sessions WHERE user_id = 9800)
-    AND NOT EXISTS (SELECT 1 FROM user_identities WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_totp WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_backup_codes WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_passkeys WHERE user_id = 9800)

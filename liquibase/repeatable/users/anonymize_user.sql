@@ -55,8 +55,7 @@ $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- Erases the user `p_user_id` (archived first if needed) and returns what was done:
 -- { user_id, already_anonymized, handed_over_to, deleted_private_events, revoked_sessions[] }.
--- The caller (Core_API) publishes `revoked_sessions` to the revocation list (MAIR-264) and mirrors
--- the erasure to Keycloak. Refused for the seeded administrator (id 1) and when no other active
+-- The caller (Core_API) publishes `revoked_sessions` to the revocation list (MAIR-264). Refused for the seeded administrator (id 1) and when no other active
 -- administrator can take the objects over.
 CREATE OR REPLACE FUNCTION anonymize_user(p_user_id INT)
 RETURNS JSONB AS $$
@@ -113,7 +112,6 @@ BEGIN
     DELETE FROM user_backup_codes WHERE user_id = p_user_id;
     DELETE FROM user_calendar_params WHERE user_id = p_user_id;
     DELETE FROM user_content_progress WHERE user_id = p_user_id;
-    DELETE FROM user_identities WHERE user_id = p_user_id;
     DELETE FROM user_modules WHERE user_id = p_user_id;
     DELETE FROM user_notification_settings WHERE user_id = p_user_id;
     DELETE FROM user_passkeys WHERE user_id = p_user_id;
@@ -212,7 +210,8 @@ BEGIN
                               ('two_factor_policy_audit_log', 'action_by'),
                               ('messaging_moderation_log', 'target_user_id'),
                               ('messaging_moderation_log', 'performed_by'),
-                              ('compliance_journal', 'user_id')) AS extra(table_name, column_name)
+                              ('compliance_journal', 'user_id'),
+                              ('project_templates', 'created_by')) AS extra(table_name, column_name)
         WHERE to_regclass('public.' || extra.table_name) IS NOT NULL
         ORDER BY 1, 2
     LOOP

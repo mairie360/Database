@@ -121,7 +121,7 @@ SELECT is_empty(
 
 -- Tests 11-14: what each API role can read of users, pinned (security/api_grants.sql). Every API
 -- role reads (id, email, is_archived): the JWT middleware of mairie360_api_lib checks the account
--- and matches a Keycloak token to it by e-mail (MAIR-556).
+-- and finds the account by e-mail (MAIR-556).
 CREATE FUNCTION pg_temp.readable_user_columns(p_role TEXT) RETURNS SETOF TEXT AS $$
     SELECT a.attname::TEXT FROM pg_attribute a
      WHERE a.attrelid = 'public.users'::regclass AND a.attnum > 0 AND NOT a.attisdropped
