@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(10);
 
--- Author of a project template: releases/v3.11.0/01. Project_API writes it on creation and reads
+-- Author of a project template: releases/v3.11.0/01, without foreign key since releases/v3.11.1/01. Project_API writes it on creation and reads
 -- it to decide who may modify or delete a template; the four seeded templates belong to the
 -- system admin (users.id = 1).
 
@@ -25,12 +25,12 @@ VALUES (4900, 'Rita', 'Author', 'rita.author@template-author.test', '$argon2id$v
 
 --- 1. STRUCTURE (4 tests)
 SELECT has_column('project_templates', 'created_by', 'a template has an author');
-SELECT col_is_fk('project_templates', 'created_by', 'the author is a user');
+-- A foreign key to users would make the TRUNCATE users CASCADE of the API test harness empty the
+-- templates and their statuses.
+SELECT col_isnt_fk('project_templates', 'created_by', 'the author is not a foreign key');
 SELECT is(
-    (SELECT confdeltype::TEXT FROM pg_constraint
-      WHERE conrelid = 'project_templates'::regclass AND contype = 'f'
-        AND conkey = ARRAY[(SELECT attnum FROM pg_attribute WHERE attrelid = 'project_templates'::regclass AND attname = 'created_by')]),
-    'n', 'deleting the author clears the reference instead of deleting the template'
+    (SELECT count(*) FROM pg_constraint WHERE confrelid = 'users'::regclass AND conrelid = 'project_templates'::regclass)::INT,
+    0, 'no constraint links project_templates to users'
 );
 
 SELECT has_index('project_templates', 'idx_project_templates_created_by', 'the author lookup is indexed');
@@ -55,15 +55,17 @@ SELECT is(
     'ok', 'project_api reads the author of a template'
 );
 SELECT is(
-    pg_temp.run_as('project_api', $$INSERT INTO project_templates (name, created_by) VALUES ('Fantôme', 999999)$$),
-    '23503', 'an author that is not a user is refused'
+    pg_temp.run_as('project_api', $$UPDATE project_templates SET name = 'Voirie 4900 bis' WHERE name = 'Voirie 4900'$$),
+    'ok', 'project_api modifies a template'
 );
 
---- 4. DELETION OF THE AUTHOR (1 test)
-DELETE FROM users WHERE id = 4900;
-SELECT is(
-    (SELECT created_by FROM project_templates WHERE name = 'Voirie 4900'), NULL,
-    'the template stays, without author, when its author row is deleted'
+--- 4. TRUNCATE OF THE USERS (1 test)
+-- What the API test harness runs first: the templates and their statuses must survive it.
+SET CONSTRAINTS ALL IMMEDIATE;
+TRUNCATE TABLE users RESTART IDENTITY CASCADE;
+SELECT cmp_ok(
+    (SELECT count(*) FROM project_template_statuses)::INT, '>', 0,
+    'the templates and their statuses survive TRUNCATE users CASCADE'
 );
 
 SELECT * FROM finish();
