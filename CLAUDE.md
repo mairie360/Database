@@ -123,6 +123,7 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 - `releases/v3.8.0/` — previous refresh token of a session, reuse detection.
 - `releases/v3.9.0/` — groups linked to a project.
 - `releases/v3.10.0/` — MAIR-810 (name of the passkey manager).
+- `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -164,15 +165,10 @@ What each former schema version did, in order:
    that never reconnect); hashing itself happens outside Postgres (pgcrypto
    has no argon2id), so this repo only stores and validates the hash shape.
 
-5. **`rel-1.4.0-*`** (`releases/v2.0.0/02`–`03`) — SSO identities (MAIR-141):
-   `user_identities` (`user_id`, `provider`, `subject`; unique per
-   `(provider, subject)` and per `(user_id, provider)`) and `users.password`
-   made nullable for SSO-only accounts (`chk_users_password_hashed` still
-   applies to non-NULL values). The behaviour lives in `repeatable/auth/`:
-   `link_user_identity()` (idempotent write path of the Keycloak migration
-   job), `resolve_user_identity()` (SSO login, NULL for archived users) and
-   `v_users_sso_export` (users + role names + provider links the job reads).
-   The migration job itself (Keycloak side) is not in this repo.
+5. **`rel-1.4.0-*`** (`releases/v2.0.0/02`–`03`) — SSO identities (MAIR-141), removed by
+   `mair-812-01` (see below): `user_identities` and its functions no longer exist. What stays is
+   `users.password` made nullable (`chk_users_password_hashed` still applies to non-NULL values):
+   an account with no local password sets one through the e-mailed link.
 
 6. **`rel-1.5.0-*`** (`releases/v2.0.0/04`–`05`) — explicit read acknowledgement (MAIR-269):
    `conversation_read_cursors` (`user_id`, `conversation_id`, `last_read_message_id`; kept apart
@@ -375,11 +371,11 @@ What each former schema version did, in order:
    (MAIR-498, Compliance_API): `compliance_journal` (append-only, `tr_immutable_compliance_journal`:
    kind, storage, location, action, rows, masked excerpt, cause hint, the erased `user_id` without
    foreign key; never a value) and `erasure_steps` (one row per user and step: keycloak, resend,
-   s3, redis, backup_key, database; status, attempts, `last_error` without data). The role
+   s3, redis, backup_key, database; status, attempts, `last_error` without data; the `keycloak` step was removed by `mair-812-01`). The role
    `compliance_api` (`api_roles.sql`, `-Dcompliance_api_password`) reads no personal table: it
    calls `fn_compliance_scan()` (counts of retention-overdue rows, archived-overdue accounts, rows
-   left on anonymized accounts; messages excluded) and `fn_erasure_targets(user_id)` (e-mail and
-   Keycloak subject, read before `anonymize_user()`), both in `repeatable/security/compliance.sql`,
+   left on anonymized accounts; messages excluded) and `fn_erasure_targets(user_id)` (e-mail,
+   read before `anonymize_user()`), both in `repeatable/security/compliance.sql`,
    writes its journal and the steps, and runs `anonymize_user()`. `tests/42_compliance_service_test.sql`.
 
 23. **`mair-805-01`** (`releases/v3.5.0/01`) — second factor managed by Core (MAIR-805, epic MAIR-804,
@@ -420,6 +416,15 @@ What each former schema version did, in order:
    sides. Every current and future member of a linked group sees the project in Project_API, with the rights of a
    project member; Project_API checks the caller may link the group and keeps one group per project. `project_api`
    writes the table and reads `groups (id, name)`. Test `tests/48_project_groups_test.sql`.
+
+28. **`mair-812-01`** (`releases/v4.0.0/01`) — Keycloak removed (MAIR-812, epic MAIR-804): Core is the only account
+   system. Drops `user_identities`, `link_user_identity()`, `resolve_user_identity()` and `v_users_sso_export`
+   (with their grants and the `fn_erasure_targets` field `keycloak_subject`), deletes the `keycloak` rows of
+   `erasure_steps` and removes that step from its `CHECK`. The data of `user_identities` is lost for good (the
+   rollback gives the empty table back); `compliance_storage` keeps its `keycloak` value (Postgres cannot drop one,
+   and the append-only `compliance_journal` keeps the proof of past erasures). `users.password` stays nullable.
+   Breaking: **deploy it after** the Core_API, Compliance_API and API_lib releases that no longer use these objects.
+   Test `tests/49_keycloak_removed_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
@@ -521,8 +526,7 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   (`mairie360_api_lib` `test_setup`) pass `-D<role>_password` and run the
   application code as the API's role, so a missing grant fails the API's CI:
   the fix belongs here. Every API reads `users (id, email, is_archived)`: the
-  lib's JWT middleware checks the account and matches a Keycloak token by
-  e-mail. Functions and triggers run with the calling
+  lib's JWT middleware checks the account. Functions and triggers run with the calling
   API's rights, so a trigger that writes logs/audit or touches another domain's
   tables must be `SECURITY DEFINER SET search_path = public, pg_temp` (see
   `fn_archive_user`, `check_access`, and the session log triggers).

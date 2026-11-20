@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(37);
+SELECT plan(36);
 
 -- Per-API Postgres roles (MAIR-114): security/api_roles.sql and
 -- security/api_grants.sql. The migration is run with -D<role>_password in
@@ -81,17 +81,6 @@ SELECT results_eq(
     'Only core_api can read users.password'
 );
 
--- Test 4b: SSO identities (MAIR-141) are core's business only
-SELECT results_eq(
-    $$
-    SELECT r.name FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
-    WHERE has_table_privilege(r.name, 'user_identities', 'SELECT')
-       OR has_table_privilege(r.name, 'v_users_sso_export', 'SELECT')
-    $$,
-    $$VALUES ('core_api')$$,
-    'Only core_api can read user_identities and v_users_sso_export'
-);
-
 -- Test 4c: the TOTP secrets and backup codes (MAIR-805) are core's business only
 SELECT results_eq(
     $$
@@ -126,7 +115,7 @@ SELECT is(
 SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('core_api')$$,
     $$VALUES ('access_control'), ('group_members'), ('groups'), ('roles'), ('sessions'), ('two_factor_policy'),
-             ('user_backup_codes'), ('user_identities'), ('user_notification_settings'),
+             ('user_backup_codes'), ('user_notification_settings'),
              ('user_passkeys'), ('user_preferences'), ('user_roles'), ('user_totp'), ('users'), ('v_users_active')$$,
     'core_api writes only to the core domain'
 );
@@ -325,8 +314,7 @@ SELECT is_empty(
     'Every API role can run the is_user_active check of api_lib'
 );
 
--- Test 25c: a Keycloak access token is matched to its account by e-mail
--- (api_lib get_user_id_by_email) in the JWT middleware of every API; only
+-- Test 25c: an account is found by its e-mail in the JWT middleware of every API; only
 -- core_api could run it before MAIR-556.
 SELECT is_empty(
     $q$SELECT r.name FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
@@ -334,7 +322,7 @@ SELECT is_empty(
            $$SELECT (array_agg(id))[1] FROM users
              WHERE lower(email) = lower('paul.owner@roles.test') AND NOT COALESCE(is_archived, false)
              HAVING count(*) = 1$$) <> 'ok'$q$,
-    'Every API role can resolve a Keycloak e-mail to its account'
+    'Every API role can resolve an e-mail to its account'
 );
 
 ---

@@ -43,9 +43,8 @@ $$;
 -- Shared by every API
 -- ---------------------------------------------------------------------------
 -- API_lib's JwtMiddleware, on every authenticated request of every API:
--- is_user_active_by_id reads `id` and `is_archived` (MAIR-531), and a Keycloak
--- access token is matched to its account by e-mail (get_user_id_by_email,
--- MAIR-140), which answered 42501 outside core_api until MAIR-556.
+-- is_user_active_by_id reads `id` and `is_archived` (MAIR-531); `email` stays readable by every
+-- API role (it answered 42501 outside core_api before MAIR-556).
 GRANT SELECT (id, email, is_archived) ON users
     TO core_api, project_api, calendar_api, message_api, elearning_api, compliance_api;
 -- check_access() and is_admin() are SECURITY DEFINER, so RightMiddleware /
@@ -63,11 +62,6 @@ GRANT SELECT, INSERT, UPDATE ON users TO core_api;
 GRANT SELECT, DELETE ON v_users_active TO core_api;
 GRANT SELECT ON v_users_archived TO core_api;
 GRANT SELECT, INSERT, UPDATE, DELETE ON user_preferences, user_notification_settings TO core_api;
--- SSO identities (MAIR-141): the login path resolves a Keycloak subject and
--- the migration job links accounts through link_user_identity(), both as
--- core_api. v_users_sso_export is what the job reads to provision Keycloak.
-GRANT SELECT, INSERT, UPDATE, DELETE ON user_identities TO core_api;
-GRANT SELECT ON v_users_sso_export TO core_api;
 
 -- Second factor (MAIR-805): TOTP secret (sealed by Core) and hashed backup codes, Core's business only.
 -- Rows are deleted when the 2FA is disabled or reset by an administrator.

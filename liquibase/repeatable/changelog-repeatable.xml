@@ -19,14 +19,6 @@
         />
         <rollback/>
     </changeSet>
-    <changeSet id="rep-views-users-sso-export" author="dev" runOnChange="true">
-        <sqlFile
-            path="auth/v_users_sso_export.sql"
-            relativeToChangelogFile="true"
-            splitStatements="false"
-        />
-        <rollback/>
-    </changeSet>
     <changeSet id="rep-views-sessions" author="dev" runOnChange="true">
         <sqlFile
             path="sessions/v_sessions.sql"
@@ -140,22 +132,6 @@
     <changeSet id="rep-functions-users-migrate-legacy-password" author="dev" runOnChange="true">
         <sqlFile
             path="users/migrate_legacy_password.sql"
-            relativeToChangelogFile="true"
-            splitStatements="false"
-        />
-        <rollback/>
-    </changeSet>
-    <changeSet id="rep-functions-auth-link-identity" author="dev" runOnChange="true">
-        <sqlFile
-            path="auth/link_user_identity.sql"
-            relativeToChangelogFile="true"
-            splitStatements="false"
-        />
-        <rollback/>
-    </changeSet>
-    <changeSet id="rep-functions-auth-resolve-identity" author="dev" runOnChange="true">
-        <sqlFile
-            path="auth/resolve_user_identity.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />
@@ -459,14 +435,6 @@
     <changeSet id="rep-triggers-users-normalize-legacy-phone" author="dev" runOnChange="true">
         <sqlFile
             path="users/trigger_normalize_legacy_phone.sql"
-            relativeToChangelogFile="true"
-            splitStatements="false"
-        />
-        <rollback/>
-    </changeSet>
-    <changeSet id="rep-triggers-user-identities-updated-at" author="dev" runOnChange="true">
-        <sqlFile
-            path="auth/trg_user_identities_updated_at.sql"
             relativeToChangelogFile="true"
             splitStatements="false"
         />
