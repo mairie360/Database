@@ -110,6 +110,12 @@ BEGIN
     SELECT 1, 1
     WHERE EXISTS (SELECT 1 FROM users WHERE id = 1)
     ON CONFLICT DO NOTHING;
+
+    -- The project templates seeded before the admin existed belong to it (releases/v3.11.0/01).
+    UPDATE project_templates
+    SET created_by = 1
+    WHERE created_by IS NULL
+      AND EXISTS (SELECT 1 FROM users WHERE id = 1);
 END;
 $$ LANGUAGE plpgsql SET search_path = public, pg_temp;
 
