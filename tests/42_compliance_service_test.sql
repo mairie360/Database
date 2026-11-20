@@ -34,7 +34,7 @@ SELECT ok(
 -- Test 2: it reads no personal table directly: the scan and the targets go through functions.
 SELECT is(
     (SELECT count(*)::INT FROM unnest(ARRAY['users_audit_log', 'connection_logs', 'access_logs', 'messages',
-                                            'sessions', 'user_identities', 'events']) AS t(name)
+                                            'sessions', 'events']) AS t(name)
      WHERE has_table_privilege('compliance_api', t.name, 'SELECT, INSERT, UPDATE, DELETE')),
     0,
     'compliance_api has no privilege on the personal tables'
@@ -95,20 +95,19 @@ VALUES (9900, 'Compliancemarker', 'Tracer', 'gdpr.compliance.marker@example.com'
        (9901, 'Admin', 'Compliance', 'admin.compliance@example.com', NULL, NULL, NULL);
 SET CONSTRAINTS ALL IMMEDIATE;
 INSERT INTO user_roles (user_id, role_id) SELECT 9901, id FROM roles WHERE name = 'Admin';
-INSERT INTO user_identities (user_id, provider, subject) VALUES (9900, 'keycloak', 'kc-compliance-marker');
 
 -- Test 9: the targets, read before the erasure.
 SELECT is(
     (SELECT fn_erasure_targets(9900)),
-    '{"user_id": 9900, "email": "gdpr.compliance.marker@example.com", "keycloak_subject": "kc-compliance-marker"}'::JSONB,
-    'fn_erasure_targets gives the e-mail and the Keycloak subject to propagate the erasure'
+    '{"user_id": 9900, "email": "gdpr.compliance.marker@example.com"}'::JSONB,
+    'fn_erasure_targets gives the e-mail to propagate the erasure'
 );
 
 -- Test 10: the steps, then the database step itself, as compliance_api.
 SELECT is(
     pg_temp.run_as('compliance_api',
-        $$INSERT INTO erasure_steps (user_id, step) SELECT 9900, s FROM unnest(ARRAY['keycloak', 'resend', 's3', 'redis', 'backup_key', 'database']) s;
-          UPDATE erasure_steps SET status = 'done', attempts = 1, updated_at = now() WHERE user_id = 9900 AND step = 'keycloak';
+        $$INSERT INTO erasure_steps (user_id, step) SELECT 9900, s FROM unnest(ARRAY['resend', 's3', 'redis', 'backup_key', 'database']) s;
+          UPDATE erasure_steps SET status = 'done', attempts = 1, updated_at = now() WHERE user_id = 9900 AND step = 'resend';
           SELECT anonymize_user(9900)$$),
     'ok',
     'compliance_api records the steps and runs anonymize_user'

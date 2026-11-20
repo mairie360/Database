@@ -55,8 +55,7 @@ $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- Erases the user `p_user_id` (archived first if needed) and returns what was done:
 -- { user_id, already_anonymized, handed_over_to, deleted_private_events, revoked_sessions[] }.
--- The caller (Core_API) publishes `revoked_sessions` to the revocation list (MAIR-264) and mirrors
--- the erasure to Keycloak. Refused for the seeded administrator (id 1) and when no other active
+-- The caller (Core_API) publishes `revoked_sessions` to the revocation list (MAIR-264). Refused for the seeded administrator (id 1) and when no other active
 -- administrator can take the objects over.
 CREATE OR REPLACE FUNCTION anonymize_user(p_user_id INT)
 RETURNS JSONB AS $$
@@ -113,7 +112,6 @@ BEGIN
     DELETE FROM user_backup_codes WHERE user_id = p_user_id;
     DELETE FROM user_calendar_params WHERE user_id = p_user_id;
     DELETE FROM user_content_progress WHERE user_id = p_user_id;
-    DELETE FROM user_identities WHERE user_id = p_user_id;
     DELETE FROM user_modules WHERE user_id = p_user_id;
     DELETE FROM user_notification_settings WHERE user_id = p_user_id;
     DELETE FROM user_passkeys WHERE user_id = p_user_id;

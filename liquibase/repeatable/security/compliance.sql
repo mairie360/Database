@@ -63,7 +63,7 @@ BEGIN
     FOREACH v_table IN ARRAY ARRAY['access_control', 'conversation_members', 'conversation_read_cursors',
         'course_ratings', 'event_members', 'group_members', 'message_mentions', 'project_members',
         'recurrence_members', 'sessions', 'task_assignees', 'unread_counters', 'user_calendar_params',
-        'user_content_progress', 'user_identities', 'user_modules', 'user_notification_settings',
+        'user_content_progress', 'user_modules', 'user_notification_settings',
         'user_backup_codes', 'user_passkeys', 'user_preferences', 'user_roles', 'user_totp']
     LOOP
         EXECUTE format(
@@ -90,14 +90,13 @@ END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- What the compliance service needs to propagate the erasure of a user outside the database,
--- read BEFORE anonymize_user() clears it: the e-mail (Resend contact, Keycloak lookup) and the
--- Keycloak subject. NULL for an unknown or already anonymized account.
+-- read BEFORE anonymize_user() clears it: the e-mail (Resend contact). NULL for an unknown or already
+-- anonymized account.
 CREATE OR REPLACE FUNCTION fn_erasure_targets(p_user_id INT)
 RETURNS JSONB AS $$
     SELECT jsonb_build_object(
         'user_id', u.id,
-        'email', u.email,
-        'keycloak_subject', (SELECT i.subject FROM user_identities i WHERE i.user_id = u.id AND i.provider = 'keycloak' LIMIT 1)
+        'email', u.email
     )
     FROM users u
     WHERE u.id = p_user_id AND u.email <> format('anonymized-%s@anonymized.invalid', u.id);
