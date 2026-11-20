@@ -171,5 +171,68 @@ class Markers(unittest.TestCase):
         self.assertEqual(len(errors), 1, errors)
 
 
+class ReviewFindings(unittest.TestCase):
+    """Cases the first version let through (review of the expand/contract check)."""
+
+    def test_mair_648_not_null_after_a_type_with_a_comma_fails(self):
+        errors = check(new_release("ALTER TABLE tasks ADD COLUMN amount NUMERIC(10,2) NOT NULL;\n"))
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn(": not null column without default: ", errors[0])
+
+    def test_mair_648_defaulted_column_with_a_comma_type_passes(self):
+        self.assertEqual(check(new_release(
+            "ALTER TABLE tasks ADD COLUMN amount NUMERIC(10,2) NOT NULL DEFAULT 0, "
+            "ADD COLUMN note TEXT;\n")), [])
+
+    def test_mair_648_released_table_dropped_and_recreated_fails(self):
+        errors = check(new_release(
+            "DROP TABLE legacy_notes;\nCREATE TABLE legacy_notes (id BIGINT PRIMARY KEY);\n"))
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("DROP TABLE LEGACY_NOTES", errors[0])
+
+    def test_mair_648_released_view_dropped_and_recreated_passes(self):
+        baseline = dict(BASE_TREE)
+        baseline["liquibase/repeatable/v.sql"] = "CREATE VIEW v_tasks AS SELECT * FROM tasks;\n"
+        self.assertEqual(check({"liquibase/repeatable/v.sql":
+                                "DROP VIEW IF EXISTS v_tasks;\n"
+                                "CREATE VIEW v_tasks AS SELECT id FROM tasks;\n"}, baseline), [])
+
+    def test_mair_648_drop_of_a_released_function_without_arguments_fails(self):
+        errors = check(new_release("DROP FUNCTION create_user;\n"))
+        self.assertEqual(len(errors), 1, errors)
+
+    def test_mair_648_drop_with_a_nested_parenthesis_type_fails(self):
+        baseline = dict(BASE_TREE)
+        baseline["liquibase/repeatable/f.sql"] = (
+            "CREATE FUNCTION fn_round(p NUMERIC(10,2)) RETURNS INT AS $$ SELECT 1 $$ LANGUAGE sql;\n")
+        errors = check({"liquibase/repeatable/f.sql": "DROP FUNCTION fn_round(NUMERIC(10,2));\n"},
+                       baseline)
+        self.assertEqual(len(errors), 1, errors)
+
+    def test_mair_648_out_arguments_are_not_part_of_the_signature(self):
+        baseline = dict(BASE_TREE)
+        baseline["liquibase/repeatable/f.sql"] = (
+            "CREATE FUNCTION fn_stats(p_id INT, OUT total INT) AS $$ SELECT 1 $$ LANGUAGE sql;\n")
+        errors = check({"liquibase/repeatable/f.sql": "DROP FUNCTION fn_stats(INT);\n"}, baseline)
+        self.assertEqual(len(errors), 1, errors)
+
+    def test_mair_648_comma_inside_a_default_literal_is_not_an_argument(self):
+        baseline = dict(BASE_TREE)
+        baseline["liquibase/repeatable/f.sql"] = (
+            "CREATE FUNCTION fn_tag(p TEXT DEFAULT 'a,b') RETURNS INT AS $$ SELECT 1 $$ "
+            "LANGUAGE sql;\n")
+        errors = check({"liquibase/repeatable/f.sql": "DROP FUNCTION fn_tag(TEXT);\n"}, baseline)
+        self.assertEqual(len(errors), 1, errors)
+
+    def test_mair_648_released_clause_on_another_table_fails(self):
+        # A repeatable file that tightened tasks now tightens users: same clause, new table.
+        baseline = dict(BASE_TREE)
+        baseline["liquibase/repeatable/x.sql"] = "ALTER TABLE tasks ALTER COLUMN status SET NOT NULL;\n"
+        errors = check({"liquibase/repeatable/x.sql":
+                        "ALTER TABLE users ALTER COLUMN status SET NOT NULL;\n"}, baseline)
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn(": set not null: ", errors[0])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -23,8 +23,10 @@ filled by a trigger for the writers that omit it, for example) is accepted with 
     -- expand-safe: the trigger gives the writers that omit it the first status
 
 A marker sits on the statement's line or in the comment lines right above it. Dropping a
-function, view, table or type is not destructive when the same file creates it again with the
-same signature, nor when the baseline release never had it.
+function, procedure or view is not destructive when the same file creates it again with the
+same signature (the repeatable drop-and-recreate pattern); a table or type recreated in the same
+file still loses its data or members, so it counts. A drop of an object the baseline release
+never had is not destructive either.
 
 Usage: check_expand_contract.py --baseline vX.Y.Z [--root .]
 """
@@ -53,14 +55,15 @@ DESTRUCTIVE = [
         r"\bALTER\s+COLUMN\s+\S+\s+(?:SET\s+DATA\s+)?TYPE\b[^;,]*", re.IGNORECASE)),
     ("set not null", re.compile(r"\bALTER\s+COLUMN\s+\S+\s+SET\s+NOT\s+NULL\b", re.IGNORECASE)),
 ]
-ADD_COLUMN = re.compile(r"\bADD\s+COLUMN\b[^;,]*", re.IGNORECASE)
+# One level of parentheses inside the action: `NUMERIC(10,2) NOT NULL` is one column.
+ADD_COLUMN = re.compile(r"\bADD\s+COLUMN\b(?:[^;,()]|\([^()]*\))*", re.IGNORECASE)
 NOT_NULL = re.compile(r"\bNOT\s+NULL\b", re.IGNORECASE)
 HAS_VALUE = re.compile(r"\b(?:DEFAULT|GENERATED)\b", re.IGNORECASE)
 MARKER = re.compile(r"--.*\bcontract:\s*(v\d+\.\d+\.\d+)\b", re.IGNORECASE)
 SAFE_MARKER = re.compile(r"--.*\bexpand-safe:\s*\S", re.IGNORECASE)
 DROP_OBJECT = re.compile(
     r"\bDROP\s+(MATERIALIZED\s+VIEW|TABLE|VIEW|FUNCTION|PROCEDURE|TYPE)\s+(?:IF\s+EXISTS\s+)?"
-    r"([\w.\"]+)\s*(\([^)]*\))?", re.IGNORECASE)
+    r"([\w.\"]+)\s*(\()?", re.IGNORECASE)
 CREATE_OBJECT = re.compile(
     r"\bCREATE\s+(?:OR\s+REPLACE\s+)?(?:UNLOGGED\s+|TEMP(?:ORARY)?\s+)?"
     r"(MATERIALIZED\s+VIEW|TABLE|VIEW|FUNCTION|PROCEDURE|TYPE)\s+(?:IF\s+NOT\s+EXISTS\s+)?"
@@ -73,6 +76,11 @@ TYPE_ALIASES = {
     "CHARACTER VARYING": "VARCHAR", "TIMESTAMPTZ": "TIMESTAMP WITH TIME ZONE",
     "FLOAT8": "DOUBLE PRECISION", "DECIMAL": "NUMERIC",
 }
+# Kinds identified by their whole key: dropping and creating one again in the same file is the
+# repeatable pattern. A table or type recreated in place loses its rows or members.
+RECREATABLE = {"FUNCTION", "PROCEDURE", "VIEW", "MATERIALIZED VIEW"}
+ALTER_TABLE = re.compile(r"\bALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?([\w.\"]+)",
+                         re.IGNORECASE)
 SEMVER = re.compile(r"^v(\d+)\.(\d+)\.(\d+)$")
 
 
@@ -83,6 +91,7 @@ class Finding:
     kind: str
     statement: str
     marker: str | None
+    target: str = ""
     safe: bool = False
     exempt: bool = False
     object_drop: bool = False
@@ -148,13 +157,18 @@ def _safe(lines: list[str], line_index: int) -> bool:
 
 
 def _split_args(args: str) -> list[str]:
-    parts, depth, current = [], 0, ""
+    """Top-level arguments; commas and parentheses inside `'…'` literals do not count."""
+    parts, depth, current, quoted = [], 0, "", False
     for c in args:
-        if c == "(":
+        if c == "'":
+            quoted = not quoted  # a doubled quote toggles twice
+        elif quoted:
+            pass
+        elif c == "(":
             depth += 1
         elif c == ")":
             depth -= 1
-        if c == "," and depth == 0:
+        if c == "," and depth == 0 and not quoted:
             parts.append(current)
             current = ""
         else:
@@ -171,12 +185,13 @@ def _arg_types(args: str) -> tuple[str, ...]:
         arg = re.split(r"\bDEFAULT\b|:=|=", arg, maxsplit=1, flags=re.IGNORECASE)[0]
         arg = re.sub(r"\([^)]*\)", "", arg)
         tokens = arg.upper().split()
-        if tokens and tokens[0] in {"IN", "OUT", "INOUT", "VARIADIC"}:
+        # PostgreSQL identifies a function by its input arguments: OUT ones are not part of it.
+        if tokens and tokens[0] == "OUT":
+            continue
+        if tokens and tokens[0] in {"IN", "INOUT", "VARIADIC"}:
             tokens = tokens[1:]
         if len(tokens) > 1 and tokens[0] not in MULTIWORD_TYPES:
             tokens = tokens[1:]
-        if tokens and tokens[0] == "OUT":
-            continue
         name = " ".join(tokens)
         types.append(TYPE_ALIASES.get(name, name))
     return tuple(types)
@@ -191,28 +206,53 @@ def _object_key(kind: str, name: str, args: str | None) -> tuple:
     return (kind, name, signature)
 
 
+def _parenthesised(code: str, start: int) -> str:
+    """The `(…)` group opening at `code[start]`, nested groups and `'…'` literals included."""
+    depth, end, quoted = 1, start + 1, False
+    while end < len(code) and depth:
+        c = code[end]
+        if c == "'":
+            quoted = not quoted
+        elif not quoted:
+            depth += {"(": 1, ")": -1}.get(c, 0)
+        end += 1
+    return code[start:end]
+
+
 def _created_objects(code: str) -> list[tuple[int, tuple]]:
     """(offset, key) of every object a file creates; functions keep their argument types."""
     created = []
     for m in CREATE_OBJECT.finditer(code):
         kind, name, paren = m.group(1), m.group(2), m.group(3)
-        args = None
-        if paren:
-            depth, end = 1, m.end()
-            while end < len(code) and depth:
-                depth += {"(": 1, ")": -1}.get(code[end], 0)
-                end += 1
-            args = code[m.end() - 1:end]
+        args = _parenthesised(code, m.end() - 1) if paren else None
         created.append((m.start(), _object_key(kind, name, args)))
     return created
+
+
+def _same_object(drop_key: tuple, key: tuple) -> bool:
+    """A drop without an argument list names every overload of the function."""
+    if drop_key[2] is None and drop_key[0] in {"FUNCTION", "PROCEDURE"}:
+        return key[:2] == drop_key[:2]
+    return key == drop_key
+
+
+def _target(code: str, offset: int) -> str:
+    """Table of the last `ALTER TABLE` before `offset`: column clauses are keyed on it."""
+    last = None
+    for m in ALTER_TABLE.finditer(code, 0, offset):
+        last = m
+    if last is None:
+        return ""
+    name = last.group(1).replace('"', "").lower()
+    return name if "." in name else "public." + name
 
 
 def destructive_statements(path: str, sql: str,
                            released_objects: set[tuple] | None = None) -> list[Finding]:
     """Every destructive statement of one SQL file, in file order.
 
-    A drop is `exempt` when the file creates the object again afterwards with the same
-    signature, or when `released_objects` is given and the object is not in it.
+    A drop is `exempt` when the file creates a function, procedure or view again afterwards
+    with the same signature, or when `released_objects` is given and the object is not in it.
     """
     code = _blank_comments(sql)
     created = _created_objects(code)
@@ -233,13 +273,16 @@ def destructive_statements(path: str, sql: str,
             # creates at run time, such as expired partitions, not a migration step.
             exempt = True
         elif dropped:
-            key = _object_key(dropped.group(1), dropped.group(2), dropped.group(3))
-            recreated = any(o > offset and k == key for o, k in created)
-            never_released = released_objects is not None and key not in released_objects
+            args = _parenthesised(code, dropped.end() - 1) if dropped.group(3) else None
+            key = _object_key(dropped.group(1), dropped.group(2), args)
+            recreated = key[0] in RECREATABLE and any(
+                o > offset and _same_object(key, k) for o, k in created)
+            never_released = released_objects is not None and not any(
+                _same_object(key, k) for k in released_objects)
             exempt = recreated or never_released
         findings.append(Finding(path, line_index + 1, kind, _normalise(statement),
-                                _marker(lines, line_index), _safe(lines, line_index), exempt,
-                                dropped is not None))
+                                _marker(lines, line_index), _target(code, offset),
+                                _safe(lines, line_index), exempt, dropped is not None))
     return findings
 
 
@@ -252,10 +295,10 @@ def find_violations(current: dict[str, str], baseline: dict[str, str],
                     baseline_tag: str, released_tags: set[str]) -> list[str]:
     """Destructive statements new since the baseline that carry no valid marker.
 
-    `current` and `baseline` map a file path to its SQL. A dropped function, view, table or type
-    fails when the baseline has it and the file does not create it again with the same
-    signature; any other destructive statement fails when the baseline tree does not already
-    hold it. A `contract:` marker is valid when it names a released tag no newer than the
+    `current` and `baseline` map a file path to its SQL. A dropped object fails when the
+    baseline has it, unless it is a function, procedure or view the file creates again with the
+    same signature; any other destructive statement fails when the baseline tree does not
+    already hold it on the same table. A `contract:` marker is valid when it names a released tag no newer than the
     baseline.
     """
     def forward(files: dict[str, str]):
@@ -271,12 +314,14 @@ def find_violations(current: dict[str, str], baseline: dict[str, str],
     # Column-level statements already in the baseline tree (in any file: release folders get
     # renamed) are not new. Dropped objects are judged on their own: the drop line of a
     # drop-and-recreate stays the same when the recreated signature changes.
-    remaining = Counter(f.statement for f in scanned(baseline, None) if not f.object_drop)
+    # Keyed on the table too: the same clause on another table is a new statement.
+    remaining = Counter((f.target, f.statement) for f in scanned(baseline, None)
+                        if not f.object_drop)
     baseline_version = _version(baseline_tag)
     errors = []
     for f in scanned(current, released_objects):
-        if not f.object_drop and remaining[f.statement] > 0:
-            remaining[f.statement] -= 1
+        if not f.object_drop and remaining[(f.target, f.statement)] > 0:
+            remaining[(f.target, f.statement)] -= 1
             continue
         if f.exempt or f.safe:
             continue

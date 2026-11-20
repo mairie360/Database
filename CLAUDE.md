@@ -101,8 +101,9 @@ db container: `psql -U postgres -d core -f /path/to/tests/NN_x_test.sql` (each t
 file is wrapped in `BEGIN; … ROLLBACK;` so it is self-cleaning).
 
 CI (`.github/workflows/cicd.yml`) delegates everything to the shared
-`mairie360/CICD` reusable workflow; releases are cut by semantic-release on pushes
-to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major).
+`mairie360/CICD` reusable workflow. A push to `main` only releases dev: the version tag is
+computed by semantic-release (**conventionalcommits**, `feat!:` / `BREAKING CHANGE` → major)
+and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
 
 ## Migration architecture
 
@@ -474,9 +475,13 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   uses the old element. `./expand_contract_test.sh` (run by `./test.sh`, so in CI) fails
   on every such statement new since the newest `vX.Y.Z` tag (the release in prod, since
   only `promote-prod` cuts tags; `EXPAND_CONTRACT_BASELINE` overrides it). Not counted:
-  `*.rollback.sql`, a drop followed in the same file by the same object with the same
-  signature (the repeatable drop-and-recreate pattern), a drop of an object the baseline
-  never had, a `format()` template (`DROP TABLE public.%I`). A contract step carries
+  `*.rollback.sql`, a drop of a function, procedure or view followed in the same file by
+  the same object with the same signature (the repeatable drop-and-recreate pattern; a
+  table or type recreated that way still counts, its rows or members are lost), a drop of
+  an object the baseline never had (a `DROP FUNCTION` without argument list names every
+  overload; `OUT` arguments are not part of a signature), a `format()` template
+  (`DROP TABLE public.%I`). A column-level statement already in the baseline counts as
+  released only on the same table. A contract step carries
   `-- contract: vX.Y.Z` (the released expand step, at or before the baseline) on its line
   or in the comment block right above it; a statement that does not break the previous
   release although it looks destructive (a column a trigger fills for the writers that
