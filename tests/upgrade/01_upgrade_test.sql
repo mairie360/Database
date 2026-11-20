@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(47);
+SELECT plan(48);
 
 ---
 --- Admin account
@@ -213,7 +213,7 @@ SELECT ok(
 -- changelog had no tag.
 SELECT results_eq(
     $$SELECT tag FROM databasechangelog WHERE tag IS NOT NULL ORDER BY orderexecuted$$,
-    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0'), ('v3.4.0'), ('v3.4.1'), ('v3.5.0'), ('v3.6.0'), ('v3.7.0'), ('v3.8.0'), ('v3.9.0'), ('v3.10.0')$$,
+    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0'), ('v3.4.0'), ('v3.4.1'), ('v3.5.0'), ('v3.6.0'), ('v3.7.0'), ('v3.8.0'), ('v3.9.0'), ('v3.10.0'), ('v3.11.0')$$,
     'The database is tagged with the git tags, in order'
 );
 
@@ -223,6 +223,13 @@ SELECT ok(
     AND (SELECT orderexecuted FROM databasechangelog WHERE tag = 'v2.0.0')
         < (SELECT orderexecuted FROM databasechangelog WHERE id = 'rel-1.9.0-01'),
     'Each tag is set before the changesets of the next git tag'
+);
+
+-- The templates seeded by an earlier release belong to the system admin once the author column exists.
+SELECT is(
+    (SELECT count(*) FROM project_templates WHERE created_by = 1)::INT,
+    (SELECT count(*) FROM project_templates)::INT,
+    'Every project template of the upgraded database belongs to the system admin'
 );
 
 ---
