@@ -8,6 +8,9 @@ echo "🚀 CI secrets check..."
 ./ci_secrets_test.sh
 ./auto_approve_test.sh
 
+echo "🚀 Expand/contract check of the migrations..."
+./expand_contract_test.sh
+
 echo "🚀 Nettoyage complet..."
 docker compose -f docker-compose-test.yml down -v --remove-orphans
 

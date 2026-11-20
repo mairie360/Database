@@ -465,6 +465,24 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   `bench/docker-compose-bench.yml` — the changesets use
   `sqlFile path="NN__x.sql"` and Liquibase resolves those against the search path,
   not the changelog dir. Miss this and `update` fails with a file-not-found.
+- **Expand/contract.** The APIs of the release in prod must keep working on the schema
+  of the next one, so that they can be rolled back without restoring the database. A
+  release only *expands* (new table, nullable or defaulted column, new function, view or
+  index); dropping, renaming or tightening (`DROP` of a column, table, view, function or
+  type, `RENAME`, `ALTER COLUMN … TYPE`, `SET NOT NULL`, a `NOT NULL` column without
+  default) is a *contract* step that waits for a later release, once no deployed version
+  uses the old element. `./expand_contract_test.sh` (run by `./test.sh`, so in CI) fails
+  on every such statement new since the newest `vX.Y.Z` tag (the release in prod, since
+  only `promote-prod` cuts tags; `EXPAND_CONTRACT_BASELINE` overrides it). Not counted:
+  `*.rollback.sql`, a drop followed in the same file by the same object with the same
+  signature (the repeatable drop-and-recreate pattern), a drop of an object the baseline
+  never had, a `format()` template (`DROP TABLE public.%I`). A contract step carries
+  `-- contract: vX.Y.Z` (the released expand step, at or before the baseline) on its line
+  or in the comment block right above it; a statement that does not break the previous
+  release although it looks destructive (a column a trigger fills for the writers that
+  omit it) carries `-- expand-safe: <why>`. Changing a function's signature is a contract
+  step: add the new signature, keep the old one until the APIs stop calling it. Tests:
+  `tests/expand_contract/mair_648_expand_contract_test.py`.
 - **Repeatable objects** (views/functions/triggers) *are* meant to be edited in
   place. Write them idempotently: `CREATE OR REPLACE` for functions/views,
   `DROP … IF EXISTS` + recreate for triggers, and `DROP FUNCTION IF EXISTS` first
