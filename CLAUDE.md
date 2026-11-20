@@ -494,13 +494,20 @@ Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
   uses the old element. `./expand_contract_test.sh` (run by `./test.sh`, so in CI) fails
   on every such statement new since the newest `vX.Y.Z` tag (the release in prod, since
   only `promote-prod` cuts tags; `EXPAND_CONTRACT_BASELINE` overrides it). Not counted:
-  `*.rollback.sql`, a drop of a function, procedure or view followed in the same file by
-  the same object with the same signature (the repeatable drop-and-recreate pattern; a
-  table or type recreated that way still counts, its rows or members are lost), a drop of
+  `*.rollback.sql`, a drop of a function or procedure followed in the same file by the
+  same object with the same signature (the repeatable drop-and-recreate pattern; a drop
+  without argument list must bring every released overload back), a view recreated with
+  the definition it had at the baseline (another definition may have lost a column: it
+  needs a marker; a table or type recreated that way still counts, its rows or members are
+  lost), a drop of
   an object the baseline never had (a `DROP FUNCTION` without argument list names every
   overload; `OUT` arguments are not part of a signature), a `format()` template
   (`DROP TABLE public.%I`). A column-level statement already in the baseline counts as
-  released only on the same table. A contract step carries
+  released only on the same table (quoted identifiers keep their case). `ADD` without
+  `COLUMN` counts as a column. A contract step accepted although the previous release
+  still uses the element (Keycloak's objects, removed from every service in v4.0.0) is
+  listed in `tests/expand_contract/accepted.json` with its file, statement and reason; an
+  entry that matches nothing fails. A contract step carries
   `-- contract: vX.Y.Z` (the released expand step, at or before the baseline) on its line
   or in the comment block right above it; a statement that does not break the previous
   release although it looks destructive (a column a trigger fills for the writers that

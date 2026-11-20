@@ -190,12 +190,31 @@ class ReviewFindings(unittest.TestCase):
         self.assertEqual(len(errors), 1, errors)
         self.assertIn("DROP TABLE LEGACY_NOTES", errors[0])
 
-    def test_mair_648_released_view_dropped_and_recreated_passes(self):
+    def test_mair_648_released_view_recreated_unchanged_passes(self):
         baseline = dict(BASE_TREE)
-        baseline["liquibase/repeatable/v.sql"] = "CREATE VIEW v_tasks AS SELECT * FROM tasks;\n"
+        view = ("DROP VIEW IF EXISTS v_tasks;\n"
+                "CREATE VIEW v_tasks AS SELECT id, title, assigned_to FROM tasks;\n")
+        baseline["liquibase/repeatable/v.sql"] = view
+        self.assertEqual(check({"liquibase/repeatable/v.sql": view}, baseline), [])
+
+    def test_mair_648_released_view_recreated_with_fewer_columns_fails(self):
+        baseline = dict(BASE_TREE)
+        baseline["liquibase/repeatable/v.sql"] = (
+            "CREATE VIEW v_tasks AS SELECT id, title, assigned_to FROM tasks;\n")
+        errors = check({"liquibase/repeatable/v.sql":
+                        "DROP VIEW IF EXISTS v_tasks;\n"
+                        "CREATE VIEW v_tasks AS SELECT id FROM tasks;\n"}, baseline)
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("DROP VIEW IF EXISTS V_TASKS", errors[0])
+
+    def test_mair_648_released_view_recreated_with_expand_safe_passes(self):
+        baseline = dict(BASE_TREE)
+        baseline["liquibase/repeatable/v.sql"] = "CREATE VIEW v_tasks AS SELECT id FROM tasks;\n"
         self.assertEqual(check({"liquibase/repeatable/v.sql":
+                                "-- expand-safe: the view only gains the title column\n"
                                 "DROP VIEW IF EXISTS v_tasks;\n"
-                                "CREATE VIEW v_tasks AS SELECT id FROM tasks;\n"}, baseline), [])
+                                "CREATE VIEW v_tasks AS SELECT id, title FROM tasks;\n"},
+                               baseline), [])
 
     def test_mair_648_drop_of_a_released_function_without_arguments_fails(self):
         errors = check(new_release("DROP FUNCTION create_user;\n"))
@@ -232,6 +251,70 @@ class ReviewFindings(unittest.TestCase):
                         "ALTER TABLE users ALTER COLUMN status SET NOT NULL;\n"}, baseline)
         self.assertEqual(len(errors), 1, errors)
         self.assertIn(": set not null: ", errors[0])
+
+
+class SecondReviewFindings(unittest.TestCase):
+    """Cases the second review of the expand/contract check found."""
+
+    def test_mair_648_add_without_column_keyword_fails(self):
+        errors = check(new_release("ALTER TABLE tasks ADD amount NUMERIC(10,2) NOT NULL;\n"))
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn(": not null column without default: ", errors[0])
+
+    def test_mair_648_add_constraint_with_not_null_check_passes(self):
+        self.assertEqual(check(new_release(
+            "ALTER TABLE tasks ADD CONSTRAINT chk_title CHECK (title IS NOT NULL) NOT VALID;\n")),
+            [])
+
+    def test_mair_648_comma_inside_a_quoted_argument_name_is_not_an_argument(self):
+        baseline = dict(BASE_TREE)
+        baseline["liquibase/repeatable/f.sql"] = (
+            'CREATE FUNCTION fn_q("a,b" TEXT) RETURNS INT AS $$ SELECT 1 $$ LANGUAGE sql;\n')
+        errors = check({"liquibase/repeatable/f.sql": "DROP FUNCTION fn_q(TEXT);\n"}, baseline)
+        self.assertEqual(len(errors), 1, errors)
+
+    def test_mair_648_quoted_table_is_not_the_lower_case_one(self):
+        baseline = dict(BASE_TREE)
+        baseline["liquibase/repeatable/x.sql"] = "ALTER TABLE tasks ALTER COLUMN title SET NOT NULL;\n"
+        errors = check({"liquibase/repeatable/x.sql":
+                        'ALTER TABLE "Tasks" ALTER COLUMN title SET NOT NULL;\n'}, baseline)
+        self.assertEqual(len(errors), 1, errors)
+
+    def test_mair_648_drop_without_arguments_then_other_signature_fails(self):
+        errors = check(new_release(
+            "DROP FUNCTION create_user;\n"
+            "CREATE FUNCTION create_user(p_email TEXT) RETURNS INT AS $$ SELECT 1 $$ LANGUAGE sql;\n"))
+        self.assertEqual(len(errors), 1, errors)
+
+    def test_mair_648_drop_without_arguments_then_same_signature_passes(self):
+        self.assertEqual(check(new_release(
+            "DROP FUNCTION create_user;\n"
+            "CREATE FUNCTION create_user(p_email VARCHAR, p_role INT) RETURNS INT\n"
+            "AS $$ SELECT 1 $$ LANGUAGE sql;\n")), [])
+
+
+class AcceptedContractSteps(unittest.TestCase):
+    """accepted.json: contract steps accepted with a reason, never stale."""
+
+    def test_mair_648_accepted_contract_step_passes(self):
+        current = dict(BASE_TREE, **new_release("DROP TABLE legacy_notes;\n"))
+        accepted = [{"path": "liquibase/releases/v3.5.0/01__change.sql",
+                     "statement": "drop table legacy_notes", "reason": "test"}]
+        self.assertEqual(find_violations(current, BASE_TREE, BASELINE, RELEASED, accepted), [])
+
+    def test_mair_648_accepted_entry_matching_nothing_fails(self):
+        accepted = [{"path": "liquibase/releases/v3.5.0/01__change.sql",
+                     "statement": "DROP TABLE legacy_notes", "reason": "test"}]
+        errors = find_violations(dict(BASE_TREE), BASE_TREE, BASELINE, RELEASED, accepted)
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("accepted.json entry matches nothing", errors[0])
+
+    def test_mair_648_accepted_file_is_valid(self):
+        from check_expand_contract import ACCEPTED_FILE
+        import json
+        for entry in json.loads(ACCEPTED_FILE.read_text(encoding="utf-8")):
+            self.assertEqual(set(entry), {"path", "statement", "reason"}, entry)
+            self.assertTrue(entry["reason"].strip(), entry)
 
 
 if __name__ == "__main__":
