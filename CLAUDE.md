@@ -123,6 +123,8 @@ to `main` using **conventionalcommits** (`feat!:` / `BREAKING CHANGE` → major)
 - `releases/v3.8.0/` — previous refresh token of a session, reuse detection.
 - `releases/v3.9.0/` — groups linked to a project.
 - `releases/v3.10.0/` — MAIR-810 (name of the passkey manager).
+- `releases/v3.11.0/` — author of a project template.
+- `releases/v3.11.1/` — the author of a project template is not a foreign key.
 - `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
@@ -417,14 +419,26 @@ What each former schema version did, in order:
    project member; Project_API checks the caller may link the group and keeps one group per project. `project_api`
    writes the table and reads `groups (id, name)`. Test `tests/48_project_groups_test.sql`.
 
-28. **`mair-812-01`** (`releases/v4.0.0/01`) — Keycloak removed (MAIR-812, epic MAIR-804): Core is the only account
+28. **`mair-691-01`** (`releases/v3.11.0/01`) — author of a project template: `project_templates.created_by`
+   (indexed; the foreign key it was created with is dropped by `mair-691-02`, see below), backfilled with the system admin (`users.id = 1`) for the existing templates.
+   On a new database that account is seeded after the changesets, so `seed_admin_account()` does the same
+   backfill once it has created it. Project_API lets an Admin manage every template and a Responsable only
+   the ones they created, never the default one; a template without author can only be managed by an Admin.
+   Classified in the GDPR inventory (identifier, `anonymize`, visible to administrators only). Deploy it before
+   the Project_API release that reads the column. `tests/49_project_template_author_test.sql` and the upgrade test.
+29. **`mair-691-02`** (`releases/v3.11.1/01`) — drops `project_templates_created_by_fkey`. The API test harness
+   (`mairie360_api_lib`) starts with `TRUNCATE users … CASCADE`, which a foreign key from `project_templates` to
+   `users` extends to the templates and their statuses (no project created in a test then gets statuses). The
+   author is only compared with the caller's id and user ids are never reused, so an id left by a hard delete
+   matches nobody. Do not add a foreign key from a seeded reference table (templates, roles) to `users`.
+30. **`mair-812-01`** (`releases/v4.0.0/01`) — Keycloak removed (MAIR-812, epic MAIR-804): Core is the only account
    system. Drops `user_identities`, `link_user_identity()`, `resolve_user_identity()` and `v_users_sso_export`
    (with their grants and the `fn_erasure_targets` field `keycloak_subject`), deletes the `keycloak` rows of
    `erasure_steps` and removes that step from its `CHECK`. The data of `user_identities` is lost for good (the
    rollback gives the empty table back); `compliance_storage` keeps its `keycloak` value (Postgres cannot drop one,
    and the append-only `compliance_journal` keeps the proof of past erasures). `users.password` stays nullable.
    Breaking: **deploy it after** the Core_API, Compliance_API and API_lib releases that no longer use these objects.
-   Test `tests/49_keycloak_removed_test.sql`.
+   Test `tests/50_keycloak_removed_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
