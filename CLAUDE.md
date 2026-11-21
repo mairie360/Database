@@ -444,7 +444,8 @@ What each former schema version did, in order:
 31. **`mair-904-01`** (`releases/v4.0.0/02`) — suspended accounts (MAIR-904): `users_status_check` accepts
    `suspended` (expand only). A suspended account keeps its rows (roles, groups, factors) but `is_admin()` and
    `check_access()` deny it like an archived one; Core sets and clears the status (`POST
-   /api/v1/admin/users/{id}/suspend` / `reactivate`) and refuses its sign-in, `mairie360_api_lib` refuses its JWT.
+   /api/v1/admin/users/{id}/suspend` / `reactivate`), revokes its sessions (so every API refuses its JWTs
+   through the revocation list) and refuses its sign-in. No API role reads `users.status`.
    The rollback puts the suspended accounts back to `offline`. Test `tests/51_users_suspended_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
