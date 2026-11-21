@@ -214,6 +214,14 @@ tables:
     personal:
       project_id: {category: activity, erasure: delete, visibility: members}
       user_id: {category: identifier, erasure: delete, visibility: members}
+      role: {category: activity, erasure: delete, visibility: members, note: "role of the agent in the project (MAIR-1088), deleted with the membership"}
+
+  project_comments:
+    personal:
+      author_id: {category: identifier, erasure: anonymize, visibility: members, note: "like task_comments.author_id (MAIR-1089)"}
+      message: {category: content, erasure: keep, visibility: members, note: "kept for the project, the author is anonymized (like task_comments)"}
+      created_at: {category: activity, erasure: keep, visibility: members}
+    not_personal: [id, project_id]
 
   project_groups:
     not_personal: [project_id, group_id, linked_at]
