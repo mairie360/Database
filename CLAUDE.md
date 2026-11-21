@@ -127,6 +127,7 @@ and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
 - `releases/v3.11.0/` — author of a project template.
 - `releases/v3.11.1/` — the author of a project template is not a foreign key.
 - `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking).
+- `releases/v4.1.0/` — MAIR-823 (Settings V2 preferences).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -440,6 +441,11 @@ What each former schema version did, in order:
    and the append-only `compliance_journal` keeps the proof of past erasures). `users.password` stays nullable.
    Breaking: **deploy it after** the Core_API, Compliance_API and API_lib releases that no longer use these objects.
    Test `tests/50_keycloak_removed_test.sql`.
+31. **`mair-823-01`** (`releases/v4.1.0/01`) — Settings V2 (MAIR-823): `user_preferences.autosave` (drafts saved every
+   30 seconds), `user_notification_settings.system_updates` (notification type) and `user_notification_settings.login_alerts`
+   (e-mail at every new sign-in, sent by Core), nullable booleans like the other preferences (NULL = application default).
+   Expand only; `core_api` writes them through its existing grants. Classified `preferences` / `delete` in the inventory.
+   Deploy it before the Core_API release that reads them. Test `tests/51_settings_v2_columns_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
