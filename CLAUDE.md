@@ -458,6 +458,11 @@ What each former schema version did, in order:
    (`manager`, `contributor`, `reader`) and `project_members.role NOT NULL DEFAULT 'contributor'`, so the members added
    before and the Project_API release in prod (which does not send it) are contributors. Project_API decides what each
    role may do. Test `tests/54_project_member_roles_test.sql`.
+35. **`mair-1089-01`** (`releases/v4.0.0/06`) — comments of a project (MAIR-1089): `project_comments` (`project_id`
+   `ON DELETE CASCADE`, `author_id` → `users` `ON DELETE SET NULL`, `message` 1–2000 characters, `created_at TIMESTAMPTZ`),
+   index `(project_id, created_at DESC, id DESC)` plus the author index. Treated like `task_comments`: exported through
+   its foreign key by `export_user_data`, kept by `anonymize_user()` (the author becomes the anonymized account).
+   `project_api` writes it. Test `tests/55_project_comments_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

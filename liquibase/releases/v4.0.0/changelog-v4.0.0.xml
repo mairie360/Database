@@ -65,6 +65,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Comments of a project (MAIR-1089). -->
+    <changeSet id="mair-1089-01" author="dev"><sqlFile
+            path="06__project_comments.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="06__project_comments.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>
