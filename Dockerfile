@@ -11,6 +11,6 @@ RUN set -eux; \
 	cd /src; \
 	go build -trimpath -ldflags '-d -w' -o /gosu .
 
-FROM postgres:18.6-bookworm
+FROM postgres:19.0-bookworm@sha256:f4859caf96de494e38efa69ed703b08a5bbd9605e152e604f2daec8841c87c41
 COPY --from=gosu /gosu /usr/local/bin/gosu
 RUN gosu nobody true
