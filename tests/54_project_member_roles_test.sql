@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(8);
+SELECT plan(9);
 
 -- Role of a member in a project (releases/v4.0.0/05, MAIR-1088): manager, contributor or reader,
 -- `contributor` when the writer does not say (the members added before this release and the
@@ -33,7 +33,7 @@ SELECT enum_has_labels('project_member_role', ARRAY['manager', 'contributor', 'r
 SELECT col_type_is('project_members', 'role', 'project_member_role', 'a member holds a project role');
 SELECT col_not_null('project_members', 'role', 'every member has a role');
 
---- 2. VALUES (4 tests)
+--- 2. VALUES (5 tests)
 SELECT is(
     pg_temp.run_as('project_api', $$INSERT INTO project_members (project_id, user_id) VALUES (5400, 5401)$$),
     'ok', 'project_api adds a member without role (release in prod)'
@@ -41,9 +41,12 @@ SELECT is(
 SELECT is((SELECT role::TEXT FROM project_members WHERE project_id = 5400 AND user_id = 5401), 'contributor',
           'a member added without role is a contributor');
 SELECT is(
-    pg_temp.run_as('project_api', $$INSERT INTO project_members (project_id, user_id, role) VALUES (5400, 5402, 'reader');
-                                    UPDATE project_members SET role = 'manager' WHERE project_id = 5400 AND user_id = 5401$$),
-    'ok', 'project_api sets and changes the role of a member'
+    pg_temp.run_as('project_api', $$INSERT INTO project_members (project_id, user_id, role) VALUES (5400, 5402, 'reader')$$),
+    'ok', 'project_api adds a member with a role'
+);
+SELECT is(
+    pg_temp.run_as('project_api', $$UPDATE project_members SET role = 'manager' WHERE project_id = 5400 AND user_id = 5401$$),
+    'ok', 'project_api changes the role of a member'
 );
 SELECT throws_ok(
     $$UPDATE project_members SET role = 'owner' WHERE project_id = 5400 AND user_id = 5401$$,
