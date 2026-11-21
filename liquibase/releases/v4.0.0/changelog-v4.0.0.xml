@@ -54,6 +54,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Role of a member in a project: manager, contributor or reader (MAIR-1088). -->
+    <changeSet id="mair-1088-01" author="dev"><sqlFile
+            path="05__project_member_roles.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="05__project_member_roles.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

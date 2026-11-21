@@ -214,6 +214,7 @@ tables:
     personal:
       project_id: {category: activity, erasure: delete, visibility: members}
       user_id: {category: identifier, erasure: delete, visibility: members}
+      role: {category: activity, erasure: delete, visibility: members, note: "role of the agent in the project (MAIR-1088), deleted with the membership"}
 
   project_groups:
     not_personal: [project_id, group_id, linked_at]
