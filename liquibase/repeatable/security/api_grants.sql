@@ -100,6 +100,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON project_task_statuses, project_templates
     project_template_statuses TO project_api;
 -- Written only by the SECURITY DEFINER fn_log_task_change() trigger (MAIR-393).
 GRANT SELECT ON task_history TO project_api;
+-- Projects V2 (epic MAIR-822): milestones of a project (MAIR-1086).
+GRANT SELECT, INSERT, UPDATE, DELETE ON project_milestones TO project_api;
 
 -- Author names, manager roles and team (group) visibility.
 GRANT SELECT (first_name, last_name) ON users TO project_api;

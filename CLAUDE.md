@@ -443,6 +443,13 @@ What each former schema version did, in order:
 31. **`mair-1085-01`** (`releases/v4.0.0/02`) — budget of a project (MAIR-1085, epic MAIR-822 Projects V2):
    `projects.budget_voted` and `projects.budget_committed`, `BIGINT` amounts in cents, NULL until filled in,
    `chk_projects_budget_voted` / `chk_projects_budget_committed` (`>= 0`). Not personal. Test `tests/51_project_budget_test.sql`.
+32. **`mair-1086-01`** (`releases/v4.0.0/03`) — milestones of a project (MAIR-1086): `project_milestones` (`project_id`
+   `ON DELETE CASCADE`, `title` 1–255 characters once trimmed, `due_date DATE`, `reached`, `created_by` / `updated_by`,
+   `created_at` / `updated_at` `TIMESTAMPTZ`, `deleted_at` = soft delete), partial index
+   `idx_project_milestones_project_due (project_id, due_date, id) WHERE deleted_at IS NULL`. The authors are not foreign
+   keys (same reason as `mair-691-02`) and are exported through the extra list of `export_user_data`; `updated_at` is
+   refreshed by `repeatable/project/trg_project_milestones_updated_at.sql`. `project_api` writes it. Test
+   `tests/52_project_milestones_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

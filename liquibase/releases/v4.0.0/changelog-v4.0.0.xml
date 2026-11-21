@@ -32,6 +32,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Milestones of a project, soft deleted (MAIR-1086). -->
+    <changeSet id="mair-1086-01" author="dev"><sqlFile
+            path="03__project_milestones.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="03__project_milestones.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

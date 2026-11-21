@@ -218,6 +218,12 @@ tables:
   project_groups:
     not_personal: [project_id, group_id, linked_at]
 
+  project_milestones:
+    personal:
+      created_by: {category: identifier, erasure: anonymize, visibility: members, note: "author of the milestone (MAIR-1086); not a foreign key (see CLAUDE.md, mair-691-02), exported through the extra list of export_user_data"}
+      updated_by: {category: identifier, erasure: anonymize, visibility: members, note: "author of the last write (MAIR-1086); not a foreign key, exported like created_by"}
+    not_personal: [id, project_id, title, due_date, reached, created_at, updated_at, deleted_at]
+
   project_task_statuses:
     not_personal: [id, project_id, name, color, category, position]
 
