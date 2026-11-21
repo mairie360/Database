@@ -450,6 +450,10 @@ What each former schema version did, in order:
    keys (same reason as `mair-691-02`) and are exported through the extra list of `export_user_data`; `updated_at` is
    refreshed by `repeatable/project/trg_project_milestones_updated_at.sql`. `project_api` writes it. Test
    `tests/52_project_milestones_test.sql`.
+33. **`mair-1087-01`** (`releases/v4.0.0/04`) — start date of a task (MAIR-1087): `tasks.start_date`, `TIMESTAMP` like
+   `tasks.due_date`, NULL when not planned, `chk_tasks_start_before_due` (`start_date <= due_date` when both are set).
+   `fn_log_task_change` writes a change of it to `task_history` (`changes.start_date`, read through `to_jsonb` like
+   `status_id`). Test `tests/53_task_start_date_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

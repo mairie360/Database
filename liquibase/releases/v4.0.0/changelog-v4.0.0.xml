@@ -43,6 +43,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Start date of a task, never after its due date (MAIR-1087). -->
+    <changeSet id="mair-1087-01" author="dev"><sqlFile
+            path="04__task_start_date.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="04__task_start_date.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

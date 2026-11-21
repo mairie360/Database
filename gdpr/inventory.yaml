@@ -308,7 +308,7 @@ tables:
       custom_fields: {category: content, erasure: keep, visibility: members}
       assigned_to: {category: identifier, erasure: anonymize, visibility: members, note: "legacy single assignee, replaced by task_assignees"}
       updated_by: {category: identifier, erasure: anonymize, visibility: members}
-    not_personal: [id, project_id, title, status, priority, due_date, updated_at, created_at, archived_at, status_id]
+    not_personal: [id, project_id, title, status, priority, due_date, updated_at, created_at, archived_at, status_id, start_date]
 
   unread_counters:
     personal:
