@@ -235,7 +235,7 @@ tables:
       description: {category: content, erasure: keep, visibility: members}
       owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "handed over to an administrator at erasure (MAIR-289)"}
       responsible_id: {category: identifier, erasure: anonymize, visibility: members}
-    not_personal: [id, title, status, custom_field_schema, created_at, priority, due_date, labels, template_id]
+    not_personal: [id, title, status, custom_field_schema, created_at, priority, due_date, labels, template_id, budget_voted, budget_committed]
 
   recurrence_members:
     personal:

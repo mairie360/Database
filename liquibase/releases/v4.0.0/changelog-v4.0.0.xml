@@ -21,6 +21,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Budget voted and committed of a project, in cents (MAIR-1085). -->
+    <changeSet id="mair-1085-01" author="dev"><sqlFile
+            path="02__project_budget.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="02__project_budget.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

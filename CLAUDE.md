@@ -126,7 +126,7 @@ and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
 - `releases/v3.10.0/` — MAIR-810 (name of the passkey manager).
 - `releases/v3.11.0/` — author of a project template.
 - `releases/v3.11.1/` — the author of a project template is not a foreign key.
-- `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking).
+- `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking), then the Projects V2 schema (epic MAIR-822).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -440,6 +440,9 @@ What each former schema version did, in order:
    and the append-only `compliance_journal` keeps the proof of past erasures). `users.password` stays nullable.
    Breaking: **deploy it after** the Core_API, Compliance_API and API_lib releases that no longer use these objects.
    Test `tests/50_keycloak_removed_test.sql`.
+31. **`mair-1085-01`** (`releases/v4.0.0/02`) — budget of a project (MAIR-1085, epic MAIR-822 Projects V2):
+   `projects.budget_voted` and `projects.budget_committed`, `BIGINT` amounts in cents, NULL until filled in,
+   `chk_projects_budget_voted` / `chk_projects_budget_committed` (`>= 0`). Not personal. Test `tests/51_project_budget_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
