@@ -3,7 +3,8 @@
 -- tr_users_default_role_guest, tout utilisateur en a au moins un (Guest).
 --
 -- An archived account is never admin (MAIR-413): archiving keeps its
--- user_roles so that restore_user() gives its rights back.
+-- user_roles so that restore_user() gives its rights back. Neither is a
+-- suspended one (MAIR-904), which keeps its roles until it is reactivated.
 --
 -- SECURITY DEFINER: every API calls it (API_lib AdminMiddleware) without
 -- necessarily reading user_roles / roles (MAIR-114).
@@ -21,6 +22,7 @@ BEGIN
         WHERE ur.user_id = p_user_id
           AND r.name = 'Admin'
           AND u.is_archived IS NOT TRUE
+          AND u.status IS DISTINCT FROM 'suspended'
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;

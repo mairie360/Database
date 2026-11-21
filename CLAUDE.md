@@ -441,6 +441,12 @@ What each former schema version did, in order:
    Breaking: **deploy it after** the Core_API, Compliance_API and API_lib releases that no longer use these objects.
    Test `tests/50_keycloak_removed_test.sql`.
 
+31. **`mair-904-01`** (`releases/v4.0.0/02`) — suspended accounts (MAIR-904): `users_status_check` accepts
+   `suspended` (expand only). A suspended account keeps its rows (roles, groups, factors) but `is_admin()` and
+   `check_access()` deny it like an archived one; Core sets and clears the status (`POST
+   /api/v1/admin/users/{id}/suspend` / `reactivate`) and refuses its sign-in, `mairie360_api_lib` refuses its JWT.
+   The rollback puts the suspended accounts back to `offline`. Test `tests/51_users_suspended_test.sql`.
+
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
