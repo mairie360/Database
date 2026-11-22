@@ -183,10 +183,20 @@ tables:
   message_business_links:
     not_personal: [id, message_id, project_id, task_id, event_id]
 
+  message_group_mentions:
+    not_personal: [message_id, group_id]
+
   message_mentions:
     personal:
       message_id: {category: activity, erasure: delete, visibility: members}
       user_id: {category: identifier, erasure: delete, visibility: members}
+
+  message_reactions:
+    personal:
+      message_id: {category: activity, erasure: delete, visibility: members}
+      user_id: {category: identifier, erasure: delete, visibility: members}
+      emoji: {category: activity, erasure: delete, visibility: members, note: "the reaction of the agent (MAIR-1155)"}
+      created_at: {category: activity, erasure: delete, visibility: members}
 
   messages:
     personal:
@@ -196,7 +206,8 @@ tables:
       updated_at: {category: activity, erasure: keep, visibility: members}
       edited_at: {category: activity, erasure: keep, visibility: members, note: "when the author edited the message"}
       deleted_at: {category: activity, erasure: keep, visibility: members, note: "when the author or a moderator deleted the message"}
-    not_personal: [id, conversation_id, reply_to_id]
+      system_event: {category: activity, erasure: keep, visibility: members, note: "system note of a membership change (MAIR-1155): ids of the actor and of the members added or removed; they stay and point to the anonymized users rows, like owner_id"}
+    not_personal: [id, conversation_id, reply_to_id, kind, mentions_everyone]
 
   messaging_moderation_log:
     personal:
