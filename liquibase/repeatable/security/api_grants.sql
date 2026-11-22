@@ -125,10 +125,16 @@ GRANT SELECT ON roles, user_roles, group_members TO calendar_api;
 GRANT SELECT, INSERT, UPDATE, DELETE ON conversations, conversation_members,
     messages, unread_counters, conversation_read_cursors, message_mentions,
     message_business_links TO message_api;
+-- Messaging V2 (MAIR-1155): reactions (idempotent through their key, no UPDATE) and group mentions
+-- (replaced as a whole when a message is edited).
+GRANT SELECT, INSERT, DELETE ON message_reactions, message_group_mentions TO message_api;
 
 -- Group conversations notify every member of the group
 -- (fn_auto_increment_unread_counter).
 GRANT SELECT ON group_members TO message_api;
+-- Group mentions (MAIR-1155): the suggestions list the groups of the members by name, and a mention
+-- is checked against them.
+GRANT SELECT (id, name) ON groups TO message_api;
 
 -- The chat list, the chat header and the member list show the members' names (MAIR-507).
 GRANT SELECT (first_name, last_name) ON users TO message_api;

@@ -126,7 +126,8 @@ and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
 - `releases/v3.10.0/` — MAIR-810 (name of the passkey manager).
 - `releases/v3.11.0/` — author of a project template.
 - `releases/v3.11.1/` — the author of a project template is not a foreign key.
-- `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking).
+- `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking), MAIR-1155 (messaging V2: reactions, system notes,
+  mentions of everyone and of groups).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -440,6 +441,20 @@ What each former schema version did, in order:
    and the append-only `compliance_journal` keeps the proof of past erasures). `users.password` stays nullable.
    Breaking: **deploy it after** the Core_API, Compliance_API and API_lib releases that no longer use these objects.
    Test `tests/50_keycloak_removed_test.sql`.
+31. **`mair-1155-01`–`03`** (`releases/v4.0.0/02`–`04`) — messaging V2 (MAIR-1155, epic MAIR-821), rollback per
+   changeset, expand only. `01` `message_reactions` (`message_id` → `messages`, `user_id` → `users`, both `ON DELETE
+   CASCADE`; `emoji` 1–32 characters without whitespace or control character, `chk_message_reactions_emoji`;
+   primary key `(message_id, user_id, emoji)`, so Message_API adds a reaction with `ON CONFLICT DO NOTHING`;
+   `idx_message_reactions_user_id`). `02` system notes of the membership changes: `messages.kind` (`'user'` by
+   default or `'system'`, `chk_messages_kind`) and `messages.system_event` (`{"action": "members_added" |
+   "member_removed" | "member_left", "actor_id", "user_ids"}`, set for a note only: `chk_messages_system_event`,
+   `chk_messages_system_event_shape`); a note has the actor as `owner_id` and an empty `content`, and counts as unread
+   for nobody (`fn_auto_increment_unread_counter` returns early, `fn_acknowledge_read` recounts `kind = 'user'`
+   only). The rollback deletes the notes. `03` `messages.mentions_everyone` (`FALSE` by default) and
+   `message_group_mentions` (`message_id`, `group_id` → `groups`, both `ON DELETE CASCADE`, primary key on the pair,
+   `idx_message_group_mentions_group_id`), next to `message_mentions`. `message_api` gets `SELECT, INSERT, DELETE` on
+   both new tables and reads `groups (id, name)` (group mention suggestions); `anonymize_user()` deletes the reactions
+   of the erased user and `fn_compliance_scan()` checks them. Test `tests/51_messaging_v2_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
