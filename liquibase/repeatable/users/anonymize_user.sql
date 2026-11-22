@@ -211,7 +211,9 @@ BEGIN
                               ('messaging_moderation_log', 'target_user_id'),
                               ('messaging_moderation_log', 'performed_by'),
                               ('compliance_journal', 'user_id'),
-                              ('project_templates', 'created_by')) AS extra(table_name, column_name)
+                              ('project_templates', 'created_by'),
+                              ('project_milestones', 'created_by'),
+                              ('project_milestones', 'updated_by')) AS extra(table_name, column_name)
         WHERE to_regclass('public.' || extra.table_name) IS NOT NULL
         ORDER BY 1, 2
     LOOP
