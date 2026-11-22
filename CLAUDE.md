@@ -127,7 +127,7 @@ and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
 - `releases/v3.11.0/` — author of a project template.
 - `releases/v3.11.1/` — the author of a project template is not a foreign key.
 - `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking), MAIR-1155 (messaging V2: reactions, system notes,
-  mentions of everyone and of groups).
+  mentions of everyone and of groups), then the Projects V2 schema (epic MAIR-822).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -455,6 +455,29 @@ What each former schema version did, in order:
    `idx_message_group_mentions_group_id`), next to `message_mentions`. `message_api` gets `SELECT, INSERT, DELETE` on
    both new tables and reads `groups (id, name)` (group mention suggestions); `anonymize_user()` deletes the reactions
    of the erased user and `fn_compliance_scan()` checks them. Test `tests/51_messaging_v2_test.sql`.
+32. **`mair-1085-01`** (`releases/v4.0.0/05`) — budget of a project (MAIR-1085, epic MAIR-822 Projects V2):
+   `projects.budget_voted` and `projects.budget_committed`, `BIGINT` amounts in cents, NULL until filled in,
+   `chk_projects_budget_voted` / `chk_projects_budget_committed` (`>= 0`). Not personal. Test `tests/52_project_budget_test.sql`.
+33. **`mair-1086-01`** (`releases/v4.0.0/06`) — milestones of a project (MAIR-1086): `project_milestones` (`project_id`
+   `ON DELETE CASCADE`, `title` 1–255 characters once trimmed, `due_date DATE`, `reached`, `created_by` / `updated_by`,
+   `created_at` / `updated_at` `TIMESTAMPTZ`, `deleted_at` = soft delete), partial index
+   `idx_project_milestones_project_due (project_id, due_date, id) WHERE deleted_at IS NULL`. The authors are not foreign
+   keys (same reason as `mair-691-02`) and are exported through the extra list of `export_user_data`; `updated_at` is
+   refreshed by `repeatable/project/trg_project_milestones_updated_at.sql`. `project_api` writes it. Test
+   `tests/53_project_milestones_test.sql`.
+34. **`mair-1087-01`** (`releases/v4.0.0/07`) — start date of a task (MAIR-1087): `tasks.start_date`, `TIMESTAMP` like
+   `tasks.due_date`, NULL when not planned, `chk_tasks_start_before_due` (`start_date <= due_date` when both are set).
+   `fn_log_task_change` writes a change of it to `task_history` (`changes.start_date`, read through `to_jsonb` like
+   `status_id`). Test `tests/54_task_start_date_test.sql`.
+35. **`mair-1088-01`** (`releases/v4.0.0/08`) — role of a member in a project (MAIR-1088): enum `project_member_role`
+   (`manager`, `contributor`, `reader`) and `project_members.role NOT NULL DEFAULT 'contributor'`, so the members added
+   before and the Project_API release in prod (which does not send it) are contributors. Project_API decides what each
+   role may do. Test `tests/55_project_member_roles_test.sql`.
+36. **`mair-1089-01`** (`releases/v4.0.0/09`) — comments of a project (MAIR-1089): `project_comments` (`project_id`
+   `ON DELETE CASCADE`, `author_id` → `users` `ON DELETE SET NULL`, `message` 1–2000 characters, `created_at TIMESTAMPTZ`),
+   index `(project_id, created_at DESC, id DESC)` plus the author index. Treated like `task_comments`: exported through
+   its foreign key by `export_user_data`, kept by `anonymize_user()` (the author becomes the anonymized account).
+   `project_api` writes it. Test `tests/56_project_comments_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
