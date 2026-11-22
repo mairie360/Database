@@ -36,6 +36,8 @@ INSERT INTO conversations (id, kind, direct_user_low, direct_user_high, created_
 VALUES (9800, 'direct', 9800, 9802, 9800);
 INSERT INTO conversation_members (conversation_id, user_id) VALUES (9800, 9800), (9800, 9802);
 INSERT INTO messages (conversation_id, owner_id, content) VALUES (9800, 9800, 'Hello there'), (9800, 9802, 'Hi');
+INSERT INTO message_reactions (message_id, user_id, emoji)
+SELECT id, 9800, '👍' FROM messages WHERE conversation_id = 9800 AND owner_id = 9802;
 INSERT INTO user_courses (user_id, course_id, status)
 SELECT 9800, id, 'completed' FROM courses ORDER BY id LIMIT 1;
 -- Actions of the marker on someone else: the colleague's data must not reach the marker's export.
@@ -175,9 +177,10 @@ SELECT ok(
     AND NOT EXISTS (SELECT 1 FROM user_totp WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_backup_codes WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_passkeys WHERE user_id = 9800)
+    AND NOT EXISTS (SELECT 1 FROM message_reactions WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM group_members WHERE user_id = 9800)
     AND NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = 9800),
-    'sessions, identities, second factor, memberships and roles of the user are deleted'
+    'sessions, identities, second factor, memberships, reactions and roles of the user are deleted'
 );
 
 -- Test 16: the training record is kept.
