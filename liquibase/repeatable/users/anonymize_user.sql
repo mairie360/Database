@@ -104,6 +104,7 @@ BEGIN
     DELETE FROM event_members WHERE user_id = p_user_id;
     DELETE FROM group_members WHERE user_id = p_user_id;
     DELETE FROM message_mentions WHERE user_id = p_user_id;
+    DELETE FROM message_reactions WHERE user_id = p_user_id;
     DELETE FROM project_members WHERE user_id = p_user_id;
     DELETE FROM recurrence_members WHERE user_id = p_user_id;
     DELETE FROM sessions WHERE user_id = p_user_id;

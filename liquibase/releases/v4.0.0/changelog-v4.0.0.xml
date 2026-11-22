@@ -21,57 +21,89 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
-    <!-- Budget voted and committed of a project, in cents (MAIR-1085). -->
-    <changeSet id="mair-1085-01" author="dev"><sqlFile
-            path="02__project_budget.sql"
+    <!-- Messaging V2 (MAIR-1155, epic MAIR-821): reactions, system notes of the membership changes,
+         mentions of everyone and of groups. -->
+    <changeSet id="mair-1155-01" author="dev"><sqlFile
+            path="02__message_reactions.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="02__project_budget.rollback.sql"
+            path="02__message_reactions.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="mair-1155-02" author="dev"><sqlFile
+            path="03__messages_system_notes.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="03__messages_system_notes.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="mair-1155-03" author="dev"><sqlFile
+            path="04__message_mentions_everyone_and_groups.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="04__message_mentions_everyone_and_groups.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Budget voted and committed of a project, in cents (MAIR-1085). -->
+    <changeSet id="mair-1085-01" author="dev"><sqlFile
+            path="05__project_budget.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="05__project_budget.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
     <!-- Milestones of a project, soft deleted (MAIR-1086). -->
     <changeSet id="mair-1086-01" author="dev"><sqlFile
-            path="03__project_milestones.sql"
+            path="06__project_milestones.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="03__project_milestones.rollback.sql"
+            path="06__project_milestones.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
     <!-- Start date of a task, never after its due date (MAIR-1087). -->
     <changeSet id="mair-1087-01" author="dev"><sqlFile
-            path="04__task_start_date.sql"
+            path="07__task_start_date.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="04__task_start_date.rollback.sql"
+            path="07__task_start_date.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
     <!-- Role of a member in a project: manager, contributor or reader (MAIR-1088). -->
     <changeSet id="mair-1088-01" author="dev"><sqlFile
-            path="05__project_member_roles.sql"
+            path="08__project_member_roles.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="05__project_member_roles.rollback.sql"
+            path="08__project_member_roles.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
     <!-- Comments of a project (MAIR-1089). -->
     <changeSet id="mair-1089-01" author="dev"><sqlFile
-            path="06__project_comments.sql"
+            path="09__project_comments.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="06__project_comments.rollback.sql"
+            path="09__project_comments.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
