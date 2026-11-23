@@ -173,6 +173,50 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Origin of a course: internal or provided with Mairie360 (MAIR-1150). -->
+    <changeSet id="mair-1150-01" author="dev"><sqlFile
+            path="16__courses_source.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="16__courses_source.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Last activity of an agent on a course (MAIR-1143). -->
+    <changeSet id="mair-1143-01" author="dev"><sqlFile
+            path="17__user_courses_last_activity.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="17__user_courses_last_activity.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Yearly training goal of the instance (MAIR-1144). -->
+    <changeSet id="mair-1144-01" author="dev"><sqlFile
+            path="18__elearning_settings.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="18__elearning_settings.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Reminders of a mandatory course (MAIR-1150). -->
+    <changeSet id="mair-1150-02" author="dev"><sqlFile
+            path="19__course_reminders.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="19__course_reminders.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

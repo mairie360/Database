@@ -128,18 +128,28 @@ tables:
       created_at: {category: activity, erasure: delete, visibility: self}
       updated_at: {category: activity, erasure: delete, visibility: self}
 
+  course_reminders:
+    personal:
+      user_id: {category: identifier, erasure: delete, visibility: self, note: "agent reminded of a mandatory course (MAIR-1150)"}
+      sent_by: {category: identifier, erasure: anonymize, visibility: admin, note: "administrator who sent the reminder; ON DELETE SET NULL"}
+      sent_at: {category: activity, erasure: delete, visibility: self}
+    not_personal: [id, course_id]
+
   courses:
     personal:
       instructor_user_id: {category: identifier, erasure: anonymize, visibility: directory}
       instructor_label: {category: identity, erasure: keep, visibility: directory, note: "free label, may name a trainer who is not an agent: cleared by hand on request"}
       description: {category: content, erasure: keep, visibility: directory, note: "free text written by agents, may name people: shared course material, kept"}
-    not_personal: [id, title, created_at, instructor_group_id, category, level, is_mandatory, deadline]
+    not_personal: [id, title, created_at, instructor_group_id, category, level, is_mandatory, deadline, source]
 
   databasechangelog:
     not_personal: [id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id]
 
   databasechangeloglock:
     not_personal: [id, locked, lockgranted, lockedby]
+
+  elearning_settings:
+    not_personal: [id, annual_goal_minutes, updated_at]
 
   event_members:
     personal:
@@ -379,6 +389,7 @@ tables:
       status: {category: activity, erasure: keep, visibility: self, note: "a mairie may have to prove mandatory training (MAIR-289)"}
       started_at: {category: activity, erasure: keep, visibility: self}
       completed_at: {category: activity, erasure: keep, visibility: self}
+      last_activity_at: {category: activity, erasure: keep, visibility: self, note: "date of the last completed module (MAIR-1143)"}
 
   user_modules:
     personal:

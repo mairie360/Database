@@ -160,8 +160,14 @@ GRANT SELECT (id, start_date) ON events TO message_api;
 GRANT SELECT, INSERT, UPDATE, DELETE ON courses, course_modules, course_attachments,
     course_ratings, user_courses, user_modules, user_content_progress TO elearning_api;
 
--- Learner list for the admin screens.
-GRANT SELECT (first_name, last_name) ON users TO elearning_api;
+-- Reminders of a mandatory course (MAIR-1150): written by an administrator, read by the agent.
+GRANT SELECT, INSERT ON course_reminders TO elearning_api;
+-- Yearly training goal of the instance (MAIR-1144): read by every agent, changed by an administrator.
+GRANT SELECT, UPDATE ON elearning_settings TO elearning_api;
+
+-- Learner list for the admin screens, and the participation per service of the mairie (MAIR-1150).
+GRANT SELECT (first_name, last_name, service_id) ON users TO elearning_api;
+GRANT SELECT (id, name) ON services TO elearning_api;
 
 -- ---------------------------------------------------------------------------
 -- compliance_api: the per-instance compliance service (MAIR-498)

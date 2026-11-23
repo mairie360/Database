@@ -1,0 +1,2 @@
+ALTER TABLE courses DROP CONSTRAINT IF EXISTS chk_courses_source;
+ALTER TABLE courses DROP COLUMN IF EXISTS source;
