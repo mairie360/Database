@@ -431,6 +431,14 @@
         />
         <rollback/>
     </changeSet>
+    <changeSet id="rep-functions-project-visible-to-user" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/fn_project_visible_to_user.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
 
 
     <changeSet id="rep-triggers-users" author="dev" runOnChange="true">
