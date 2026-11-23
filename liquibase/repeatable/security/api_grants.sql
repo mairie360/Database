@@ -148,6 +148,12 @@ GRANT SELECT (first_name, last_name) ON users TO message_api;
 -- Moderation by administrators (MAIR-394): the log is append-only for the API.
 GRANT INSERT ON messaging_moderation_log TO message_api;
 
+-- Links of a message (MAIR-1166): the pages of the Projects and Calendar fronts are addressed by
+-- `?project=<id>&task=<id>` and `?date=<day>&event=<id>`, so a task link carries its project and an
+-- event link its start. Only these columns: the titles and the rest stay with their own API.
+GRANT SELECT (id, project_id) ON tasks TO message_api;
+GRANT SELECT (id, start_date) ON events TO message_api;
+
 -- ---------------------------------------------------------------------------
 -- elearning_api: courses and learner progress
 -- ---------------------------------------------------------------------------

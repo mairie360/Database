@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(38);
+SELECT plan(41);
 
 -- Per-API Postgres roles (MAIR-114): security/api_roles.sql and
 -- security/api_grants.sql. The migration is run with -D<role>_password in
@@ -308,6 +308,27 @@ SELECT is(
     pg_temp.run_as('message_api', $$SELECT description FROM groups$$),
     '42501',
     'message_api cannot read group details'
+);
+
+-- Test 25d: a task link carries its project, an event link its start (MAIR-1166).
+SELECT is(
+    pg_temp.run_as('message_api', $$SELECT t.id, t.project_id, e.id, e.start_date FROM tasks t, events e LIMIT 1$$),
+    'ok',
+    'message_api can read the project of a task and the start of an event'
+);
+
+-- Test 25e
+SELECT is(
+    pg_temp.run_as('message_api', $$SELECT title FROM tasks$$),
+    '42501',
+    'message_api cannot read task details'
+);
+
+-- Test 25f
+SELECT is(
+    pg_temp.run_as('message_api', $$SELECT name FROM events$$),
+    '42501',
+    'message_api cannot read event details'
 );
 
 ---
