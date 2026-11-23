@@ -127,7 +127,8 @@ and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
 - `releases/v3.11.0/` — author of a project template.
 - `releases/v3.11.1/` — the author of a project template is not a foreign key.
 - `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking), MAIR-1155 (messaging V2: reactions, system notes,
-  mentions of everyone and of groups), then the Projects V2 schema (epic MAIR-822).
+  mentions of everyone and of groups), then the Projects V2 schema (epic MAIR-822) and the Settings V2
+  preferences (MAIR-823).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -478,13 +479,18 @@ What each former schema version did, in order:
    index `(project_id, created_at DESC, id DESC)` plus the author index. Treated like `task_comments`: exported through
    its foreign key by `export_user_data`, kept by `anonymize_user()` (the author becomes the anonymized account).
    `project_api` writes it. Test `tests/56_project_comments_test.sql`.
+37. **`mair-823-01`** (`releases/v4.0.0/10`) — Settings V2 (MAIR-823): `user_preferences.autosave` (drafts saved every
+   30 seconds), `user_notification_settings.system_updates` (notification type) and `user_notification_settings.login_alerts`
+   (e-mail at every new sign-in, sent by Core), nullable booleans like the other preferences (NULL = application default).
+   Expand only; `core_api` writes them through its existing grants. Classified `preferences` / `delete` in the inventory.
+   Deploy it before the Core_API release that reads them. Test `tests/57_settings_v2_columns_test.sql`.
 
-37. **`mair-904-01`** (`releases/v4.0.0/10`) — suspended accounts (MAIR-904): `users_status_check` accepts
+38. **`mair-904-01`** (`releases/v4.0.0/11`) — suspended accounts (MAIR-904): `users_status_check` accepts
    `suspended` (expand only). A suspended account keeps its rows (roles, groups, factors) but `is_admin()` and
    `check_access()` deny it like an archived one; Core sets and clears the status (`POST
    /api/v1/admin/users/{id}/suspend` / `reactivate`), revokes its sessions (so every API refuses its JWTs
    through the revocation list) and refuses its sign-in. No API role reads `users.status`.
-   The rollback puts the suspended accounts back to `offline`. Test `tests/57_users_suspended_test.sql`.
+   The rollback puts the suspended accounts back to `offline`. Test `tests/58_users_suspended_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

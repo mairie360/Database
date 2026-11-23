@@ -108,13 +108,24 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
-    <!-- Suspended accounts (MAIR-904): `users.status` accepts 'suspended'. -->
-    <changeSet id="mair-904-01" author="dev"><sqlFile
-            path="10__users_suspended_status.sql"
+    <!-- Settings V2: auto-save, system updates and login alerts preferences (MAIR-823). -->
+    <changeSet id="mair-823-01" author="dev"><sqlFile
+            path="10__settings_v2_columns.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /><rollback><sqlFile
-            path="10__users_suspended_status.rollback.sql"
+            path="10__settings_v2_columns.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Suspended accounts (MAIR-904): `users.status` accepts 'suspended'. -->
+    <changeSet id="mair-904-01" author="dev"><sqlFile
+            path="11__users_suspended_status.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="11__users_suspended_status.rollback.sql"
             splitStatements="false"
             relativeToChangelogFile="true"
         /></rollback></changeSet>
