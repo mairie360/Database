@@ -212,6 +212,15 @@
         <rollback/>
     </changeSet>
 
+    <changeSet id="rep-triggers-roles-protect-admin-module" author="dev" runOnChange="true">
+        <sqlFile
+            path="roles/trigger_protect_admin_module.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+
     <changeSet
         id="rep-functions-sessions-valid"
         author="dev"

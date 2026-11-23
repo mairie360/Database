@@ -492,6 +492,16 @@ What each former schema version did, in order:
    through the revocation list) and refuses its sign-in. No API role reads `users.status`.
    The rollback puts the suspended accounts back to `offline`. Test `tests/58_users_suspended_test.sql`.
 
+39. **`mair-916-01`, `mair-923-01`–`02`** (`releases/v4.0.0/13`–`15`) — the rest of the administration V2 (epic MAIR-824),
+   expand only, rollback per changeset. `role_modules` (`role_id` → `roles` `ON DELETE CASCADE`, `module` among
+   `dashboard`, `projects`, `calendar`, `messages`, `training`, `admin`, `settings`, the entries of the shared navigation),
+   filled for the existing roles with every module, Administration for `Admin` only; the repeatable trigger
+   `tr_role_modules_protect_admin` (`roles/trigger_protect_admin_module.sql`) refuses (`23514`) to take Administration away
+   from `Admin`. `services` (name 1–64 characters, unique whatever the case) and `users.service_id` (`ON DELETE SET NULL`,
+   indexed, cleared by `anonymize_user()`). `groups.color`, a name of the charter palette (`blue`, `teal`, `green`,
+   `orange`, `purple`, `pink`, `neutral`) or NULL. `core_api` writes `role_modules` and `services` and reads
+   `project_groups (group_id)` to count the projects of a group. Test `tests/59_role_modules_services_test.sql`.
+
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,

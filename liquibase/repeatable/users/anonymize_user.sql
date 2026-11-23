@@ -131,7 +131,8 @@ BEGIN
         phone_number = NULL,
         phone_country = NULL,
         photo = NULL,
-        biography = NULL
+        biography = NULL,
+        service_id = NULL
     WHERE id = p_user_id;
 
     -- The audit rows of the user, the ones the two updates above just wrote included.
