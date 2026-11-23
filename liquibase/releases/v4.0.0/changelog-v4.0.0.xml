@@ -108,6 +108,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Settings V2: auto-save, system updates and login alerts preferences (MAIR-823). -->
+    <changeSet id="mair-823-01" author="dev"><sqlFile
+            path="10__settings_v2_columns.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="10__settings_v2_columns.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

@@ -390,6 +390,8 @@ tables:
       messages: {category: preferences, erasure: delete, visibility: self}
       projects: {category: preferences, erasure: delete, visibility: self}
       calendar: {category: preferences, erasure: delete, visibility: self}
+      system_updates: {category: preferences, erasure: delete, visibility: self}
+      login_alerts: {category: preferences, erasure: delete, visibility: self}
 
   user_preferences:
     personal:
@@ -403,6 +405,7 @@ tables:
       date_format: {category: preferences, erasure: delete, visibility: self}
       home_page: {category: preferences, erasure: delete, visibility: self}
       auto_open_notifications: {category: preferences, erasure: delete, visibility: self}
+      autosave: {category: preferences, erasure: delete, visibility: self}
 
   user_totp:
     personal:
