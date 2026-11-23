@@ -140,8 +140,8 @@ SELECT results_eq(
 );
 SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('elearning_api')$$,
-    $$VALUES ('course_attachments'), ('course_modules'), ('course_ratings'), ('courses'),
-             ('user_content_progress'), ('user_courses'), ('user_modules')$$,
+    $$VALUES ('course_attachments'), ('course_modules'), ('course_ratings'), ('course_reminders'), ('courses'),
+             ('elearning_settings'), ('user_content_progress'), ('user_courses'), ('user_modules')$$,
     'elearning_api writes only to the e-learning domain'
 );
 

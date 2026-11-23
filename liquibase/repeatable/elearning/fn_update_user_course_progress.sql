@@ -5,25 +5,27 @@ DECLARE
     v_total_modules INT;
     v_completed_modules INT;
 BEGIN
-    -- Retrouver la formation parente
+    -- Course of the module
     SELECT course_id INTO v_course_id FROM course_modules WHERE id = NEW.module_id;
 
-    -- Initialisation de la progression si nécessaire
-    INSERT INTO user_courses (user_id, course_id, status, started_at)
-    VALUES (NEW.user_id, v_course_id, 'in_progress', CURRENT_TIMESTAMP)
+    -- Start the enrolment when needed; every module write is an activity of the agent (MAIR-1143)
+    INSERT INTO user_courses (user_id, course_id, status, started_at, last_activity_at)
+    VALUES (NEW.user_id, v_course_id, 'in_progress', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     ON CONFLICT (user_id, course_id)
-    DO UPDATE SET status = 'in_progress' WHERE user_courses.status = 'not_started';
+    DO UPDATE SET status = CASE WHEN user_courses.status = 'not_started' THEN 'in_progress'::progress_status
+                                ELSE user_courses.status END,
+                  last_activity_at = CURRENT_TIMESTAMP;
 
-    -- Compter les modules
+    -- Modules of the course
     SELECT COUNT(*)::INT INTO v_total_modules FROM course_modules WHERE course_id = v_course_id;
 
-    -- Compter les validés
+    -- Completed ones
     SELECT COUNT(*)::INT INTO v_completed_modules
     FROM user_modules um
     JOIN course_modules cm ON um.module_id = cm.id
     WHERE um.user_id = NEW.user_id AND cm.course_id = v_course_id AND um.is_completed = TRUE;
 
-    -- Mise à jour statut global
+    -- Status of the enrolment
     IF v_total_modules = v_completed_modules THEN
         UPDATE user_courses
         SET status = 'completed', completed_at = CURRENT_TIMESTAMP
@@ -34,7 +36,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Attachement du trigger
+-- Trigger
 DROP TRIGGER IF EXISTS tr_after_user_module_update ON user_modules;
 CREATE TRIGGER tr_after_user_module_update
     AFTER INSERT OR UPDATE ON user_modules

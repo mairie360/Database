@@ -61,7 +61,7 @@ BEGIN
 
     -- Tables anonymize_user() empties for the erased account (MAIR-289).
     FOREACH v_table IN ARRAY ARRAY['access_control', 'conversation_members', 'conversation_read_cursors',
-        'course_ratings', 'event_members', 'group_members', 'message_mentions', 'message_reactions',
+        'course_ratings', 'course_reminders', 'event_members', 'group_members', 'message_mentions', 'message_reactions',
         'project_members',
         'recurrence_members', 'sessions', 'task_assignees', 'unread_counters', 'user_calendar_params',
         'user_content_progress', 'user_modules', 'user_notification_settings',

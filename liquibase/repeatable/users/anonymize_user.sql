@@ -101,6 +101,7 @@ BEGIN
     DELETE FROM conversation_members WHERE user_id = p_user_id;
     DELETE FROM conversation_read_cursors WHERE user_id = p_user_id;
     DELETE FROM course_ratings WHERE user_id = p_user_id;
+    DELETE FROM course_reminders WHERE user_id = p_user_id;
     DELETE FROM event_members WHERE user_id = p_user_id;
     DELETE FROM group_members WHERE user_id = p_user_id;
     DELETE FROM message_mentions WHERE user_id = p_user_id;

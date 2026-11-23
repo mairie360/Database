@@ -138,8 +138,8 @@ SELECT set_eq($$SELECT pg_temp.readable_user_columns('message_api')$$,
               ARRAY['id', 'email', 'is_archived', 'first_name', 'last_name'],
               'message_api reads the shared columns and the names of users, nothing else');
 SELECT set_eq($$SELECT pg_temp.readable_user_columns('elearning_api')$$,
-              ARRAY['id', 'email', 'is_archived', 'first_name', 'last_name'],
-              'elearning_api reads the shared columns and the names of users, nothing else');
+              ARRAY['id', 'email', 'is_archived', 'first_name', 'last_name', 'service_id'],
+              'elearning_api reads the shared columns, the names and the service of users, nothing else');
 
 -- Tests 15-18: column_privs_are on the password hash, for every API role.
 SELECT column_privs_are('public', 'users', 'password', 'core_api', ARRAY['INSERT', 'SELECT', 'UPDATE'],

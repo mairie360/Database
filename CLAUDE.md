@@ -502,6 +502,17 @@ What each former schema version did, in order:
    `orange`, `purple`, `pink`, `neutral`) or NULL. `core_api` writes `role_modules` and `services` and reads
    `project_groups (group_id)` to count the projects of a group. Test `tests/59_role_modules_services_test.sql`.
 
+40. **`mair-1150-01`, `mair-1143-01`, `mair-1144-01`, `mair-1150-02`** (`releases/v4.0.0/16`–`19`) — E-learning V2
+   (epic MAIR-827), expand only, rollback per changeset. `courses.source` (`internal` by default or `platform`,
+   `chk_courses_source`): a course of the mairie or one provided with Mairie360. `user_courses.last_activity_at`
+   (`TIMESTAMP`, backfilled with the latest start / completion date, index `(user_id, last_activity_at DESC)`), set by
+   `fn_update_user_course_progress` at every module write. `elearning_settings`, a single row (`id = 1`) holding
+   `annual_goal_minutes` (600 by default), the yearly training goal shown to the agents. `course_reminders` (`course_id`,
+   `user_id` `ON DELETE CASCADE`, `sent_by` `ON DELETE SET NULL`, `sent_at`): an administrator reminds the agents late
+   on a mandatory course; `anonymize_user()` deletes the reminders of the erased agent. `elearning_api` writes
+   `course_reminders`, reads and updates `elearning_settings`, and reads `users.service_id` and `services (id, name)`
+   for the participation per service. Test `tests/60_elearning_v2_test.sql`.
+
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
