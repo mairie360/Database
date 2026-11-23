@@ -1,0 +1,2 @@
+ALTER TABLE groups DROP CONSTRAINT IF EXISTS chk_groups_color;
+ALTER TABLE groups DROP COLUMN IF EXISTS color;

@@ -140,6 +140,39 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Modules a role opens (MAIR-916). -->
+    <changeSet id="mair-916-01" author="dev"><sqlFile
+            path="13__role_modules.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="13__role_modules.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Services of the mairie and the service of an agent (MAIR-923). -->
+    <changeSet id="mair-923-01" author="dev"><sqlFile
+            path="14__services.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="14__services.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Colour of a group (MAIR-923). -->
+    <changeSet id="mair-923-02" author="dev"><sqlFile
+            path="15__groups_color.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="15__groups_color.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

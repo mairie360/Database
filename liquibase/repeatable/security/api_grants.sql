@@ -77,6 +77,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON sessions TO core_api;
 GRANT SELECT ON v_sessions, session_settings TO core_api;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON roles, user_roles TO core_api;
+-- Modules a role opens (MAIR-916) and the services of the mairie (MAIR-923), Core's business only.
+GRANT SELECT, INSERT, UPDATE, DELETE ON role_modules, services TO core_api;
 GRANT SELECT, INSERT, UPDATE, DELETE ON groups, group_members TO core_api;
 GRANT SELECT, INSERT, UPDATE, DELETE ON access_control TO core_api;
 GRANT SELECT ON resources, permissions, rights TO core_api;
@@ -86,6 +88,8 @@ GRANT SELECT ON v_securable_users, v_securable_roles, v_securable_sessions,
 -- IsOwnerQueryView reads `owner_id` of any securable resource before an ACL
 -- is granted on it; `events` is the only one outside core's domain.
 GRANT SELECT (id, owner_id) ON events TO core_api;
+-- Number of projects of each group on the administration cards (MAIR-923 F20): read only.
+GRANT SELECT (group_id) ON project_groups TO core_api;
 
 -- Erasure and export of a user's data (MAIR-289): SECURITY DEFINER, they touch every domain.
 GRANT EXECUTE ON FUNCTION anonymize_user(INT), export_user_data(INT) TO core_api;

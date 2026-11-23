@@ -178,7 +178,7 @@ tables:
     personal:
       owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "handed over to an administrator at erasure (MAIR-289)"}
       description: {category: content, erasure: keep, visibility: members, note: "free text written by agents, may name people: shared with the group, kept"}
-    not_personal: [id, name, created_at]
+    not_personal: [id, name, created_at, color]
 
   message_business_links:
     not_personal: [id, message_id, project_id, task_id, event_id]
@@ -282,8 +282,14 @@ tables:
   rights:
     not_personal: [role_id, permission_id]
 
+  role_modules:
+    not_personal: [role_id, module]
+
   roles:
     not_personal: [id, name, description, created_at, updated_at, can_be_deleted]
+
+  services:
+    not_personal: [id, name, created_at]
 
   session_settings:
     not_personal: [id, session_duration]
@@ -449,6 +455,7 @@ tables:
       updated_at: {category: account, erasure: keep, visibility: admin}
       first_connect: {category: account, erasure: keep, visibility: internal}
       biography: {category: content, erasure: anonymize, visibility: internal}
+      service_id: {category: account, erasure: anonymize, visibility: admin, note: "service of the agent in the mairie (MAIR-923), cleared at erasure"}
 
   users_audit_log:
     personal:
