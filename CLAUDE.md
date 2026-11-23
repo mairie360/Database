@@ -485,6 +485,13 @@ What each former schema version did, in order:
    Expand only; `core_api` writes them through its existing grants. Classified `preferences` / `delete` in the inventory.
    Deploy it before the Core_API release that reads them. Test `tests/57_settings_v2_columns_test.sql`.
 
+38. **`mair-904-01`–`02`** (`releases/v4.0.0/11`–`12`) — suspended accounts (MAIR-904): `users_status_check` accepts
+   `suspended` (expand only; added `NOT VALID`, validated by `02` in its own transaction). A suspended account keeps its rows (roles, groups, factors) but `is_admin()` and
+   `check_access()` deny it like an archived one; Core sets and clears the status (`POST
+   /api/v1/admin/users/{id}/suspend` / `reactivate`), revokes its sessions (so every API refuses its JWTs
+   through the revocation list) and refuses its sign-in. No API role reads `users.status`.
+   The rollback puts the suspended accounts back to `offline`. Test `tests/58_users_suspended_test.sql`.
+
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,

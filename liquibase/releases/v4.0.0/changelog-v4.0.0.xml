@@ -119,6 +119,27 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Suspended accounts (MAIR-904): `users.status` accepts 'suspended'. -->
+    <changeSet id="mair-904-01" author="dev"><sqlFile
+            path="11__users_suspended_status.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="11__users_suspended_status.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <changeSet id="mair-904-02" author="dev"><sqlFile
+            path="12__users_suspended_status_validate.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="12__users_suspended_status_validate.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

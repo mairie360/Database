@@ -27,7 +27,8 @@ BEGIN
 
     -- Unknown user: denied, and nothing to log (access_logs.user_id
     -- references users).
-    SELECT is_archived INTO v_user_archived FROM users WHERE id = p_user_id;
+    -- A suspended account (MAIR-904) is denied like an archived one.
+    SELECT is_archived IS TRUE OR status = 'suspended' INTO v_user_archived FROM users WHERE id = p_user_id;
     IF NOT FOUND THEN
         RETURN 0;
     END IF;
