@@ -217,6 +217,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Attempts to use a stolen session, device binding of the sessions (MAIR-773). -->
+    <changeSet id="mair-773-01" author="dev"><sqlFile
+            path="20__session_security_alerts.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="20__session_security_alerts.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

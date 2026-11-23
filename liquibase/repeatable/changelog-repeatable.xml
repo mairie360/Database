@@ -249,6 +249,14 @@
         />
         <rollback/>
     </changeSet>
+    <changeSet id="rep-functions-sessions-security" author="dev" runOnChange="true">
+        <sqlFile
+            path="sessions/fn_session_security.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
     <changeSet
         id="rep-functions-sessions-archive"
         author="dev"
