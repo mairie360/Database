@@ -153,6 +153,9 @@ GRANT INSERT ON messaging_moderation_log TO message_api;
 -- event link its start. Only these columns: the titles and the rest stay with their own API.
 GRANT SELECT (id, project_id) ON tasks TO message_api;
 GRANT SELECT (id, start_date) ON events TO message_api;
+-- A project or task link is allowed when its project is visible to the author, the rule of
+-- Project_API (MAIR-1166): the function reads the RBAC and project tables itself (SECURITY DEFINER).
+GRANT EXECUTE ON FUNCTION project_visible_to_user(INT, INT) TO message_api;
 
 -- ---------------------------------------------------------------------------
 -- elearning_api: courses and learner progress
