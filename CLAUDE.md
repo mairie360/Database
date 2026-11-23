@@ -513,6 +513,21 @@ What each former schema version did, in order:
    `course_reminders`, reads and updates `elearning_settings`, and reads `users.service_id` and `services (id, name)`
    for the participation per service. Test `tests/60_elearning_v2_test.sql`.
 
+41. **`mair-773-01`** (`releases/v4.0.0/20`) — stolen sessions (MAIR-773, with the session check of MAIR-772), expand only,
+   rollback per changeset. `session_action` gains `STOLEN_SESSION_ATTEMPT` (certain: the session is bound to its device and
+   the request came without a valid proof), `SUSPICIOUS_IP_CHANGE` (possible: an unbound session changed address) and
+   `IP_CHANGE` (the bound device changed network, no alert); the rollback leaves them (Postgres cannot drop an enum value).
+   `sessions.dpop_jkt`, the RFC 7638 thumbprint of the device key a session is bound to (DPoP), NULL when not bound.
+   `session_security_alerts` (one per session and level, `uq_session_security_alerts_session_level`; `sent_at`, `attempts`,
+   `last_error` for Core's sender, `acknowledged_at` when the agent closes the message of Login). The behaviour lives in
+   `repeatable/sessions/fn_session_security.sql`, both `SECURITY DEFINER` and executable by every API role:
+   `session_state(session_id, user_id)` (active session of that user, account neither archived nor suspended, plus its
+   address and device key: the fallback of API_lib's JWT middleware when the Redis key `session:<sid>` is missing) and
+   `report_suspicious_session_use(session_id, user_id, level, ip, device)` (`certain` / `possible`: revokes the session if
+   active, logs the attempt and queues one alert, `NOTIFY session_security_alert`; `ip_change`: logs it and moves the
+   session's address). `core_api` reads and updates the alerts and reads `connection_logs` (administration journal);
+   `anonymize_user()` deletes the alerts. Test `tests/62_session_security_test.sql`.
+
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,

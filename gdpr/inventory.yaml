@@ -304,6 +304,16 @@ tables:
   session_settings:
     not_personal: [id, session_duration]
 
+  session_security_alerts:
+    personal:
+      session_id: {category: connection, erasure: delete, visibility: self}
+      user_id: {category: identifier, erasure: delete, visibility: self}
+      ip_address: {category: connection, erasure: delete, visibility: self, note: "address of the attempt, shown masked (first two bytes) to the agent and the administrators (MAIR-773)"}
+      device_info: {category: connection, erasure: delete, visibility: self}
+      created_at: {category: connection, erasure: delete, visibility: self}
+      acknowledged_at: {category: activity, erasure: delete, visibility: self}
+    not_personal: [id, level, sent_at, attempts, last_attempt_at, last_error]
+
   sessions:
     personal:
       id: {category: connection, erasure: delete, visibility: self}
@@ -316,6 +326,7 @@ tables:
       created_at: {category: connection, erasure: delete, visibility: self}
       expires_at: {category: connection, erasure: delete, visibility: self}
       revoked_at: {category: connection, erasure: delete, visibility: self}
+      dpop_jkt: {category: connection, erasure: delete, visibility: internal, note: "thumbprint of the device key the session is bound to (DPoP, MAIR-773); a public key digest, not a secret"}
 
   task_assignees:
     personal:
@@ -486,6 +497,7 @@ tables:
 # shared revocation list. `{...}` stands for the variable part. max_ttl_seconds is the longest TTL
 # the code sets (defaults of the configuration).
 redis:
+  "session:{session_id}": {personal: true, category: connection, max_ttl_seconds: 900, note: "state of a session for the JWT middleware (MAIR-772): SHA-256 of the active JWT, user id, address, active / revoked; TTL = what is left of the JWT, 15 min at most"}
   "revoked:{session_id}": {personal: true, category: connection, max_ttl_seconds: 3600, note: "revocation list of the sessions, TTL = JWT_TIMEOUT (session_revocation, mairie360_api_lib)"}
   "core-api:{email}/forgot_password_token": {personal: true, category: credentials, max_ttl_seconds: 1800, note: "the key itself holds the e-mail: to hash in a follow-up (MAIR-498 watches it meanwhile)"}
   "core-api:{token}/forgot_password_email": {personal: true, category: contact, max_ttl_seconds: 604800, note: "password reset link (15 min) and account invitation link (7 days)"}

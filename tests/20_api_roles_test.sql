@@ -60,15 +60,18 @@ SELECT is(
 --- 2. PRIVILEGE MATRIX
 ---
 
--- Test 3: logs, audit and Liquibase tables are out of reach of every API
+-- Test 3: logs, audit and Liquibase tables are out of reach of every API, except the session log core_api
+-- reads for the administration (MAIR-773)
 SELECT is(
     (SELECT count(*)::INT
      FROM unnest(ARRAY['core_api', 'project_api', 'calendar_api', 'message_api', 'elearning_api', 'compliance_api']) AS r(name)
      CROSS JOIN unnest(ARRAY['users_audit_log', 'connection_logs', 'access_logs', 'retention_policies',
                              'databasechangelog', 'databasechangeloglock']) AS t(name)
-     WHERE has_table_privilege(r.name, t.name, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')),
+     WHERE has_table_privilege(r.name, t.name, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+       AND NOT (r.name = 'core_api' AND t.name = 'connection_logs'
+                AND NOT has_table_privilege(r.name, t.name, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'))),
     0,
-    'No API role has any privilege on log, audit or Liquibase tables'
+    'No API role has any privilege on log, audit or Liquibase tables (core_api only reads connection_logs)'
 );
 
 -- Test 4: only core_api can read password hashes
@@ -114,7 +117,7 @@ SELECT is(
 -- Tests 7-11: each API writes only to its own domain
 SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('core_api')$$,
-    $$VALUES ('access_control'), ('group_members'), ('groups'), ('role_modules'), ('roles'), ('services'), ('sessions'), ('two_factor_policy'),
+    $$VALUES ('access_control'), ('group_members'), ('groups'), ('role_modules'), ('roles'), ('services'), ('session_security_alerts'), ('sessions'), ('two_factor_policy'),
              ('user_backup_codes'), ('user_notification_settings'),
              ('user_passkeys'), ('user_preferences'), ('user_roles'), ('user_totp'), ('users'), ('v_users_active')$$,
     'core_api writes only to the core domain'

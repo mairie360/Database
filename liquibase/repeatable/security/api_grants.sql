@@ -17,6 +17,7 @@
 -- fn_archive_user, fn_check_can_delete_user, fn_set_group_accesses), so no API
 -- needs access to users_audit_log, connection_logs, access_logs, or to
 -- another domain's tables just because one of its statements fires a trigger.
+-- core_api only reads connection_logs for the administration (MAIR-773).
 
 -- ---------------------------------------------------------------------------
 -- Reset
@@ -53,6 +54,11 @@ GRANT SELECT (id, email, is_archived) ON users
 -- (access/fn_check_access.sql) and granted to the API roles only (MAIR-413).
 GRANT EXECUTE ON FUNCTION check_access(INT, VARCHAR, VARCHAR, INT)
     TO core_api, project_api, calendar_api, message_api, elearning_api, compliance_api;
+-- JWT middleware (MAIR-772, MAIR-773): the state of a session when its Redis key is missing, and the report of a
+-- suspicious use of a session. SECURITY DEFINER: no API but core_api reads `sessions`.
+GRANT EXECUTE ON FUNCTION session_state(UUID, INT),
+    report_suspicious_session_use(UUID, INT, TEXT, INET, TEXT)
+    TO core_api, project_api, calendar_api, message_api, elearning_api, compliance_api;
 
 -- ---------------------------------------------------------------------------
 -- core_api: users, auth, sessions, roles, groups, RBAC and ACL
@@ -75,6 +81,10 @@ GRANT SELECT, UPDATE ON two_factor_policy TO core_api;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON sessions TO core_api;
 GRANT SELECT ON v_sessions, session_settings TO core_api;
+-- Stolen-session alerts (MAIR-773): queued by report_suspicious_session_use(), sent by Core (sent_at, attempts,
+-- last_error) and closed by the agent (acknowledged_at). The session log is read for the administration.
+GRANT SELECT, UPDATE ON session_security_alerts TO core_api;
+GRANT SELECT ON connection_logs TO core_api;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON roles, user_roles TO core_api;
 -- Modules a role opens (MAIR-916) and the services of the mairie (MAIR-923), Core's business only.

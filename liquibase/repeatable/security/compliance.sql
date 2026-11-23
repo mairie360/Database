@@ -63,7 +63,7 @@ BEGIN
     FOREACH v_table IN ARRAY ARRAY['access_control', 'conversation_members', 'conversation_read_cursors',
         'course_ratings', 'course_reminders', 'event_members', 'group_members', 'message_mentions', 'message_reactions',
         'project_members',
-        'recurrence_members', 'sessions', 'task_assignees', 'unread_counters', 'user_calendar_params',
+        'recurrence_members', 'session_security_alerts', 'sessions', 'task_assignees', 'unread_counters', 'user_calendar_params',
         'user_content_progress', 'user_modules', 'user_notification_settings',
         'user_backup_codes', 'user_passkeys', 'user_preferences', 'user_roles', 'user_totp']
     LOOP
