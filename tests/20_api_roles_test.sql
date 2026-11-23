@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(36);
+SELECT plan(38);
 
 -- Per-API Postgres roles (MAIR-114): security/api_roles.sql and
 -- security/api_grants.sql. The migration is run with -D<role>_password in
@@ -121,7 +121,7 @@ SELECT results_eq(
 );
 SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('project_api')$$,
-    $$VALUES ('project_groups'), ('project_members'), ('project_task_statuses'), ('project_template_statuses'),
+    $$VALUES ('project_comments'), ('project_groups'), ('project_members'), ('project_milestones'), ('project_task_statuses'), ('project_template_statuses'),
              ('project_templates'), ('projects'), ('task_assignees'), ('task_comments'), ('tasks')$$,
     'project_api writes only to the project domain'
 );
@@ -134,8 +134,8 @@ SELECT results_eq(
 SELECT results_eq(
     $$SELECT * FROM pg_temp.writable_by('message_api')$$,
     $$VALUES ('conversation_members'), ('conversation_read_cursors'), ('conversations'),
-             ('message_business_links'), ('message_mentions'), ('messages'),
-             ('messaging_moderation_log'), ('unread_counters')$$,
+             ('message_business_links'), ('message_group_mentions'), ('message_mentions'),
+             ('message_reactions'), ('messages'), ('messaging_moderation_log'), ('unread_counters')$$,
     'message_api writes only to the messaging domain'
 );
 SELECT results_eq(
@@ -294,6 +294,20 @@ SELECT is(
     pg_temp.run_as('message_api', $$SELECT id, first_name, last_name FROM users WHERE id = 2000$$),
     'ok',
     'message_api can read user names'
+);
+
+-- Test 25b: group mentions (MAIR-1155) list the groups of the members by name.
+SELECT is(
+    pg_temp.run_as('message_api', $$SELECT id, name FROM groups WHERE id = 2000$$),
+    'ok',
+    'message_api can read group names'
+);
+
+-- Test 25c
+SELECT is(
+    pg_temp.run_as('message_api', $$SELECT description FROM groups$$),
+    '42501',
+    'message_api cannot read group details'
 );
 
 ---

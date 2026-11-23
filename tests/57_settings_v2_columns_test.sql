@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(8);
 
--- Settings V2 (MAIR-823, releases/v4.1.0/01): auto-save, system updates and login alerts,
+-- Settings V2 (MAIR-823, releases/v4.0.0/10): auto-save, system updates and login alerts,
 -- nullable booleans like the other preferences (NULL = application default).
 
 SELECT has_column('user_preferences', 'autosave', 'user_preferences.autosave exists');

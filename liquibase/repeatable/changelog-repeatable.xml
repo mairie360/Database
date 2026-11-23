@@ -456,6 +456,14 @@
         />
         <rollback/>
     </changeSet>
+    <changeSet id="rep-triggers-project-milestones-updated-at" author="dev" runOnChange="true">
+        <sqlFile
+            path="project/trg_project_milestones_updated_at.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
 
     <changeSet id="rep-retention-policies" author="dev" runOnChange="true">
         <sqlFile

@@ -183,10 +183,20 @@ tables:
   message_business_links:
     not_personal: [id, message_id, project_id, task_id, event_id]
 
+  message_group_mentions:
+    not_personal: [message_id, group_id]
+
   message_mentions:
     personal:
       message_id: {category: activity, erasure: delete, visibility: members}
       user_id: {category: identifier, erasure: delete, visibility: members}
+
+  message_reactions:
+    personal:
+      message_id: {category: activity, erasure: delete, visibility: members}
+      user_id: {category: identifier, erasure: delete, visibility: members}
+      emoji: {category: activity, erasure: delete, visibility: members, note: "the reaction of the agent (MAIR-1155)"}
+      created_at: {category: activity, erasure: delete, visibility: members}
 
   messages:
     personal:
@@ -196,7 +206,8 @@ tables:
       updated_at: {category: activity, erasure: keep, visibility: members}
       edited_at: {category: activity, erasure: keep, visibility: members, note: "when the author edited the message"}
       deleted_at: {category: activity, erasure: keep, visibility: members, note: "when the author or a moderator deleted the message"}
-    not_personal: [id, conversation_id, reply_to_id]
+      system_event: {category: activity, erasure: keep, visibility: members, note: "system note of a membership change (MAIR-1155): ids of the actor and of the members added or removed; they stay and point to the anonymized users rows, like owner_id"}
+    not_personal: [id, conversation_id, reply_to_id, kind, mentions_everyone]
 
   messaging_moderation_log:
     personal:
@@ -214,9 +225,23 @@ tables:
     personal:
       project_id: {category: activity, erasure: delete, visibility: members}
       user_id: {category: identifier, erasure: delete, visibility: members}
+      role: {category: activity, erasure: delete, visibility: members, note: "role of the agent in the project (MAIR-1088), deleted with the membership"}
+
+  project_comments:
+    personal:
+      author_id: {category: identifier, erasure: anonymize, visibility: members, note: "like task_comments.author_id (MAIR-1089)"}
+      message: {category: content, erasure: keep, visibility: members, note: "kept for the project, the author is anonymized (like task_comments)"}
+      created_at: {category: activity, erasure: keep, visibility: members}
+    not_personal: [id, project_id]
 
   project_groups:
     not_personal: [project_id, group_id, linked_at]
+
+  project_milestones:
+    personal:
+      created_by: {category: identifier, erasure: anonymize, visibility: members, note: "author of the milestone (MAIR-1086); not a foreign key (see CLAUDE.md, mair-691-02), exported through the extra list of export_user_data"}
+      updated_by: {category: identifier, erasure: anonymize, visibility: members, note: "author of the last write (MAIR-1086); not a foreign key, exported like created_by"}
+    not_personal: [id, project_id, title, due_date, reached, created_at, updated_at, deleted_at]
 
   project_task_statuses:
     not_personal: [id, project_id, name, color, category, position]
@@ -235,7 +260,7 @@ tables:
       description: {category: content, erasure: keep, visibility: members}
       owner_id: {category: identifier, erasure: anonymize, visibility: members, note: "handed over to an administrator at erasure (MAIR-289)"}
       responsible_id: {category: identifier, erasure: anonymize, visibility: members}
-    not_personal: [id, title, status, custom_field_schema, created_at, priority, due_date, labels, template_id]
+    not_personal: [id, title, status, custom_field_schema, created_at, priority, due_date, labels, template_id, budget_voted, budget_committed]
 
   recurrence_members:
     personal:
@@ -302,7 +327,7 @@ tables:
       custom_fields: {category: content, erasure: keep, visibility: members}
       assigned_to: {category: identifier, erasure: anonymize, visibility: members, note: "legacy single assignee, replaced by task_assignees"}
       updated_by: {category: identifier, erasure: anonymize, visibility: members}
-    not_personal: [id, project_id, title, status, priority, due_date, updated_at, created_at, archived_at, status_id]
+    not_personal: [id, project_id, title, status, priority, due_date, updated_at, created_at, archived_at, status_id, start_date]
 
   unread_counters:
     personal:
