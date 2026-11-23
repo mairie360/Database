@@ -398,7 +398,7 @@ tables:
       user_id: {category: identifier, erasure: keep, visibility: self, note: "training record kept at erasure: ids and dates only, the users row is anonymized (MAIR-289; ON DELETE NO ACTION)"}
       course_id: {category: activity, erasure: keep, visibility: self}
       status: {category: activity, erasure: keep, visibility: self, note: "a mairie may have to prove mandatory training (MAIR-289)"}
-      started_at: {category: activity, erasure: keep, visibility: self}
+      started_at: {category: activity, erasure: keep, visibility: self, note: "first activity of the agent on the course, also for an enrolment made by an administrator (MAIR-817)"}
       completed_at: {category: activity, erasure: keep, visibility: self}
       last_activity_at: {category: activity, erasure: keep, visibility: self, note: "date of the last completed module (MAIR-1143)"}
 

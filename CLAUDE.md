@@ -513,6 +513,12 @@ What each former schema version did, in order:
    `course_reminders`, reads and updates `elearning_settings`, and reads `users.service_id` and `services (id, name)`
    for the participation per service. Test `tests/60_elearning_v2_test.sql`.
 
+41. **`mair-817-01`** (`releases/v4.0.0/21`) — start date of an enrolment made by an administrator (MAIR-817): such a
+   `user_courses` row is created `not_started` without `started_at`, and `fn_update_user_course_progress` only set it
+   when it inserted the row. The function now fills `started_at` on the first activity of an existing enrolment, and
+   this changeset backfills the enrolments already started (earliest completed module, else last activity, else
+   completion). Data only, empty `<rollback/>`. `tests/60_elearning_v2_test.sql` and the upgrade test cover it.
+
 41. **`mair-773-01`** (`releases/v4.0.0/20`) — stolen sessions (MAIR-773, with the session check of MAIR-772), expand only,
    rollback per changeset. `session_action` gains `STOLEN_SESSION_ATTEMPT` (certain: the session is bound to its device and
    the request came without a valid proof), `SUSPICIOUS_IP_CHANGE` (possible: an unbound session changed address) and

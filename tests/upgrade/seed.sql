@@ -136,6 +136,10 @@ INSERT INTO course_attachments (id, module_id, title, file_type, file_url) VALUE
     (100, 100, 'Slides', 'pdf', 'https://files.upgrade.example/slides.pdf');
 INSERT INTO user_courses (user_id, course_id, status) VALUES (102, 100, 'in_progress');
 INSERT INTO user_modules (user_id, module_id, is_completed) VALUES (102, 100, FALSE);
+-- MAIR-817: user 101 enrolled by an administrator (no start date), who then completed the module:
+-- the trigger of the baseline leaves started_at NULL, mair-817-01 backfills it.
+INSERT INTO user_courses (user_id, course_id, status) VALUES (101, 100, 'not_started');
+INSERT INTO user_modules (user_id, module_id, is_completed, completed_at) VALUES (101, 100, TRUE, '2026-03-02 09:00');
 
 COMMIT;
 

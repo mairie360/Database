@@ -228,6 +228,13 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Start date of the enrolments made by an administrator (MAIR-817): data only, nothing to undo. -->
+    <changeSet id="mair-817-01" author="dev"><sqlFile
+            path="21__user_courses_started_at.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback/></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

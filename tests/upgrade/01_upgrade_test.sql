@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(48);
+SELECT plan(49);
 
 ---
 --- Admin account
@@ -295,6 +295,11 @@ SELECT ok(
     AND NOT EXISTS (SELECT 1 FROM users_audit_log WHERE coalesce(previous_data::TEXT, '') || coalesce(new_data::TEXT, '') LIKE '%plaintext-legacy%'),
     'the purge kept the audit rows of the legacy account, without its plaintext password'
 );
+
+-- MAIR-817: an enrolment made by an administrator, then started, gets the date of its first completed module.
+SELECT is((SELECT started_at FROM user_courses WHERE user_id = 101 AND course_id = 100),
+          '2026-03-02 09:00'::TIMESTAMP,
+          'mair-817-01 dates the start of an enrolment made by an administrator');
 
 SELECT * FROM finish();
 ROLLBACK;
