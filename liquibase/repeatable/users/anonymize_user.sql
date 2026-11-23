@@ -104,6 +104,7 @@ BEGIN
     DELETE FROM event_members WHERE user_id = p_user_id;
     DELETE FROM group_members WHERE user_id = p_user_id;
     DELETE FROM message_mentions WHERE user_id = p_user_id;
+    DELETE FROM message_reactions WHERE user_id = p_user_id;
     DELETE FROM project_members WHERE user_id = p_user_id;
     DELETE FROM recurrence_members WHERE user_id = p_user_id;
     DELETE FROM sessions WHERE user_id = p_user_id;
@@ -211,7 +212,9 @@ BEGIN
                               ('messaging_moderation_log', 'target_user_id'),
                               ('messaging_moderation_log', 'performed_by'),
                               ('compliance_journal', 'user_id'),
-                              ('project_templates', 'created_by')) AS extra(table_name, column_name)
+                              ('project_templates', 'created_by'),
+                              ('project_milestones', 'created_by'),
+                              ('project_milestones', 'updated_by')) AS extra(table_name, column_name)
         WHERE to_regclass('public.' || extra.table_name) IS NOT NULL
         ORDER BY 1, 2
     LOOP

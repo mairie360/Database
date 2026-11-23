@@ -100,6 +100,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON project_task_statuses, project_templates
     project_template_statuses TO project_api;
 -- Written only by the SECURITY DEFINER fn_log_task_change() trigger (MAIR-393).
 GRANT SELECT ON task_history TO project_api;
+-- Projects V2 (epic MAIR-822): milestones (MAIR-1086) and comments (MAIR-1089) of a project.
+GRANT SELECT, INSERT, UPDATE, DELETE ON project_milestones, project_comments TO project_api;
 
 -- Author names, manager roles and team (group) visibility.
 GRANT SELECT (first_name, last_name) ON users TO project_api;
@@ -125,10 +127,16 @@ GRANT SELECT ON roles, user_roles, group_members TO calendar_api;
 GRANT SELECT, INSERT, UPDATE, DELETE ON conversations, conversation_members,
     messages, unread_counters, conversation_read_cursors, message_mentions,
     message_business_links TO message_api;
+-- Messaging V2 (MAIR-1155): reactions (idempotent through their key, no UPDATE) and group mentions
+-- (replaced as a whole when a message is edited).
+GRANT SELECT, INSERT, DELETE ON message_reactions, message_group_mentions TO message_api;
 
 -- Group conversations notify every member of the group
 -- (fn_auto_increment_unread_counter).
 GRANT SELECT ON group_members TO message_api;
+-- Group mentions (MAIR-1155): the suggestions list the groups of the members by name, and a mention
+-- is checked against them.
+GRANT SELECT (id, name) ON groups TO message_api;
 
 -- The chat list, the chat header and the member list show the members' names (MAIR-507).
 GRANT SELECT (first_name, last_name) ON users TO message_api;

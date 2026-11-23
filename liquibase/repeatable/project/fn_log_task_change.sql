@@ -17,6 +17,8 @@ DECLARE
     v_changes JSONB := '{}'::JSONB;
     v_old_status_id INT;
     v_new_status_id INT;
+    v_old_start_date TIMESTAMP;
+    v_new_start_date TIMESTAMP;
 BEGIN
     IF TG_OP = 'INSERT' THEN
         INSERT INTO task_history (task_id, changed_by, action, new_status)
@@ -55,6 +57,15 @@ BEGIN
         v_changes := v_changes || jsonb_build_object('due_date', jsonb_build_object(
             'from', to_char(OLD.due_date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
             'to', to_char(NEW.due_date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')));
+    END IF;
+    -- start_date (MAIR-1087) is read through to_jsonb, like status_id: a migration replayed after a
+    -- rollback of releases/v4.0.0 updates tasks before the column exists again.
+    v_old_start_date := (to_jsonb(OLD)->>'start_date')::TIMESTAMP;
+    v_new_start_date := (to_jsonb(NEW)->>'start_date')::TIMESTAMP;
+    IF v_old_start_date IS DISTINCT FROM v_new_start_date THEN
+        v_changes := v_changes || jsonb_build_object('start_date', jsonb_build_object(
+            'from', to_char(v_old_start_date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+            'to', to_char(v_new_start_date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')));
     END IF;
     IF OLD.assigned_to IS DISTINCT FROM NEW.assigned_to THEN
         v_changes := v_changes || jsonb_build_object('assigned_to', jsonb_build_object('from', OLD.assigned_to, 'to', NEW.assigned_to));

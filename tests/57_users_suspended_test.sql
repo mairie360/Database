@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(7);
 
--- Suspended accounts (MAIR-904, releases/v4.0.0/02): `users.status` accepts 'suspended', and a
+-- Suspended accounts (MAIR-904, releases/v4.0.0/10): `users.status` accepts 'suspended', and a
 -- suspended account is denied like an archived one, while keeping its roles.
 
 INSERT INTO users (id, first_name, last_name, email, password)
