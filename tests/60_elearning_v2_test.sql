@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(10);
+SELECT plan(11);
 
 -- E-learning V2 (epic MAIR-827), releases/v4.0.0/16-19: origin of a course, last activity of an
 -- enrolment, yearly training goal and reminders of a mandatory course.
@@ -40,7 +40,14 @@ SELECT is((SELECT status::TEXT || ':' || (last_activity_at IS NOT NULL)::TEXT FR
           'in_progress:true',
           'a completed module starts the course and dates the activity');
 
--- Tests 8-10: reminders of a course (MAIR-1150).
+-- Test 8: a later write never moves the activity backwards.
+UPDATE user_courses SET last_activity_at = '2999-01-01 00:00' WHERE user_id = 6000 AND course_id = 6000;
+INSERT INTO user_modules (user_id, module_id, is_completed, completed_at) VALUES (6000, 6001, TRUE, CURRENT_TIMESTAMP);
+SELECT is((SELECT last_activity_at FROM user_courses WHERE user_id = 6000 AND course_id = 6000),
+          '2999-01-01 00:00'::TIMESTAMP,
+          'the activity keeps the newest date');
+
+-- Tests 9-11: reminders of a course (MAIR-1150).
 INSERT INTO course_reminders (course_id, user_id, sent_by) VALUES (6000, 6000, 6001);
 SELECT is((SELECT count(*)::INT FROM course_reminders WHERE user_id = 6000 AND sent_by = 6001), 1, 'a reminder is recorded');
 SELECT is((SELECT (anonymize_user(6000) ->> 'user_id')::INT), 6000, 'the agent is erased');
