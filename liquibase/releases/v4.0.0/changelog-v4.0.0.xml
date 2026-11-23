@@ -130,6 +130,16 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <changeSet id="mair-904-02" author="dev"><sqlFile
+            path="12__users_suspended_status_validate.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="12__users_suspended_status_validate.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>
