@@ -112,6 +112,7 @@ DECLARE
     v_replaced session_replaced_refresh_tokens%ROWTYPE;
     v_session sessions%ROWTYPE;
     v_active BOOLEAN;
+    v_now TIMESTAMPTZ;
     v_alert_id BIGINT;
     v_device TEXT := left(p_device_info, 512);
 BEGIN
@@ -127,9 +128,16 @@ BEGIN
 
     -- Locked: a rotation of the same session running at the same time waits.
     SELECT * INTO v_session FROM sessions WHERE id = v_replaced.session_id FOR UPDATE;
-    v_active := v_session.revoked_at IS NULL AND (v_session.expires_at IS NULL OR v_session.expires_at > now());
+    IF NOT FOUND THEN
+        -- The session was deleted between the two reads: its tokens are unknown now.
+        RETURN jsonb_build_object('known', FALSE, 'superseded', FALSE, 'reused', FALSE, 'revoked', FALSE,
+                                  'session_id', NULL, 'user_id', NULL, 'alert_id', NULL);
+    END IF;
+    -- Read after the lock, not at the start of the transaction: a wait on the lock must not stretch the window.
+    v_now := clock_timestamp();
+    v_active := v_session.revoked_at IS NULL AND (v_session.expires_at IS NULL OR v_session.expires_at > v_now);
 
-    IF v_replaced.replaced_at > now() - make_interval(secs => p_grace_seconds) THEN
+    IF v_replaced.replaced_at > v_now - make_interval(secs => p_grace_seconds) THEN
         RETURN jsonb_build_object('known', TRUE, 'superseded', v_active, 'reused', FALSE, 'revoked', FALSE,
                                   'session_id', v_session.id, 'user_id', v_session.user_id, 'alert_id', NULL);
     END IF;

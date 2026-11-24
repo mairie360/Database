@@ -3,7 +3,8 @@
 -- Until now only the hash replaced by the last rotation was kept (`sessions.previous_token_hash`, releases/v3.8.0/01):
 -- a token replaced two rotations ago or more was refused without closing the session. Each rotation now keeps the hash
 -- it replaces here (the hash only, never the token) until the session row goes (ON DELETE CASCADE: retention purge,
--- erasure of the user). `replaced_at` is written on the Postgres clock, the one the grace window is read on.
+-- erasure of the user). `replaced_at` is the time of the replacement itself (`clock_timestamp()`, not the start of the
+-- rotation's transaction), on the Postgres clock the grace window is read on.
 -- `previous_token_hash` and `rotated_at` are no longer read by Core_API; they stay until a contract release drops them.
 -- Postgres cannot drop an enum value: the rollback leaves REFRESH_REUSE, unused.
 ALTER TYPE session_action ADD VALUE IF NOT EXISTS 'REFRESH_REUSE';
@@ -27,7 +28,7 @@ ON CONFLICT (token_hash) DO NOTHING;
 CREATE OR REPLACE FUNCTION fn_keep_replaced_refresh_token() RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO session_replaced_refresh_tokens (token_hash, session_id, replaced_at)
-    VALUES (OLD.token_hash, NEW.id, now())
+    VALUES (OLD.token_hash, NEW.id, clock_timestamp())
     ON CONFLICT (token_hash) DO NOTHING;
     RETURN NEW;
 END;
