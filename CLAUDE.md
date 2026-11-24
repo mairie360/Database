@@ -534,6 +534,16 @@ What each former schema version did, in order:
    session's address). `core_api` reads and updates the alerts and reads `connection_logs` (administration journal);
    `anonymize_user()` deletes the alerts. Test `tests/62_session_security_test.sql`.
 
+42. **`mair-776-01`** (`releases/v4.0.0/22`) — every refresh token a session replaced, expand only,
+   with its rollback. `session_action` gains `REFRESH_REUSE` (left by the rollback). `session_replaced_refresh_tokens`
+   (`token_hash` primary key, `session_id` → `sessions` `ON DELETE CASCADE`, `replaced_at` on the Postgres clock), filled by
+   the `SECURITY DEFINER` trigger `tr_keep_replaced_refresh_token` at every change of `sessions.token_hash` and backfilled
+   with `previous_token_hash`; no API role reaches it. `report_refresh_token_reuse(hash, grace_seconds, ip, device)`
+   (`repeatable/sessions/fn_session_security.sql`, `core_api` only) answers `superseded` for a hash replaced within the
+   window while the session is active (concurrent renewal, nothing written), and beyond it logs `REFRESH_REUSE`, revokes an
+   active session and queues one `certain` alert (same circuit as `report_suspicious_session_use`). Core_API no longer reads
+   `previous_token_hash` / `rotated_at`; dropping them is a later contract step. Test `tests/63_refresh_token_reuse_test.sql`.
+
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
    where all views (`v_*`), functions (`fn_*`), triggers, and the admin seed live,
