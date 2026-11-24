@@ -1,7 +1,7 @@
 BEGIN;
-SELECT plan(6);
+SELECT plan(7);
 
--- Answer of a member to an event invitation (MAIR-1122), releases/v4.0.0/23.
+-- Answer of a member to an event invitation (MAIR-1122), releases/v4.0.0/23-25.
 
 INSERT INTO users (id, first_name, last_name, email, password) VALUES
     (6401, 'Ana', 'Creator', 'ana.creator64@mairie.fr', '$argon2id$v=19$m=16,t=2,p=1$dGVzdHNhbHQ$dGVzdGhhc2g'),
@@ -40,6 +40,12 @@ SELECT throws_ok(
     $$UPDATE event_members SET participation = NULL WHERE event_id = 6401 AND user_id = 6402$$,
     '23502', NULL,
     'the participation cannot be NULL'
+);
+
+-- Test 7: the CHECK added NOT VALID was validated by mair-1122-03.
+SELECT ok(
+    (SELECT convalidated FROM pg_constraint WHERE conname = 'chk_event_members_participation'),
+    'the participation CHECK is validated'
 );
 
 SELECT * FROM finish();

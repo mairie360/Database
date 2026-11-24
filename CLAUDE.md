@@ -544,11 +544,12 @@ What each former schema version did, in order:
    active session and queues one `certain` alert (same circuit as `report_suspicious_session_use`). Core_API no longer reads
    `previous_token_hash` / `rotated_at`; dropping them is a later contract step. Test `tests/63_refresh_token_reuse_test.sql`.
 
-43. **`mair-1122-01`** (`releases/v4.0.0/23`) — answer of a member to an event invitation (MAIR-1122), expand only, with
-   its rollback. `event_members.participation` (`TEXT NOT NULL DEFAULT 'pending'`, `chk_event_members_participation`:
-   `pending`, `accepted` or `declined`), so the released Calendar_API keeps inserting members without naming it. The
-   creators who assigned themselves are backfilled `accepted`. Calendar_API returns it per member and as the caller's
-   `my_participation`, and lets a member answer. Test `tests/64_event_members_participation_test.sql` and the upgrade test.
+43. **`mair-1122-01`–`03`** (`releases/v4.0.0/23`–`25`) — answer of a member to an event invitation (MAIR-1122), expand
+   only, rollback per changeset. `01` adds `event_members.participation` (`TEXT NOT NULL DEFAULT 'pending'`) and
+   `chk_event_members_participation` (`pending`, `accepted`, `declined`) `NOT VALID`, so the released Calendar_API keeps
+   inserting members without naming it; `02` backfills `accepted` for the creators who assigned themselves; `03` validates
+   the CHECK in its own transaction. Read and written by the Calendar_API release that follows (per-member participation,
+   the caller's answer and the route to give it). Test `tests/64_event_members_participation_test.sql` and the upgrade test.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
