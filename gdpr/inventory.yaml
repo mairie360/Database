@@ -441,6 +441,7 @@ tables:
       home_page: {category: preferences, erasure: delete, visibility: self}
       auto_open_notifications: {category: preferences, erasure: delete, visibility: self}
       autosave: {category: preferences, erasure: delete, visibility: self}
+      onboarding_completed: {category: account, erasure: delete, visibility: self, note: "whether the agent finished or skipped the welcome tour"}
 
   user_totp:
     personal:

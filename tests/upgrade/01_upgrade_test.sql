@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(50);
+SELECT plan(51);
 
 ---
 --- Admin account
@@ -305,6 +305,13 @@ SELECT is((SELECT started_at FROM user_courses WHERE user_id = 101 AND course_id
 SELECT is((SELECT participation FROM event_members WHERE event_id = 100 AND user_id = 101),
           'pending',
           'mair-1122-01 leaves the members assigned before it pending');
+
+-- MAIR-1176: no backfill, an existing account has not done the welcome tour yet.
+SELECT results_eq(
+    $$SELECT onboarding_completed FROM user_preferences WHERE user_id = 100$$,
+    $$VALUES (NULL::BOOLEAN)$$,
+    'mair-1176-01 keeps the existing preferences row, with the tour not done'
+);
 
 SELECT * FROM finish();
 ROLLBACK;
