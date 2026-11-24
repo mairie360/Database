@@ -128,7 +128,8 @@ and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
 - `releases/v3.11.1/` — the author of a project template is not a foreign key.
 - `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking), MAIR-1155 (messaging V2: reactions, system notes,
   mentions of everyone and of groups), then the Projects V2 schema (epic MAIR-822), the Settings V2
-  preferences (MAIR-823) and the answer of a member to an event invitation (MAIR-1122).
+  preferences (MAIR-823), the answer of a member to an event invitation (MAIR-1122) and the welcome
+  tour state (MAIR-1176).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -550,6 +551,10 @@ What each former schema version did, in order:
    inserting members without naming it; `02` backfills `accepted` for the creators who assigned themselves; `03` validates
    the CHECK in its own transaction. Read and written by the Calendar_API release that follows (per-member participation,
    the caller's answer and the route to give it). Test `tests/64_event_members_participation_test.sql` and the upgrade test.
+44. **`mair-1176-01`** (`releases/v4.0.0/26`) — welcome tour state (MAIR-1176): `user_preferences.onboarding_completed`
+   `BOOLEAN`, nullable (NULL = not done yet), no backfill so existing accounts see the tour once. Written by Core
+   (`PATCH /user/me/preferences/`) through its existing grants, erased with the preferences row by `anonymize_user()`,
+   exported by `export_user_data()`. Test `tests/65_onboarding_completed_test.sql` and the upgrade test.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
