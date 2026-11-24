@@ -235,6 +235,17 @@
             relativeToChangelogFile="true"
         /><rollback/></changeSet>
 
+    <!-- Every refresh token a session replaced, report of their reuse. -->
+    <changeSet id="mair-776-01" author="dev"><sqlFile
+            path="22__session_replaced_refresh_tokens.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="22__session_replaced_refresh_tokens.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

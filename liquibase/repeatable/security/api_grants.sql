@@ -84,6 +84,9 @@ GRANT SELECT ON v_sessions, session_settings TO core_api;
 -- Stolen-session alerts (MAIR-773): queued by report_suspicious_session_use(), sent by Core (sent_at, attempts,
 -- last_error) and closed by the agent (acknowledged_at). The session log is read for the administration.
 GRANT SELECT, UPDATE ON session_security_alerts TO core_api;
+-- Reuse of a replaced refresh token: SECURITY DEFINER, core_api has no access to
+-- session_replaced_refresh_tokens.
+GRANT EXECUTE ON FUNCTION report_refresh_token_reuse(TEXT, INT, INET, TEXT) TO core_api;
 GRANT SELECT ON connection_logs TO core_api;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON roles, user_roles TO core_api;

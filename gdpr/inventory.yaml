@@ -301,6 +301,12 @@ tables:
   services:
     not_personal: [id, name, created_at]
 
+  session_replaced_refresh_tokens:
+    personal:
+      token_hash: {category: credentials, erasure: delete, visibility: internal, note: "hash of a refresh token a rotation replaced, never the token; kept until the session row goes, to detect its reuse"}
+      session_id: {category: connection, erasure: delete, visibility: internal}
+      replaced_at: {category: connection, erasure: delete, visibility: internal}
+
   session_settings:
     not_personal: [id, session_duration]
 
@@ -319,7 +325,7 @@ tables:
       id: {category: connection, erasure: delete, visibility: self}
       user_id: {category: identifier, erasure: delete, visibility: self}
       token_hash: {category: credentials, erasure: delete, visibility: internal}
-      previous_token_hash: {category: credentials, erasure: delete, visibility: internal, note: "hash of the refresh token replaced by the last rotation, to detect its reuse"}
+      previous_token_hash: {category: credentials, erasure: delete, visibility: internal, note: "hash of the refresh token replaced by the last rotation; no longer read, every replaced hash is in session_replaced_refresh_tokens"}
       rotated_at: {category: connection, erasure: delete, visibility: internal}
       device_info: {category: connection, erasure: delete, visibility: self}
       ip_address: {category: connection, erasure: delete, visibility: self, note: "kept for security while the session lives (MAIR-290 decision); deleted with the session"}
