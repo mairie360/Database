@@ -1,7 +1,7 @@
 -- Checks the database produced by run.sh: baseline release + seed.sql, then
 -- HEAD applied on top of it (MAIR-413).
 BEGIN;
-SELECT plan(49);
+SELECT plan(50);
 
 ---
 --- Admin account
@@ -300,6 +300,11 @@ SELECT ok(
 SELECT is((SELECT started_at FROM user_courses WHERE user_id = 101 AND course_id = 100),
           '2026-03-02 09:00'::TIMESTAMP,
           'mair-817-01 dates the start of an enrolment made by an administrator');
+
+-- MAIR-1122: a member assigned before the participation existed has not answered yet.
+SELECT is((SELECT participation FROM event_members WHERE event_id = 100 AND user_id = 101),
+          'pending',
+          'mair-1122-01 leaves the members assigned before it pending');
 
 SELECT * FROM finish();
 ROLLBACK;

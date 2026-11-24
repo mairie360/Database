@@ -127,8 +127,8 @@ and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
 - `releases/v3.11.0/` — author of a project template.
 - `releases/v3.11.1/` — the author of a project template is not a foreign key.
 - `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking), MAIR-1155 (messaging V2: reactions, system notes,
-  mentions of everyone and of groups), then the Projects V2 schema (epic MAIR-822) and the Settings V2
-  preferences (MAIR-823).
+  mentions of everyone and of groups), then the Projects V2 schema (epic MAIR-822), the Settings V2
+  preferences (MAIR-823) and the answer of a member to an event invitation (MAIR-1122).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -543,6 +543,12 @@ What each former schema version did, in order:
    window while the session is active (concurrent renewal, nothing written), and beyond it logs `REFRESH_REUSE`, revokes an
    active session and queues one `certain` alert (same circuit as `report_suspicious_session_use`). Core_API no longer reads
    `previous_token_hash` / `rotated_at`; dropping them is a later contract step. Test `tests/63_refresh_token_reuse_test.sql`.
+
+43. **`mair-1122-01`** (`releases/v4.0.0/23`) — answer of a member to an event invitation (MAIR-1122), expand only, with
+   its rollback. `event_members.participation` (`TEXT NOT NULL DEFAULT 'pending'`, `chk_event_members_participation`:
+   `pending`, `accepted` or `declined`), so the released Calendar_API keeps inserting members without naming it. The
+   creators who assigned themselves are backfilled `accepted`. Calendar_API returns it per member and as the caller's
+   `my_participation`, and lets a member answer. Test `tests/64_event_members_participation_test.sql` and the upgrade test.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is
