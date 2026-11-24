@@ -246,6 +246,39 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Answer of a member to an event invitation (MAIR-1122). -->
+    <changeSet id="mair-1122-01" author="dev"><sqlFile
+            path="23__event_members_participation.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="23__event_members_participation.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- The creators who assigned themselves take part (MAIR-1122). -->
+    <changeSet id="mair-1122-02" author="dev"><sqlFile
+            path="24__event_members_participation_backfill.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="24__event_members_participation_backfill.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Validates the participation CHECK in its own transaction (MAIR-1122). -->
+    <changeSet id="mair-1122-03" author="dev"><sqlFile
+            path="25__event_members_participation_validate.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="25__event_members_participation_validate.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.0.0" author="dev"><tagDatabase tag="v4.0.0"/></changeSet>
 
 </databaseChangeLog>

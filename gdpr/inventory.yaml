@@ -156,6 +156,7 @@ tables:
       event_id: {category: activity, erasure: delete, visibility: members}
       user_id: {category: identifier, erasure: delete, visibility: members}
       validation_status: {category: activity, erasure: delete, visibility: members}
+      participation: {category: activity, erasure: delete, visibility: members, note: "answer of the member to the invitation (pending, accepted, declined)"}
     not_personal: [id]
 
   erasure_steps:
