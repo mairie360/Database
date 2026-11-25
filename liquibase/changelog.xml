@@ -32,50 +32,6 @@
     />
 
     <include
-        file="releases/v3.4.1/changelog-v3.4.1.xml"
-        relativeToChangelogFile="true"
-    />
-
-    <include
-        file="releases/v3.5.0/changelog-v3.5.0.xml"
-        relativeToChangelogFile="true"
-    />
-
-    <include
-        file="releases/v3.6.0/changelog-v3.6.0.xml"
-        relativeToChangelogFile="true"
-    />
-
-    <include
-        file="releases/v3.7.0/changelog-v3.7.0.xml"
-        relativeToChangelogFile="true"
-    />
-
-    <include
-        file="releases/v3.8.0/changelog-v3.8.0.xml"
-        relativeToChangelogFile="true"
-    />
-    <include
-        file="releases/v3.9.0/changelog-v3.9.0.xml"
-        relativeToChangelogFile="true"
-    />
-
-    <include
-        file="releases/v3.10.0/changelog-v3.10.0.xml"
-        relativeToChangelogFile="true"
-    />
-
-    <include
-        file="releases/v3.11.0/changelog-v3.11.0.xml"
-        relativeToChangelogFile="true"
-    />
-
-    <include
-        file="releases/v3.11.1/changelog-v3.11.1.xml"
-        relativeToChangelogFile="true"
-    />
-
-    <include
         file="releases/v4.0.0/changelog-v4.0.0.xml"
         relativeToChangelogFile="true"
     />

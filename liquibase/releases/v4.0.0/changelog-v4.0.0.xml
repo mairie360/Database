@@ -10,6 +10,150 @@
     <!-- Changesets shipped by the git tag v4.0.0. Their identity does not depend on the
          folder: renaming it after the release keeps them applied. -->
 
+    <!-- Formerly releases/v3.4.1/ (never shipped: regrouped into v4.0.0, MAIR-491 identity kept). -->
+
+    <!-- Group-owned events no longer get ACL rows for the permissions of other resources (MAIR-535).
+         The function itself is fixed in repeatable/calendar/fn_set_group_accesses.sql.
+         runOnChange: the purge was narrowed to the old trigger's footprint after a first merge; re-running the
+         DELETE is idempotent. -->
+    <changeSet id="mair-535-01" author="dev" runOnChange="true"><sqlFile
+            path="v3_4_1__01__purge_misattributed_event_acl.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="v3_4_1__01__purge_misattributed_event_acl.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Formerly releases/v3.5.0/ (never shipped: regrouped into v4.0.0, MAIR-491 identity kept). -->
+
+    <!-- Changesets shipped by the git tag v3.5.0. Their identity does not depend on the
+         folder (MAIR-491): renaming it after the release keeps them applied. -->
+
+    <!-- TOTP secret and backup codes of the two-factor authentication managed by Core (MAIR-805). -->
+    <changeSet id="mair-805-01" author="dev"><sqlFile
+            path="v3_5_0__01__user_totp.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="v3_5_0__01__user_totp.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Formerly releases/v3.6.0/ (never shipped: regrouped into v4.0.0, MAIR-491 identity kept). -->
+
+    <!-- Changesets shipped by the git tag v3.6.0. Their identity does not depend on the
+         folder (MAIR-491): renaming it after the release keeps them applied. -->
+
+    <!-- Two-factor policy of the instance and its audit log (MAIR-808). -->
+    <changeSet id="mair-808-01" author="dev"><sqlFile
+            path="v3_6_0__01__two_factor_policy.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="v3_6_0__01__two_factor_policy.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Formerly releases/v3.7.0/ (never shipped: regrouped into v4.0.0, MAIR-491 identity kept). -->
+
+    <!-- Changesets shipped by the git tag v3.7.0. Their identity does not depend on the
+         folder (MAIR-491): renaming it after the release keeps them applied. -->
+
+    <!-- Passkeys (WebAuthn) of the accounts (MAIR-810). -->
+    <changeSet id="mair-810-01" author="dev"><sqlFile
+            path="v3_7_0__01__user_passkeys.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="v3_7_0__01__user_passkeys.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Formerly releases/v3.8.0/ (never shipped: regrouped into v4.0.0, MAIR-491 identity kept). -->
+
+    <!-- Changesets shipped by the git tag v3.8.0. Their identity does not depend on the
+         folder: renaming it after the release keeps them applied. -->
+
+    <!-- Previous refresh token of a session and its rotation time, to detect its reuse. -->
+    <changeSet id="mair-695-01" author="dev"><sqlFile
+            path="v3_8_0__01__sessions_refresh_token_reuse.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="v3_8_0__01__sessions_refresh_token_reuse.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Formerly releases/v3.9.0/ (never shipped: regrouped into v4.0.0, MAIR-491 identity kept). -->
+
+    <!-- Changesets shipped by the git tag v3.9.0. Their identity does not depend on the
+         folder: renaming it after the release keeps them applied. -->
+
+    <!-- Groups linked to a project: their members see it. -->
+    <changeSet id="mair-683-01" author="dev"><sqlFile
+            path="v3_9_0__01__project_groups.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="v3_9_0__01__project_groups.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Formerly releases/v3.10.0/ (never shipped: regrouped into v4.0.0, MAIR-491 identity kept). -->
+
+    <!-- Changesets shipped by the git tag v3.10.0. Their identity does not depend on the
+         folder: renaming it after the release keeps them applied. -->
+
+    <!-- Name of the passkey manager of a passkey (MAIR-810). -->
+    <changeSet id="mair-810-02" author="dev"><sqlFile
+            path="v3_10_0__01__user_passkeys_provider.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="v3_10_0__01__user_passkeys_provider.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Formerly releases/v3.11.0/ (never shipped: regrouped into v4.0.0, MAIR-491 identity kept). -->
+
+    <!-- Changesets shipped by the git tag v3.11.0. Their identity does not depend on the
+         folder: renaming it after the release keeps them applied. -->
+
+    <!-- Author of a project template (MAIR-691). -->
+    <changeSet id="mair-691-01" author="dev"><sqlFile
+            path="v3_11_0__01__project_template_author.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="v3_11_0__01__project_template_author.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
+    <!-- Formerly releases/v3.11.1/ (never shipped: regrouped into v4.0.0, MAIR-491 identity kept). -->
+
+    <!-- Changesets shipped by the git tag v3.11.1. Their identity does not depend on the
+         folder: renaming it after the release keeps them applied. -->
+
+    <!-- The author of a project template is not a foreign key (MAIR-691). -->
+    <changeSet id="mair-691-02" author="dev"><sqlFile
+            path="v3_11_1__01__project_template_author_no_fk.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="v3_11_1__01__project_template_author_no_fk.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <!-- Core is the only account system: the Keycloak SSO objects are dropped (MAIR-812). -->
     <changeSet id="mair-812-01" author="dev"><sqlFile
             path="01__remove_keycloak.sql"
