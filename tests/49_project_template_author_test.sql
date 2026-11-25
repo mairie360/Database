@@ -1,7 +1,7 @@
 BEGIN;
 SELECT plan(10);
 
--- Author of a project template: releases/v3.11.0/01, without foreign key since releases/v3.11.1/01. Project_API writes it on creation and reads
+-- Author of a project template: releases/v4.0.0/v3_11_0__01, without foreign key since releases/v4.0.0/v3_11_1__01. Project_API writes it on creation and reads
 -- it to decide who may modify or delete a template; the four seeded templates belong to the
 -- system admin (users.id = 1).
 

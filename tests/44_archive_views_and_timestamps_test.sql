@@ -141,7 +141,7 @@ SELECT is(
 );
 
 -- Release v3.4.1 purge: a row left by the former trigger (events resource + permission of another resource) goes away,
--- the correct rows stay. The statement is the one of releases/v3.4.1/01__purge_misattributed_event_acl.sql.
+-- the correct rows stay. The statement is the one of releases/v4.0.0/v3_4_1__01__purge_misattributed_event_acl.sql.
 INSERT INTO access_control (group_id, resource_id, resource_instance_id, permission_id)
 SELECT 4410, res.id, 44100, p.id
 FROM resources res, permissions p

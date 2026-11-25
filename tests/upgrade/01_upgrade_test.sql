@@ -210,10 +210,11 @@ SELECT ok(
 ---
 -- The database carries one tag per git tag, each one set right before the
 -- first changeset of the next tag: the baseline gets v1.3.0 although its
--- changelog had no tag.
+-- changelog had no tag. The unshipped folders v3.4.1-v3.11.1 were regrouped into
+-- v4.0.0 before the prod release, so their intermediate tags are gone.
 SELECT results_eq(
     $$SELECT tag FROM databasechangelog WHERE tag IS NOT NULL ORDER BY orderexecuted$$,
-    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0'), ('v3.4.0'), ('v3.4.1'), ('v3.5.0'), ('v3.6.0'), ('v3.7.0'), ('v3.8.0'), ('v3.9.0'), ('v3.10.0'), ('v3.11.0'), ('v3.11.1'), ('v4.0.0')$$,
+    $$VALUES ('v1.3.0'::VARCHAR), ('v2.0.0'), ('v3.0.0'), ('v3.1.0'), ('v3.4.0'), ('v4.0.0')$$,
     'The database is tagged with the git tags, in order'
 );
 
