@@ -118,15 +118,11 @@ and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
   `logicalFilePath="releases"`).
 - `releases/v3.4.0/` — MAIR-286 (audit log purge), MAIR-289 (erasure), MAIR-498 (compliance service); MAIR-289's `feat` renamed
   the unreleased `releases/v3.3.1` into `releases/v3.4.0` (MAIR-491).
-- `releases/v3.5.0/` — MAIR-805 (TOTP second factor managed by Core).
-- `releases/v3.6.0/` — MAIR-808 (two-factor policy of the instance).
-- `releases/v3.7.0/` — MAIR-810 (passkeys of the accounts).
-- `releases/v3.8.0/` — previous refresh token of a session, reuse detection.
-- `releases/v3.9.0/` — groups linked to a project.
-- `releases/v3.10.0/` — MAIR-810 (name of the passkey manager).
-- `releases/v3.11.0/` — author of a project template.
-- `releases/v3.11.1/` — the author of a project template is not a foreign key.
-- `releases/v4.0.0/` — MAIR-812 (Keycloak removed, breaking), MAIR-1155 (messaging V2: reactions, system notes,
+- `releases/v4.0.0/` — first the changesets of the folders `v3.4.1`–`v3.11.1` that never shipped (MAIR-535 event ACL purge,
+  MAIR-805 TOTP, MAIR-808 two-factor policy, MAIR-810 passkeys and their manager name, refresh token reuse, groups
+  linked to a project, author of a project template): MAIR-812's breaking change turned the next release into v4.0.0,
+  so the release folder gate had them regrouped here (files prefixed with their former folder, `v3_5_0__01__…`, ids
+  kept, the intermediate `tag-v3.x` dropped). Then MAIR-812 (Keycloak removed, breaking), MAIR-1155 (messaging V2: reactions, system notes,
   mentions of everyone and of groups), then the Projects V2 schema (epic MAIR-822), the Settings V2
   preferences (MAIR-823), the answer of a member to an event invitation (MAIR-1122) and the welcome
   tour state (MAIR-1176).
@@ -384,7 +380,7 @@ What each former schema version did, in order:
    read before `anonymize_user()`), both in `repeatable/security/compliance.sql`,
    writes its journal and the steps, and runs `anonymize_user()`. `tests/42_compliance_service_test.sql`.
 
-23. **`mair-805-01`** (`releases/v3.5.0/01`) — second factor managed by Core (MAIR-805, epic MAIR-804,
+23. **`mair-805-01`** (`releases/v4.0.0/v3_5_0__01`) — second factor managed by Core (MAIR-805, epic MAIR-804,
    replaces Keycloak's 2FA): `user_totp` (one row per user: TOTP secret sealed by Core with AES-GCM,
    the key `TOTP_ENCRYPTION_KEY` stays outside the database; `confirmed_at` NULL while the enrolment
    is pending; `last_used_step` refuses a replayed code) and `user_backup_codes` (Argon2 hashes of
@@ -393,7 +389,7 @@ What each former schema version did, in order:
    them as credentials; tests `tests/44_user_totp_test.sql`, `20_api_roles_test.sql`,
    `41_gdpr_erasure_test.sql`.
 
-24. **`mair-808-01`** (`releases/v3.6.0/01`) — two-factor policy of the instance (MAIR-808, epic
+24. **`mair-808-01`** (`releases/v4.0.0/v3_6_0__01`) — two-factor policy of the instance (MAIR-808, epic
    MAIR-804): `two_factor_policy`, a single row (`id = 1`, never inserted or deleted) with `required`
    (off at first), the allowed modes `totp_allowed` / `passkey_allowed` (off until MAIR-810) /
    `backup_codes_allowed`, at least one real mode allowed (`chk_two_factor_policy_one_mode`), and
@@ -402,35 +398,35 @@ What each former schema version did, in order:
    (author, before, after) to `two_factor_policy_audit_log`, append-only and out of reach of the API
    roles. Tests `tests/45_two_factor_policy_test.sql`, `20_api_roles_test.sql`.
 
-25. **`mair-810-01`** (`releases/v3.7.0/01`) — passkeys (WebAuthn) managed by Core (MAIR-810, epic MAIR-804):
+25. **`mair-810-01`** (`releases/v4.0.0/v3_7_0__01`) — passkeys (WebAuthn) managed by Core (MAIR-810, epic MAIR-804):
    `user_passkeys` (several per user, `credential_id` unique, `passkey` the serialized credential never returned
    by the API, `label`, `last_used_at`), `ON DELETE CASCADE` and deleted by `anonymize_user()`. Only `core_api`
    has privileges on it. Test `tests/46_user_passkeys_test.sql`.
 
-26b. **`mair-810-02`** (`releases/v3.10.0/01`) — `user_passkeys.provider`: name of the passkey manager Core deduces from the
+26b. **`mair-810-02`** (`releases/v4.0.0/v3_10_0__01`) — `user_passkeys.provider`: name of the passkey manager Core deduces from the
    AAGUID at registration (NULL when unknown or for older passkeys, never blank). Test `tests/46_user_passkeys_test.sql`.
 
-26. **`mair-695-01`** (`releases/v3.8.0/01`) — reuse of a rotated refresh token: `sessions.previous_token_hash`
+26. **`mair-695-01`** (`releases/v4.0.0/v3_8_0__01`) — reuse of a rotated refresh token: `sessions.previous_token_hash`
    (hash of the token the last rotation replaced) and `sessions.rotated_at`, both NULL until the first rotation, with
    the partial index `idx_sessions_previous_token_hash`. Core_API writes them in its rotation `UPDATE` and looks a
    session up by the previous hash to tell a reuse within its grace window (refused) from a later one (session
    revoked). `v_sessions` (`SELECT *`) is not recreated: Core reads these columns from `sessions`. Test
    `tests/47_sessions_refresh_token_reuse_test.sql`.
 
-27. **`mair-683-01`** (`releases/v3.9.0/01`) — groups linked to a project: `project_groups` (`project_id`,
+27. **`mair-683-01`** (`releases/v4.0.0/v3_9_0__01`) — groups linked to a project: `project_groups` (`project_id`,
    `group_id`, `linked_at`; primary key on the pair, `idx_project_groups_group_id`), `ON DELETE CASCADE` on both
    sides. Every current and future member of a linked group sees the project in Project_API, with the rights of a
    project member; Project_API checks the caller may link the group and keeps one group per project. `project_api`
    writes the table and reads `groups (id, name)`. Test `tests/48_project_groups_test.sql`.
 
-28. **`mair-691-01`** (`releases/v3.11.0/01`) — author of a project template: `project_templates.created_by`
+28. **`mair-691-01`** (`releases/v4.0.0/v3_11_0__01`) — author of a project template: `project_templates.created_by`
    (indexed; the foreign key it was created with is dropped by `mair-691-02`, see below), backfilled with the system admin (`users.id = 1`) for the existing templates.
    On a new database that account is seeded after the changesets, so `seed_admin_account()` does the same
    backfill once it has created it. Project_API lets an Admin manage every template and a Responsable only
    the ones they created, never the default one; a template without author can only be managed by an Admin.
    Classified in the GDPR inventory (identifier, `anonymize`, visible to administrators only). Deploy it before
    the Project_API release that reads the column. `tests/49_project_template_author_test.sql` and the upgrade test.
-29. **`mair-691-02`** (`releases/v3.11.1/01`) — drops `project_templates_created_by_fkey`. The API test harness
+29. **`mair-691-02`** (`releases/v4.0.0/v3_11_1__01`) — drops `project_templates_created_by_fkey`. The API test harness
    (`mairie360_api_lib`) starts with `TRUNCATE users … CASCADE`, which a foreign key from `project_templates` to
    `users` extends to the templates and their statuses (no project created in a test then gets statuses). The
    author is only compared with the caller's id and user ids are never reused, so an id left by a hard delete
