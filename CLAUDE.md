@@ -234,7 +234,7 @@ What each former schema version did, in order:
      one row per message of someone else or conversation deleted by an administrator,
      INSERT-only for `message_api`.
 
-10. **`rel-1.9.0-*`** (`releases/v4.0.0/v3_0_0__01`–`02`) — one direct conversation per pair of agents
+10. **`rel-1.9.0-*`** (`releases/v3.0.0/01`–`02`) — one direct conversation per pair of agents
    (MAIR-478), with its `<rollback>`. `conversations.direct_user_low` /
    `direct_user_high` (→ `users` `ON DELETE CASCADE`) hold the two participants of a `direct`
    conversation, lowest id first; `chk_conversations_direct_pair` requires them (and no group) for
@@ -252,7 +252,7 @@ What each former schema version did, in order:
    conversation. **Deploy it with the Message_API release of MAIR-478**: older Message_API
    versions insert `direct` conversations without a pair, which the constraint now refuses.
 
-11. **`rel-1.10.0-*`** (`releases/v4.0.0/v3_0_0__03`) — phone number as country + national number
+11. **`rel-1.10.0-*`** (`releases/v3.0.0/03`) — phone number as country + national number
    (MAIR-480): `users.phone_country` (ISO 3166-1 alpha-2) and `users.phone_number` (national
    significant number, digits only, no trunk prefix: `0612345678` is stored `FR` / `612345678`),
    both set or both NULL (`chk_users_phone`, written with `COALESCE` because a CHECK passes on
@@ -264,7 +264,7 @@ What each former schema version did, in order:
    backfill rules; any other number without a country is refused (`23514`). The release rollback
    drops that trigger, the next update recreates it.
 
-12. **`rel-1.11.0-*`** (`releases/v4.0.0/v3_0_0__04`–`05`) — findings of the schema lint and bench of MAIR-476,
+12. **`rel-1.11.0-*`** (`releases/v3.0.0/04`–`05`) — findings of the schema lint and bench of MAIR-476,
    fixed by MAIR-477, rollback per changeset.
    - `04__drop_redundant_indexes`: drops the five indexes the lint reported as duplicates or
      prefixes of a wider index (`idx_sessions_token_lookup`, `idx_messages_conversation_id_id`,
@@ -281,7 +281,7 @@ What each former schema version did, in order:
    them; the bench holds `core_directory_search` to the strict thresholds (126 blocks per
    transaction, growth 1.20).
 
-13. **`rel-1.12.0-*`** (`releases/v4.0.0/v3_0_0__06`) — event dates bounded to
+13. **`rel-1.12.0-*`** (`releases/v3.0.0/06`) — event dates bounded to
    `[1970-01-01, 3000-01-01)` UTC (MAIR-481), rollback per changeset.
    `06__events_date_window` deletes the events outside that window, or repeating along a rule
    outside it, with their members, message links and group ACL entries, then the rules outside
@@ -292,7 +292,7 @@ What each former schema version did, in order:
    constraints. Calendar_API applies the same window and answers 400 first.
    `tests/34_events_date_window_test.sql` covers the constraints, the upgrade test the cleanup.
 
-14. **`mair-477-01`** (`releases/v4.0.0/v3_1_0__01`) — B-tree `idx_users_name_order` on
+14. **`mair-477-01`** (`releases/v3.1.0/01`) — B-tree `idx_users_name_order` on
    `users (last_name, first_name, id)`, the order of Core_API's admin user list (MAIR-477, found
    by the MAIR-474 load test): without it each page sorted every user (10 143 blocks per
    transaction at a random page in the bench, 249 now). Core_API only orders by it without a
@@ -302,7 +302,7 @@ What each former schema version did, in order:
    `tests/33` drops it in its transaction to read the trigram plans; the bench holds
    `core_admin_users` (OFFSET pages: growth 1.48 by design) and `core_directory_search`.
 
-15. **`mair-477-02`** (`releases/v4.0.0/v3_1_0__02`) — one trigram GIN `idx_users_search_text_trgm` on the
+15. **`mair-477-02`** (`releases/v3.1.0/02`) — one trigram GIN `idx_users_search_text_trgm` on the
    expression `lower(first_name || ' ' || last_name || chr(31) || last_name || ' ' || first_name
    || chr(31) || email)`, replacing the five trigram indexes of `rel-1.11.0-02`. The searches of
    Core_API matched five `ILIKE` joined by OR: a broad term read the whole table, five `ILIKE` per
@@ -311,7 +311,7 @@ What each former schema version did, in order:
    keeps a term from matching across fields. An expression index, not a generated column:
    `v_users_active` / `v_users_archived` select `users.*` and would carry a column the rollback
    could not drop. Core_API must write the exact expression; `tests/33` checks the plan.
-16. **`mair-502-01`** (`releases/v4.0.0/v3_1_0__03`) — `tasks.archived_at`: a completed task is archived.
+16. **`mair-502-01`** (`releases/v3.1.0/03`) — `tasks.archived_at`: a completed task is archived.
    The repeatable trigger `tr_before_task_archive` (`project/fn_set_task_archived_at.sql`) sets it
    when a task becomes `completed` (keeping the first date while it stays completed) and clears it
    when it is reopened; the changeset backfills the completed tasks (`updated_at`). Partial indexes
@@ -319,12 +319,12 @@ What each former schema version did, in order:
    `idx_tasks_project_archived` (`project_id, archived_at DESC, id DESC`). Project_API shows the
    active tasks in the project detail and the archived ones in their own list; its counters count
    both. This `feat` renamed the unreleased `releases/v3.0.1` into `releases/v3.1.0` (MAIR-491).
-17. **`mair-558-01`** (`releases/v4.0.0/v3_1_0__06`) — backfills `projects.priority` (rel-1.2.0, default
+17. **`mair-558-01`** (`releases/v3.1.0/06`) — backfills `projects.priority` (rel-1.2.0, default
    `medium`, written by nobody until then) with the highest priority of each project's tasks, the
    value Project_API showed before it started storing the priority chosen in the creation form
    (MAIR-558). `project_status` already had `todo` and `review` (rel-1.2.0), so no schema change.
    Data only, empty `<rollback/>`; the upgrade test checks it (projects 100 and 101 of its seed).
-18. **`mair-564-01`** (`releases/v4.0.0/v3_1_0__07`) — one role per user (MAIR-564): `user_roles_pkey`
+18. **`mair-564-01`** (`releases/v3.1.0/07`) — one role per user (MAIR-564): `user_roles_pkey`
    becomes `(user_id)`, so a second role is a unique violation (`23505`). Accounts holding several
    roles keep their lowest role id, the one their JWT `role` claim already carried (MAIR-529); the
    dropped rows are listed in a NOTICE and the rollback (former key `(user_id, role_id)`) does not
@@ -335,7 +335,7 @@ What each former schema version did, in order:
    `INSERT … ON CONFLICT (user_id) DO UPDATE`, which needs this key: deploy it before (or with)
    the Core_API release of MAIR-564. `tests/38_one_role_per_user_test.sql` and the upgrade test
    cover it.
-19. **`mair-566-01`** (`releases/v4.0.0/v3_1_0__08`) — task statuses per project, copied from project
+19. **`mair-566-01`** (`releases/v3.1.0/08`) — task statuses per project, copied from project
    templates. `project_templates` (`is_default`: the template of a project created without one,
    undeletable) and `project_template_statuses`; `project_task_statuses` (name, `#RRGGBB` colour,
    position unique per project and deferred so a reorder can swap, one of the three `task_status`
@@ -354,7 +354,7 @@ What each former schema version did, in order:
    two statuses of one category too, reading `status_id` through `to_jsonb` so the migrations
    replayed after a rollback still update tasks. `tests/39` and the upgrade test cover it.
 
-20. **`mair-286-01`** (`releases/v4.0.0/v3_4_0__01`) — one-off purge of `password` and `photo` from
+20. **`mair-286-01`** (`releases/v3.4.0/01`) — one-off purge of `password` and `photo` from
    `previous_data` / `new_data` of every `users_audit_log` row (MAIR-286): the audit trigger used to
    copy the whole `users` row, plaintext passwords of the pre-MAIR-169 accounts included. The
    append-only guard is disabled for that `UPDATE` only. Irreversible (the rollback is a no-op);
@@ -362,14 +362,14 @@ What each former schema version did, in order:
    columns out, and its changeset runs before the admin seed in `changelog-repeatable.xml`, so the
    update that replaces it does not audit the new admin password with the old function.
 
-21. **`mair-289-01`–`03`** (`releases/v4.0.0/v3_4_0__02`–`04`) — erasure of a user (MAIR-289), rollback
+21. **`mair-289-01`–`03`** (`releases/v3.4.0/02`–`04`) — erasure of a user (MAIR-289), rollback
    per changeset. `02` turns the `ON DELETE CASCADE` of `conversations.direct_user_low/high` and
    `user_courses.user_id` into `NO ACTION` (a direct conversation stays for the other participant,
    a training record is kept); `03` adds `ANONYMIZE` to `archive_strategy_type` (Postgres cannot
    drop it: the rollback leaves it, unused); `04` adds the `users` policy, `1 year`, `ANONYMIZE`
    (the mairie sets its own period in `retention_policies`, MAIR-294).
 
-22. **`mair-498-01`** (`releases/v4.0.0/v3_4_0__05`) — tables of the per-instance compliance service
+22. **`mair-498-01`** (`releases/v3.4.0/05`) — tables of the per-instance compliance service
    (MAIR-498, Compliance_API): `compliance_journal` (append-only, `tr_immutable_compliance_journal`:
    kind, storage, location, action, rows, masked excerpt, cause hint, the erased `user_id` without
    foreign key; never a value) and `erasure_steps` (one row per user and step: keycloak, resend,
