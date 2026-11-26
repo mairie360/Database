@@ -126,6 +126,7 @@ and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
   mentions of everyone and of groups), then the Projects V2 schema (epic MAIR-822), the Settings V2
   preferences (MAIR-823), the answer of a member to an event invitation (MAIR-1122) and the welcome
   tour state (MAIR-1176).
+- `releases/v4.1.0/` — MAIR-1228 (trigram indexes of the global search).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
@@ -551,6 +552,10 @@ What each former schema version did, in order:
    `BOOLEAN`, nullable (NULL = not done yet), no backfill so existing accounts see the tour once. Written by Core
    (`PATCH /user/me/preferences/`) through its existing grants, erased with the preferences row by `anonymize_user()`,
    exported by `export_user_data()`. Test `tests/65_onboarding_completed_test.sql` and the upgrade test.
+45. **`mair-1228-01`** (`releases/v4.1.0/01`) — trigram GIN indexes of the global search (MAIR-1228): every business
+   API's `GET /v1/search` matches `<column> ILIKE '%term%'` on `projects.title` / `description`, `tasks.title`,
+   `events.name`, `conversations.title`, `messages.content` and `courses.title`; users already have
+   `idx_users_search_text_trgm`. Indexes only, no change an older API sees. Test `tests/66_global_search_trigram_test.sql`.
 
 Then **`repeatable/changelog-repeatable.xml`** — every changeset here is
    `runOnChange="true"`, so editing the referenced `.sql` re-applies it. This is

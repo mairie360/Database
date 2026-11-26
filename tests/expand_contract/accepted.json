@@ -1,21 +1,6 @@
 [
   {
     "path": "liquibase/releases/v4.0.0/01__remove_keycloak.sql",
-    "statement": "DROP VIEW IF EXISTS V_USERS_SSO_EXPORT",
-    "reason": "Keycloak removed from the whole platform in one release (v4.0.0, with the Core and API releases without SSO): the previous release's SSO export is retired with it, rolling Core back past v4 is not supported."
-  },
-  {
-    "path": "liquibase/releases/v4.0.0/01__remove_keycloak.sql",
-    "statement": "DROP FUNCTION IF EXISTS LINK_USER_IDENTITY(INT, VARCHAR, VARCHAR)",
-    "reason": "Keycloak removed in v4.0.0: only the Keycloak migration job called it, and it is gone."
-  },
-  {
-    "path": "liquibase/releases/v4.0.0/01__remove_keycloak.sql",
-    "statement": "DROP FUNCTION IF EXISTS RESOLVE_USER_IDENTITY(VARCHAR, VARCHAR)",
-    "reason": "Keycloak removed in v4.0.0: SSO sign-in no longer exists, Core v4 signs in with its own accounts only. Database v4 must reach prod together with Core v4."
-  },
-  {
-    "path": "liquibase/releases/v4.0.0/01__remove_keycloak.sql",
     "statement": "DROP TABLE IF EXISTS USER_IDENTITIES",
     "reason": "Keycloak removed in v4.0.0: the links between accounts and Keycloak subjects are dropped for good (decision of the Keycloak removal)."
   }
