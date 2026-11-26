@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(16);
+SELECT plan(18);
 
 -- repeatable/common/seed_test_accounts.sql seeds the accounts of the external attack
 -- campaigns through seed_test_accounts(password_hash), only when -Dtest_accounts_password is
@@ -149,6 +149,25 @@ SELECT is(
     (SELECT count(*)::INT FROM users WHERE lower(email) = 'attack.guest@example.invalid'),
     1,
     'MAIR-1185: an existing account whose address differs only by case is reused'
+);
+
+-- Tests 17-18: an administrator account that holds a campaign address is refused, not reset.
+DELETE FROM user_roles
+WHERE user_id IN (SELECT id FROM users WHERE email ILIKE 'attack.%@example.invalid');
+DELETE FROM users WHERE email ILIKE 'attack.%@example.invalid';
+UPDATE users SET email = 'attack.guest@example.invalid' WHERE id = 1;
+
+SELECT throws_ok(
+    $$SELECT seed_test_accounts('$argon2id$v=19$m=16,t=2,p=1$Y29sbGlk$Y29sbGlkZWQ')$$,
+    'P0001',
+    'test account attack.guest@example.invalid is the administrator account (users.id = 1)',
+    'MAIR-1185: the seed refuses an administrator holding a campaign address'
+);
+
+SELECT is(
+    (SELECT r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = 1),
+    'Admin',
+    'MAIR-1185: the administrator keeps its role when its address collides'
 );
 
 SELECT * FROM finish();

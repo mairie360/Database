@@ -51,6 +51,10 @@ BEGIN
         END IF;
 
         SELECT id INTO v_user_id FROM users WHERE lower(email) = v_account.email;
+        -- The primary administrator is never reset nor demoted, whatever its address.
+        IF v_user_id = 1 THEN
+            RAISE EXCEPTION 'test account % is the administrator account (users.id = 1)', v_account.email;
+        END IF;
 
         IF v_user_id IS NULL THEN
             INSERT INTO users (first_name, last_name, email, password, status, is_archived, first_connect)
