@@ -37,7 +37,7 @@ BEGIN
     FOREACH v_key IN ARRAY ARRAY['first_name', 'last_name', 'email', 'phone_number', 'phone_country', 'photo', 'biography', 'job_title', 'password']
     LOOP
         IF v_out ? v_key AND jsonb_typeof(v_out -> v_key) <> 'null'
-           AND (v_out ->> v_key) NOT LIKE 'sha256:%' THEN
+           AND (v_out ->> v_key) !~ '^sha256:[0-9a-f]{64}$' THEN
             v_out := jsonb_set(v_out, ARRAY[v_key], to_jsonb('sha256:' || encode(sha256(
                 convert_to(p_salt || ':' || p_user_id || ':' || v_key || ':' || (v_out ->> v_key), 'UTF8')), 'hex')));
         END IF;
