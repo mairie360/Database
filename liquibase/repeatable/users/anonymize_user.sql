@@ -1,7 +1,7 @@
 -- Erasure and export of a user's data (MAIR-289, epic MAIR-284), following the `erasure` of each
 -- column in gdpr/inventory.yaml:
 --   delete     the rows of the user (memberships, sessions, preferences, roles, identities...) go;
---   anonymize  the users row stays, without its identity (names, e-mail, phone, photo, biography,
+--   anonymize  the users row stays, without its identity (names, e-mail, phone, photo, biography, job title,
 --              password): the references of shared objects (messages, comments, tasks, events)
 --              keep pointing to it and no longer name anyone; the identity copied into
 --              users_audit_log is replaced by a salted hash whose salt is never stored;
@@ -34,10 +34,10 @@ BEGIN
     IF p_data IS NULL THEN
         RETURN NULL;
     END IF;
-    FOREACH v_key IN ARRAY ARRAY['first_name', 'last_name', 'email', 'phone_number', 'phone_country', 'photo', 'biography', 'password']
+    FOREACH v_key IN ARRAY ARRAY['first_name', 'last_name', 'email', 'phone_number', 'phone_country', 'photo', 'biography', 'job_title', 'password']
     LOOP
         IF v_out ? v_key AND jsonb_typeof(v_out -> v_key) <> 'null'
-           AND (v_out ->> v_key) NOT LIKE 'sha256:%' THEN
+           AND (v_out ->> v_key) !~ '^sha256:[0-9a-f]{64}$' THEN
             v_out := jsonb_set(v_out, ARRAY[v_key], to_jsonb('sha256:' || encode(sha256(
                 convert_to(p_salt || ':' || p_user_id || ':' || v_key || ':' || (v_out ->> v_key), 'UTF8')), 'hex')));
         END IF;
@@ -134,6 +134,7 @@ BEGIN
         phone_country = NULL,
         photo = NULL,
         biography = NULL,
+        job_title = NULL,
         service_id = NULL
     WHERE id = p_user_id;
 

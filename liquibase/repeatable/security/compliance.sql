@@ -80,7 +80,7 @@ BEGIN
     SELECT count(*) INTO v_count
     FROM users u
     WHERE u.email = format('anonymized-%s@anonymized.invalid', u.id)
-      AND (u.password IS NOT NULL OR u.phone_number IS NOT NULL OR u.photo IS NOT NULL OR u.biography IS NOT NULL
+      AND (u.password IS NOT NULL OR u.phone_number IS NOT NULL OR u.photo IS NOT NULL OR u.biography IS NOT NULL OR u.job_title IS NOT NULL
            OR u.first_name <> 'Anonymized' OR u.last_name <> 'User');
     IF v_count > 0 THEN
         kind := 'erased_user_data'; location := 'users'; rows := v_count;

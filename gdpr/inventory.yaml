@@ -485,6 +485,7 @@ tables:
       updated_at: {category: account, erasure: keep, visibility: admin}
       first_connect: {category: account, erasure: keep, visibility: internal}
       biography: {category: content, erasure: anonymize, visibility: internal}
+      job_title: {category: identity, erasure: anonymize, visibility: internal, note: "function of the agent shown on its Settings profile, cleared at erasure"}
       service_id: {category: account, erasure: anonymize, visibility: admin, note: "service of the agent in the mairie (MAIR-923), cleared at erasure"}
 
   users_audit_log:

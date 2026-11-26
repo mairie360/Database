@@ -126,7 +126,7 @@ and cut by `promote-prod.yml`, see **Promotion to staging and prod** below.
   mentions of everyone and of groups), then the Projects V2 schema (epic MAIR-822), the Settings V2
   preferences (MAIR-823), the answer of a member to an event invitation (MAIR-1122) and the welcome
   tour state (MAIR-1176).
-- `releases/v4.1.0/` — MAIR-1228 (trigram indexes of the global search).
+- `releases/v4.1.0/` — MAIR-1228 (trigram indexes of the global search), MAIR-1231 (`users.job_title`).
 
 Until MAIR-490 the folders were named after a schema version unrelated to the git
 tags. The regrouped changesets keep their id (`rel-1.X.0-NN`) and their former
