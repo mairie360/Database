@@ -513,6 +513,19 @@
         <rollback/>
     </changeSet>
 
+    <!-- Test accounts of the external attack campaigns: dev and staging only, a no-op without
+         -Dtest_accounts_password. After every users trigger, so the accounts are audited and get
+         their role like any other. runAlways: a rotated password or a role changed during a
+         campaign is reset at the next deploy. -->
+    <changeSet id="rep-common-test-accounts" author="dev" runAlways="true" runOnChange="true">
+        <sqlFile
+            path="common/seed_test_accounts.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+        />
+        <rollback/>
+    </changeSet>
+
     <changeSet id="rep-security-api-roles" author="dev" runAlways="true" runOnChange="true">
         <sqlFile
             path="security/api_roles.sql"
