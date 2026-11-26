@@ -1,0 +1,2 @@
+ALTER TABLE users DROP CONSTRAINT IF EXISTS chk_users_job_title;
+ALTER TABLE users DROP COLUMN IF EXISTS job_title;

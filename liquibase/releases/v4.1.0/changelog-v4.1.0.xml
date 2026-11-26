@@ -21,6 +21,17 @@
             relativeToChangelogFile="true"
         /></rollback></changeSet>
 
+    <!-- Function (job title) of an agent, on the Profile tab of Settings. -->
+    <changeSet id="mair-1231-01" author="dev"><sqlFile
+            path="02__users_job_title.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /><rollback><sqlFile
+            path="02__users_job_title.rollback.sql"
+            splitStatements="false"
+            relativeToChangelogFile="true"
+        /></rollback></changeSet>
+
     <changeSet id="tag-v4.1.0" author="dev"><tagDatabase tag="v4.1.0"/></changeSet>
 
 </databaseChangeLog>
