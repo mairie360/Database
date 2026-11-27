@@ -31,6 +31,9 @@ services:
       - LIQUIBASE_COMMAND_PASSWORD=password
       - LIQUIBASE_COMMAND_CHANGELOG_FILE=changelog.xml
       - LIQUIBASE_COMMAND_DRIVER=org.postgresql.Driver
+      # Argon2id-shaped hash of the external attack campaign test accounts
+      # (repeatable/common/seed_test_accounts.sql), test value only. $$ escapes compose.
+      - TEST_ACCOUNTS_PASSWORD=$$argon2id$$v=19$$m=16,t=2,p=1$$dGVzdHNhbHQ$$dGVzdGhhc2g
       # On pointe précisément là où sont tes fichiers (vu dans ton ls -la)
       - LIQUIBASE_SEARCH_PATH=/workspace/liquibase,/workspace/liquibase/releases/v1.3.0,/workspace/liquibase/releases/v2.0.0,/workspace/liquibase/releases/v3.0.0,/workspace/liquibase/releases/v3.1.0,/workspace/liquibase/releases/v3.4.0,/workspace/liquibase/repeatable,/workspace/liquibase/releases/v4.0.0,/workspace/liquibase/releases/v4.1.0
     volumes:
@@ -48,7 +51,8 @@ services:
       -Dmessage_api_password=password
       -Delearning_api_password=password
       -Dcompliance_api_password=password
-      -Dallow_template_admin=true &&
+      -Dallow_template_admin=true
+      -Dtest_accounts_password=$$TEST_ACCOUNTS_PASSWORD &&
 
       echo '--- INSTALLING PGTAP + PLPGSQL_CHECK ---' &&
       psql -h database -U postgres -d core -c 'CREATE EXTENSION IF NOT EXISTS pgtap;' &&

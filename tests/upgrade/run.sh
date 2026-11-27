@@ -76,13 +76,15 @@ liquibase_at /workspace/liquibase rollback --tag="$rollback_tag" $ROLE_PARAMS
 liquibase_at /workspace/liquibase update $ROLE_PARAMS \
     -Dadmin_email="$ADMIN_EMAIL" -Dadmin_password="$ADMIN_PASSWORD"
 
-# The runAlways changesets (security/api_*) are always listed as pending.
+# The runAlways changesets (security/api_*, common/seed_test_accounts) are
+# always listed as pending.
 # The parameters are passed because they are part of the checksum of the
 # changesets that use them.
 # shellcheck disable=SC2086
 pending="$(liquibase_at /workspace/liquibase status --verbose $ROLE_PARAMS \
     -Dadmin_email="$ADMIN_EMAIL" -Dadmin_password="$ADMIN_PASSWORD" 2>&1 \
-    | grep '::' | grep -v -e '::rep-security-api-roles::' -e '::rep-security-api-grants::' || true)"
+    | grep '::' | grep -v -e '::rep-security-api-roles::' -e '::rep-security-api-grants::' \
+        -e '::rep-common-test-accounts::' || true)"
 if [ -n "$pending" ]; then
     echo "$pending"
     echo 'FAIL: changesets are still pending after the upgrade'
